@@ -1,38 +1,132 @@
-.App {
-  text-align: center;
+/* Variables */
+.spms {
+    --tw-sidebar-transition-duration: 0.3s;
+    --tw-sidebar-transition-timing: ease;
+    --tw-sidebar-width: theme('custom.layouts.aisec.sidebar.width.desktop');
+    --tw-sidebar-default-width: theme('custom.layouts.aisec.sidebar.width.desktop');
+    --tw-header-height: theme('custom.layouts.aisec.header.height.desktop');
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+@media (max-width: theme('screens.lg')) {
+    .spms {
+        --tw-sidebar-width: theme('custom.layouts.aisec.sidebar.width.mobile');
+        --tw-header-height: theme('custom.layouts.aisec.header.height.mobile');
+    }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Base */
+.spms .header {
+    height: var(--tw-header-height);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.spms .sidebar {
+    width: var(--tw-sidebar-width);
 }
 
-.App-link {
-  color: #61dafb;
+.spms.header-fixed .wrapper {
+    padding-top: var(--tw-header-height);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Desktop mode */
+@media (min-width: theme('screens.lg')) {
+    .spms .sidebar {
+        width: var(--tw-sidebar-width);
+        transition: width var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
+    }
+
+    .spms .sidebar .sidebar-header {
+        height: var(--tw-header-height);
+    }
+
+    .spms .sidebar .sidebar-wrapper {
+        width: var(--tw-sidebar-default-width);
+    }
+
+    .spms .sidebar .sidebar-logo {
+        width: var(--tw-sidebar-default-width);
+    }
+
+    .spms .sidebar .small-logo {
+        display: none;
+    }
+
+    .spms.sidebar-fixed .wrapper {
+        padding-inline-start: var(--tw-sidebar-width);
+    }
+
+    .spms.sidebar-fixed.header-fixed .header {
+        inset-inline-start: var(--tw-sidebar-width);
+    }
+
+    .spms.sidebar-fixed.header-fixed .wrapper {
+        padding-top: var(--tw-header-height);
+    }
+
+    .spms.sidebar-collapse {
+        --tw-sidebar-width: theme('custom.layouts.aisec.sidebar.width.desktopCollapse');
+    }
+
+    .spms.sidebar-collapse .sidebar {
+        transition: width var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
+    }
+
+    .spms.sidebar-collapse .sidebar.animating {
+        pointer-events: none;
+    }
+
+    .spms.sidebar-collapse .sidebar:hover:not(.animating) {
+        width: var(--tw-sidebar-default-width);
+        transition: width var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .default-logo {
+        display: none;
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .small-logo {
+        display: flex;
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-link .menu-title,
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-link .menu-arrow,
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-link .menu-badge,
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-label .menu-title,
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-label .menu-arrow,
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-label .menu-badge {
+        display: none;
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-accordion {
+        display: none;
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-heading {
+        visibility: hidden;
+        position: relative;
+    }
+
+    .spms.sidebar-collapse .sidebar:not(:hover) .menu > .menu-item > .menu-heading::before {
+        content: "...";
+        color: currentColor;
+        font-size: inherit;
+        position: absolute;
+        visibility: visible;
+        display: inline-block;
+        bottom: 50%;
+        inset-inline-start: 0;
+        margin-inline-start: 0.225rem;
+        transform: translateX(100%);
+    }
+
+    .spms.sidebar-collapse .sidebar .sidebar-content {
+        overflow: hidden;
+    }
+}
+
+.spms.layout-initialized .wrapper {
+    transition: padding-inline-start var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
+}
+
+.spms.layout-initialized .header {
+    transition: inset-inline-start var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
 }

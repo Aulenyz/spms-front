@@ -1,0 +1,45 @@
+export class Messages {
+    static InvalidDocument: string = "El documento no es válido.";
+    static OnlyNumber: string = "El documento solo debe contener números.";
+    static InvalidGender: string = 'Debe ingresar un sexo válido.';
+    static InvalidCurrency: string = 'Debe ingresar un tipo de moneda válido.';
+    static InvalidDocumentType: string = 'Debe ingresar un tipo documento válido.';
+    static RequiredField: string = 'Este campo es requerido.';
+    static InvalidRNC: string = 'Debe introducir un RNC válido.';
+    static PasswordNotMatches: string = 'Las contraseñas deben coincidir.';
+    static DocumentExists: string = 'Este documento ya ha sido registrado.';
+    static UsernameExists: string = 'Este nombre de usuario ya ha sido registrado.';
+    static ZoneNameExists: string = 'Este nombre de zona ya ha sido registrado.';
+    static EmailExists: string = 'Este correo ya ha sido registrado.';
+    static PositionNameExists: string = 'Esta posición ya ha sido registrada.';
+    static PositionCodeExists: string = 'Este código ya ha sido registrado.';
+    static LengthOf11: string = 'Este campo debe tener 11 caracteres.';
+    static LengthOf9: string = 'Este campo debe tener 9 caracteres.';
+    static LengthOf10: string = 'Este campo debe tener 10 caracteres.';
+    static MinLengthOf8: string = 'Este campo debe tener mas de 8 caracteres.';
+    static MaxLengthOf64: string = 'Este campo debe tener menos de 64 caracteres.';
+    static matchesPassword: string = 'La nueva contraseña no puede ser igual a la actual.';
+    static oneMayus: string = 'Debe de contener almenos 1 mayuscula.';
+    static oneMin: string = 'Debe de contener almenos 1 minuscula.';
+    static InvalidEmail: string = 'Debe ingresar un correo válido.';
+    static InvalidNumber: string = 'Debe ingresar un número válido.';
+    static InvalidDateValue: string = 'Debe ingresar una fecha válida.';
+    static InvalidDuration: string = 'Debe ingresar una duración válida.';
+    static Unavailable: string = 'No disponible';
+    static BranchNameExists: string = 'Esta sucursal ya ha sido registrada.';
+    static CustomerNameExists: string = 'Este Cliente ya ha sido registrado.';
+    static RoleNameExists: string = 'Este rol ya se encuentra registrado.';
+    static CustomerDocumentExists: string = 'Ya existe un cliente con ese documento';
+    static LengthOfN = (length: number) => `Este campo debe tener ${length} caracteres o menos.`;
+    static InvalidScheduleType: string = 'Debe ingresar un turno válido.'
+    static InvalidWeekday: string = 'Debe seleccionar almenos 1 dia de la semana.';
+    static ScheduleExist: string = 'Ya existen recorridos con esa hora para este dia/s.';
+    static TagNameExist: string = 'Ya existe un punto de chequeo con ese nombre.';
+    static TagIdExist: string = 'Ya existe un punto de chequeo con ese Tag Id.';
+    static AreaAlreadyExists: string = 'Ya existe un Area de Recorrido con ese nombre.';
+    static RncAlreadyExists: string = 'Este RNC ya ha sido registrado.';
+    static OrganizationNameAlreadyExists: string = 'Este Nombre ya ha sido registrado.';
+    static OnlyNumberField: string = "Este campo solo debe contener números.";
+    static InvalidOrganization: string = 'Debe ingresar un tipo de organización válido.';
+    static MinLengthOf3: string = 'Este campo debe tener mas de 3 caracteres.';
+}
