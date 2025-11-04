@@ -1,7 +1,6 @@
 import {BaseService} from "../BaseService.ts";
 import {UserStatus} from "../../domain/model/user/user.ts";
 
-
 export class UserDataService extends BaseService {
 
     private static factory: UserDataService = new UserDataService();
