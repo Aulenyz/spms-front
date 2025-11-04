@@ -1,6 +1,4 @@
-import {BaseModel} from "../BaseModel.ts";
-
-export interface UserPasswordLogin extends BaseModel {
+export interface UserPasswordLogin {
     username: string;
     password: string;
 }

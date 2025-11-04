@@ -18,7 +18,6 @@ export const RecoverPasswordSchema = () => {
     const [loading, setLoading]: State<boolean> = useState<boolean>();
     const {register, handleSubmit, formState: {errors}, setValue}: UseForm<RecoverPassword> = useForm<RecoverPassword>({
         resolver: yupResolver(RecoverSchema),
-        defaultValues: {},
         reValidateMode: 'onChange'
     });
 

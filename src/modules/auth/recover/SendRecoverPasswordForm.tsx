@@ -16,7 +16,6 @@ export const SendRecoverSchema = () => {
     const {register, handleSubmit, formState: {errors}}: UseForm<SendRecoverRequest> =
         useForm<SendRecoverRequest>({
             resolver: yupResolver(SendRecoverPasswordSchema),
-            defaultValues: {},
             reValidateMode: 'onChange'
         });
 
