@@ -1,6 +1,5 @@
 import {Context, createContext, FC, ReactNode, useContext, useEffect, useState} from 'react';
 import {Location, NavigateFunction, useLocation, useNavigate} from 'react-router-dom';
-import {UserService} from '../services/user/UserService.ts';
 import {User} from '../domain/model/user/user.ts';
 import {UserPasswordLogin} from '../domain/model/auth/Login.ts';
 import {State, VOID} from '../domain/types/steoreotype.ts';
@@ -14,7 +13,6 @@ const LOGIN_PATH: string = '/auth/login';
 const SELECT_ORGANIZATION_PATH: string = '/auth/select-organization';
 
 const authService: AuthService = AuthService.instance;
-const userService: UserService = UserService.instance;
 
 export interface AuthContextValue {
     current?: User,
@@ -40,7 +38,7 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
 
     useEffect((): void => {
         const isRouteValid: boolean = !pathname.startsWith('/auth/') && !pathname.startsWith('/errors/');
-        isRouteValid && userService.current().then(setCurrent, (): void => {
+        isRouteValid && authService.currentUser().then(setCurrent, (): void => {
             setCurrent(undefined);
             navigate(LOGIN_PATH);
         }).finally(() => {
@@ -53,7 +51,7 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
         setMessage(undefined);
         LocalStorage.remove(StorageItem.RecentSearches);
         authService.authenticate(username, password).then((): void => {
-            userService.current().then((employee: User): void => {
+            authService.currentUser().then((employee: User): void => {
                 setCurrent(employee);
                 navigate(SELECT_ORGANIZATION_PATH, {replace: true});
             });

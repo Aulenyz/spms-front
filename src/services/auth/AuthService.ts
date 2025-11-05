@@ -2,6 +2,7 @@ import {BaseService} from "../BaseService.ts";
 import {KeyValue} from "../../domain/types/steoreotype.ts";
 import {StorageItem} from "../../domain/types/StorageItem.ts";
 import {AuthToken, TokenInfo, TokenResponse} from "../../domain/model/auth/Token.ts";
+import {User} from "../../domain/model/user/user.ts";
 
 export class AuthService extends BaseService {
 
@@ -13,6 +14,10 @@ export class AuthService extends BaseService {
 
     constructor() {
         super('/auth');
+    }
+
+    async currentUser(): Promise<User> {
+        return super.get<User>('/current');
     }
 
     async authenticate(username: string, password: string): Promise<AuthToken> {
