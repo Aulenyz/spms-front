@@ -6,12 +6,14 @@ import {ErrorsLayout} from "./modules/errors/ErrorsLayout.tsx";
 import {Error404} from "./modules/errors/components/Error404.tsx";
 import {Error403} from "./modules/errors/components/Error403.tsx";
 import {MainLayout} from "./modules/shared/main/MainLayout.tsx";
+import {StudentRouting} from "./modules/student/StudentRouting.tsx";
 
 export const AppRouting = () => {
     return (
         <Routes>
             <Route path="/" element={<MainLayout/>}>
-                <Route path="/*" element={<HomeRouting/>}/>
+                <Route path="/*" element={<HomeRouting/>}/>\
+                <Route path="students/*" element={<StudentRouting/>}/>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

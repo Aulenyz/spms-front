@@ -1,6 +1,6 @@
-import {isNil} from "lodash";
-import {NavigateFunction, useNavigate, useSearchParams} from "react-router-dom";
 import {useEffect, useRef, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {isNil} from "lodash";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
@@ -8,141 +8,179 @@ import {ChangePasswordForm} from "../../changePassword/changePasswordForm.tsx";
 import {useQueryParams} from "../../../hooks/useQueryParams.tsx";
 
 export const MainNavbar = () => {
-
-    const navigate: NavigateFunction = useNavigate();
+    const navigate = useNavigate();
     const [_, setSearchParams] = useSearchParams();
     const {notification} = useQueryParams();
     const {current}: AuthContextValue = useAuthContext();
-    const [changePassModal, setChangePassModal] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
-    const bellRef = useRef<HTMLButtonElement>(null);
 
-    const handleChangePassword = () => {
-        setChangePassModal(false);
-    };
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+    const bellRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (notification === 'show') {
+        if (notification === "show") {
             setShowNotifications(true);
             setSearchParams({});
         }
-    }, [notification])
+    }, [notification]);
+
+    // 🔹 Cierra menú al hacer clic fuera o presionar Esc
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node)
+            ) {
+                setShowProfileMenu(false);
+            }
+        };
+        const handleEsc = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setShowProfileMenu(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleEsc);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleEsc);
+        };
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token_info");
+        localStorage.removeItem("authorities_info");
+        navigate("/auth/login", {replace: true});
+    };
 
     return (
         <>
-            <header
-                className="header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-white shadow"
-                data-sticky="true" data-sticky-class="shadow-sm" data-sticky-name="header" id="header">
-                <div className="container-fixed flex justify-between items-stretch lg:gap-4" id="header_container">
-                    <div className="flex gap-1 lg:hidden items-center -ms-1">
-                        <a className="shrink-0">
-                            {/*<img className="max-h-[25px] w-full" src="/logo.png" alt=""/>*/}
-                        </a>
-                        <div className="flex items-center">
-                            <button className="btn btn-icon btn-light btn-clear btn-sm" data-drawer-toggle="#sidebar">
-                                <i className="fa fa-ellipsis-h"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div data-reparent-target="#content_container|lg:#header_container" data-reparent="true"
-                         className="flex [.header_&]:below-lg:hidden items-center gap-1.25 text-xs lg:text-sm font-medium mb-2.5 lg:mb-0"
-                         data-reparent-mode="prepend|lg:prepend">
-                    </div>
-
-                    <div className="flex items-center gap-2 lg:gap-3.5">
+            <header className="sticky top-0 z-20 w-full bg-white shadow-sm border-b border-gray-100">
+                <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8">
+                    {/* ─── Izquierda ───────────────────────────── */}
+                    <div className="flex items-center gap-3">
                         <button
-                            className="btn btn-icon btn-icon-lg size-9 rounded-full hover:bg-primary-light hover:text-primary text-gray-500">
-                            <i className="fa fa-search"></i>
-                        </button>
-
-                        <button
-                            ref={bellRef}
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className="btn btn-icon btn-icon-lg size-9 rounded-full hover:bg-primary-light hover:text-primary text-gray-500"
+                            className="lg:hidden p-2 rounded-md hover:bg-gray-100 text-gray-600"
+                            title="Abrir menú"
                         >
-                            <i className="fa fa-bell"></i>
+                            <i className="fa fa-bars text-lg"></i>
                         </button>
-
-                        <div className="menu" data-menu="true">
-                            <div className="menu-item" data-menu-item-offset="20px, 10px"
-                                 data-menu-item-offset-rtl="-20px, 10px" data-menu-item-placement="bottom-end"
-                                 data-menu-item-placement-rtl="bottom-start" data-menu-item-toggle="dropdown"
-                                 data-menu-item-trigger="click|lg:click">
-                                <div className="menu-toggle btn btn-icon rounded-full">
-                                    <LoadingContent className="text-blue-500" loading={isNil(current)}>
-                                        <img src={current?.info.image} alt="Profile Image"
-                                             className="size-9 rounded-full border-2 border-success shrink-0"/>
-                                    </LoadingContent>
-                                </div>
-                                <div
-                                    className="menu-dropdown menu-default light:border-gray-300 w-screen max-w-[350px]">
-                                    <div className="flex items-center justify-between px-5 py-1.5 gap-1.5">
-                                        <div className="flex items-center gap-2">
-                                            <img alt="" className="size-9 rounded-full border-2 border-success"
-                                                 src={current?.info.image}/>
-                                            <div className="flex flex-col gap-1.5">
-                                                <span className="text-sm text-gray-800 font-semibold leading-none">
-                                                    {current?.info.firstname}
-                                                </span>
-                                                <a className="text-xs text-gray-600 hover:text-primary font-medium leading-none">
-                                                    {current?.email ?? current?.username}
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <span className="badge badge-xs badge-primary badge-outline">
-                                            {current?.role.name}
-                                        </span>
-                                    </div>
-                                    <div className="menu-separator"></div>
-
-                                    <div className="menu-separator"></div>
-                                    <div className="flex flex-col">
-                                        <div className="menu-item" data-menu-dismiss="true">
-                                            <a className="menu-link">
-                                                <span className="menu-icon">
-                                                    <i className="fa fa-user-cog fa-fw"></i>
-                                                </span>
-                                                <span className="menu-title">Configuración de mi Perfil</span>
-                                            </a>
-                                        </div>
-
-                                        <div className="menu-item" data-menu-dismiss="true">
-                                            <button className="menu-link"
-                                                    onClick={() => setChangePassModal(true)}>
-                                                <span className="menu-icon">
-                                                    <i className="fa fa-key fa-fw"></i></span>
-                                                <span className="menu-title">Cambiar Contraseña</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="menu-separator"></div>
-                                    <div className="flex flex-col">
-                                        <div className="menu-item px-4 py-1.5">
-                                            <a className="btn btn-sm btn-light justify-center"
-                                               onClick={() => {
-                                                   localStorage.removeItem("token_info");
-                                                   localStorage.removeItem("authorities_info");
-                                                   navigate('auth/login')
-                                               }}>
-                                                Cerrar Sesión
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <h1 className="hidden sm:block text-[16px] font-semibold text-gray-700">
+                            Panel Principal
+                        </h1>
                     </div>
 
-                    <LeftModal
-                        title="Cambiar Contraseña"
-                        isOpen={changePassModal}
-                        onClose={() => setChangePassModal(false)}
-                        className="w-[30%] h-full z-[9999]">
-                        <ChangePasswordForm onSubmit={handleChangePassword}/>
-                    </LeftModal>
+                    {/* ─── Derecha ───────────────────────────── */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Buscar */}
+                        <button
+                            className="p-2 rounded-full hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                            title="Buscar"
+                        >
+                            <i className="fa fa-search text-lg"></i>
+                        </button>
+
+                        {/* Notificaciones */}
+                        <div className="relative">
+                            <button
+                                ref={bellRef}
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative p-2 rounded-full hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                                title="Notificaciones"
+                            >
+                                <i className="fa fa-bell text-lg"></i>
+                                <span
+                                    className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                            </button>
+
+                            {showNotifications && (
+                                <div
+                                    className="absolute right-0 mt-2 w-72 bg-white shadow-md rounded-md border border-gray-100 overflow-hidden animate-fade-in">
+                                    <div
+                                        className="px-4 py-2 border-b border-gray-100 text-sm font-semibold text-gray-700">
+                                        Notificaciones
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto text-sm">
+                                        <div className="p-3 text-gray-500 text-center text-xs">
+                                            No hay notificaciones nuevas
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Perfil */}
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                className="flex items-center gap-2 focus:outline-none"
+                                title="Perfil de usuario"
+                            >
+                                <LoadingContent loading={isNil(current)}>
+                                    <img
+                                        src={current?.info.image || "/default-avatar.png"}
+                                        alt="Foto de perfil"
+                                        className="w-9 h-9 rounded-full border-2 border-blue-500 object-cover"
+                                    />
+                                </LoadingContent>
+                            </button>
+
+                            {showProfileMenu && (
+                                <div
+                                    className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg border border-gray-100 overflow-hidden animate-fade-in">
+                                    <div className="flex items-center gap-3 p-3 border-b border-gray-100">
+                                        <img
+                                            src={current?.info.image || "/default-avatar.png"}
+                                            alt="Avatar"
+                                            className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-gray-800 text-sm">
+                                                {current?.info.firstname} {current?.info.lastname}
+                                            </span>
+                                            <span className="text-xs text-gray-500 truncate">
+                                                {current?.email ?? current?.username}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col text-sm text-gray-700">
+                                        <button
+                                            onClick={() => {
+                                                setShowChangePassword(true);
+                                                setShowProfileMenu(false);
+                                            }}
+                                            className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-left"
+                                        >
+                                            <i className="fa fa-key text-blue-500"></i>
+                                            <span>Cambiar contraseña</span>
+                                        </button>
+
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-left text-red-600 transition"
+                                        >
+                                            <i className="fa fa-sign-out"></i>
+                                            <span>Cerrar sesión</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </header>
+
+            {/* Modal de cambio de contraseña */}
+            <LeftModal
+                title="Cambiar contraseña"
+                isOpen={showChangePassword}
+                onClose={() => setShowChangePassword(false)}
+                className="w-[400px] h-full z-[9999]"
+            >
+                <ChangePasswordForm onSubmit={() => setShowChangePassword(false)}/>
+            </LeftModal>
         </>
     );
-}
+};

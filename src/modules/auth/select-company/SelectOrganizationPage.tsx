@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {UserOrganizationService} from "../../../services/user/UserOrganizationService";
+import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {toast} from "react-toastify";
 import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";

@@ -7,18 +7,22 @@ interface Props {
 
 const SidebarMenu = ({collapsed}: Props) => {
     const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [activeMenu] = useState<string | null>(null);
+
     const toggleMenu = (menu: string) => {
         setOpenMenu(openMenu === menu ? null : menu);
     };
 
     return (
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-1">
+            {/* Dashboard Link */}
             <SidebarLink to="/home" icon="fa-house" label="Dashboard" collapsed={collapsed}/>
 
+            {/* Perfil Desglosable */}
             <button
                 onClick={() => toggleMenu("profile")}
                 className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-all duration-200 ${
-                    openMenu === "profile"
+                    openMenu === "profile" || activeMenu === "profile"
                         ? "bg-blue-600 text-white"
                         : "hover:bg-blue-50 text-gray-700"
                 }`}
@@ -46,6 +50,44 @@ const SidebarMenu = ({collapsed}: Props) => {
                     </li>
                 </ul>
             )}
+
+            {/* Estudiantes Desglosable */}
+            <button
+                onClick={() => toggleMenu("students")}
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                    openMenu === "students" || activeMenu === "students"
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-blue-50 text-gray-700"
+                }`}
+            >
+                <div className="flex items-center gap-3">
+                    <i className="fas fa-users text-sm"></i>
+                    {!collapsed && <span className="text-sm font-medium">Estudiantes</span>}
+                </div>
+                {!collapsed && (
+                    <i
+                        className={`fas text-xs transition-transform ${
+                            openMenu === "students" ? "fa-chevron-up" : "fa-chevron-down"
+                        }`}
+                    ></i>
+                )}
+            </button>
+
+            {!collapsed && openMenu === "students" && (
+                <ul className="ml-10 mt-1 space-y-1 text-sm text-gray-600">
+                    <li>
+                        <SidebarLink to="/students/list" label="Listado" sub/>
+                    </li>
+                    <li>
+                        <SidebarLink to="/students/inscriptions" label="Inscripciones" sub/>
+                    </li>
+                    <li>
+                        <SidebarLink to="/students/graduated" label="Graduados" sub/>
+                    </li>
+                </ul>
+            )}
+
+            {/* Otras secciones */}
             <SidebarLink to="/sales" icon="fa-dollar-sign" label="Ventas" collapsed={collapsed}/>
         </nav>
     );
