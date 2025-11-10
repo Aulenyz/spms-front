@@ -4,11 +4,11 @@ import {Link} from "react-router-dom";
 import {StudentService} from "../../services/student/StudentService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Student, StudentStatus} from "../../domain/student/Student.ts";
-import {StudentBreadcrumb} from "../../components/io/output/StudentBreadcrumb.tsx";
-import {StudentFilter} from "../../components/io/output/StudentFilter.tsx";
 import {StudentGenderPill} from "../../components/io/output/pill/StudentGenderPill.tsx";
 import {StudentStatusPill} from "../../components/io/output/pill/StudentStatusPill.tsx";
 import {Pager} from "../../components/io/input/Pager.tsx";
+import {StudentBreadcrumb} from "../breadcrumb/StudentBreadcrumb.tsx";
+import {StudentFilter} from "../../domain/filters/student/StudentFilter.tsx";
 
 const studentService: StudentService = StudentService.instance;
 
@@ -33,8 +33,8 @@ export const ListStudentPage = () => {
     };
 
     return (
-        <div className="px-0 pt-2">
-            <div className="mb-2 pl-3">
+        <div className="pt-6 pl-9 pr-5">
+            <div>
                 <StudentBreadcrumb/>
             </div>
 
@@ -71,14 +71,11 @@ export const ListStudentPage = () => {
                             <td className="px-6 py-3">
                                 <StudentGenderPill gender={student.gender}/>
                             </td>
-                            <td className="px-3 py-3 flex items-center gap-2">
+                            <td className="px-6 py-3">
                                 <StudentStatusPill status={student.status}/>
                             </td>
                             <td className="px-3 py-3 text-right">
-                                <Link
-                                    to="#"
-                                    className="font-medium text-blue-600 hover:underline whitespace-nowrap"
-                                >
+                                <Link to="#" className="font-medium text-blue-600 hover:underline whitespace-nowrap">
                                     Detalles
                                     <i className="fa fa-chevron-right text-2xs ms-1"/>
                                 </Link>
@@ -88,7 +85,7 @@ export const ListStudentPage = () => {
                     </tbody>
                 </table>
 
-                <div className="px-4 py-3">
+                <div>
                     <Pager onChange={handlePageChange} page={students}/>
                 </div>
             </div>

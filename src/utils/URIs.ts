@@ -12,8 +12,12 @@ export const joinURLParts = (baseURL: string, ...parts: string[]): string => {
 export const getURI = (baseURL?: string, params?: KeyValue): string => {
     const queryParams = JSON.parse(JSON.stringify(omitBy(params, predicate)));
     const query: string = new URLSearchParams(queryParams).toString();
-    return `${baseURL}?${query}`
-}
+    if (query) {
+        return baseURL?.includes('?') ? `${baseURL}&${query}` : `${baseURL}?${query}`;
+    }
+    return baseURL || '';
+};
+
 
 export const getParams = <T, >(object: T) => {
     return JSON.parse(JSON.stringify(omitBy(object as object, predicate)))

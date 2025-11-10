@@ -1,8 +1,8 @@
-import {UseForm} from "../../../domain/types/steoreotype.ts";
 import {useForm} from "react-hook-form";
 import {useEffect} from "react";
-import {Select, SelectOption} from "./Select.tsx";
-import {StudentStatus} from "../../../domain/student/Student.ts";
+import {StudentStatus} from "../../student/Student.ts";
+import {Select, SelectOption} from "../../../components/io/output/Select.tsx";
+import {UseForm} from "../../types/steoreotype.ts";
 
 const placeholders: Record<string, string> = {
     firstname: 'Ingrese el nombre',

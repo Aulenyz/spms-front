@@ -19,7 +19,6 @@ const SidebarLink = ({to, icon, label, collapsed, sub}: Props) => {
             className={clsx(
                 "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200",
                 {
-                    // Estilo activo para los elementos principales
                     "bg-blue-600 text-white shadow-md": active && !sub, // Activo para enlaces principales
                     "hover:bg-blue-50 text-gray-700": !active && !sub, // Hover para enlaces principales no activos
 

@@ -30,13 +30,13 @@ export const MainLayout = () => {
             >
                 <MainNavbar/>
 
-                {/* Contenido */}
+                {/* Contenido principal */}
                 <main
                     id="content"
                     role="content"
-                    className="flex-1 overflow-y-auto bg-white px-6 py-4 md:px-8 md:py-5 rounded-tl-2xl shadow-inner"
+                    className="flex-1 overflow-y-auto bg-white rounded-tl-2xl shadow-inner"
                 >
-                    <div className="max-w-[95%] mx-auto">
+                    <div className="max-w-[96%] mx-auto">
                         <Outlet/>
                     </div>
                 </main>
