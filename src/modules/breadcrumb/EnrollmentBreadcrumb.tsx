@@ -4,6 +4,7 @@ import {EnrollmentStatus, EnrollmentStatusColor, EnrollmentStatusLabel} from "..
 import {State} from "../../domain/types/steoreotype.ts";
 import {PeriodService} from "../../services/period/PeriodService.ts";
 import {Period} from "../../domain/model/organization/Organization.tsx";
+import {ErrorMessage} from "../../components/io/output/ErrorMessage.tsx";
 
 const enrollmentService: EnrollmentService = EnrollmentService.instance;
 const periodService: PeriodService = PeriodService.instance;
@@ -11,18 +12,21 @@ const periodService: PeriodService = PeriodService.instance;
 export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: number }) => {
     const [status, setStatus]: State<Record<EnrollmentStatus, number>> = useState<Record<EnrollmentStatus, number>>({} as Record<EnrollmentStatus, number>);
     const [currentPeriod, setCurrentPeriod] = useState<Period | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         periodService.current().then((period) => {
             setCurrentPeriod(period);
         }).catch((error) => {
+            setError("Error al obtener el periodo actual");
             console.error("Error al obtener el periodo actual", error);
         });
     }, []);
     useEffect(() => {
-        const periodId = selectedPeriodId || currentPeriod?.id;  // Si hay un periodo seleccionado, lo usamos; de lo contrario, usamos el periodo actual
+        const periodId = selectedPeriodId || currentPeriod?.id;
         if (periodId) {
             enrollmentService.getTotalByStatus(periodId).then(setStatus).catch((error) => {
+                setError("Error al obtener los totales por estado");
                 console.error("Error al obtener los totales por estado", error);
             });
         }
@@ -63,6 +67,7 @@ export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: nu
                     Registrar
                 </a>
             </div>
+            {error && <ErrorMessage message={error}/>}
         </div>
     );
 };

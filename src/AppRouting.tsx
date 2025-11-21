@@ -8,6 +8,7 @@ import {Error403} from "./modules/errors/components/Error403.tsx";
 import {MainLayout} from "./modules/shared/main/MainLayout.tsx";
 import {StudentRouting} from "./modules/student/StudentRouting.tsx";
 import {EnrollmentRouting} from "./modules/student/enrollment/EnrollmentRouting.tsx";
+import {PaymentRouting} from "./modules/payment/PaymentRouting.tsx";
 
 export const AppRouting = () => {
     return (
@@ -16,6 +17,7 @@ export const AppRouting = () => {
                 <Route path="/*" element={<HomeRouting/>}/>\
                 <Route path="students/*" element={<StudentRouting/>}/>
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
+                <Route path="payments/*" element={<PaymentRouting/>}/>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

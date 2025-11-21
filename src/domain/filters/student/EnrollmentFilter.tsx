@@ -1,37 +1,26 @@
 import {Controller, useForm} from "react-hook-form";
 import {useEffect} from "react";
-import {Select, SelectOption} from "../../../components/io/output/Select.tsx";
+import {Select} from "../../../components/io/output/Select.tsx";
 import {PlainValue} from "../../types/steoreotype.ts";
 import {PeriodSelect} from "../../../components/io/input/business/PeriodSelect.tsx";
 
-// Opciones para elegir el filtro (Tipo o Periodo)
-const searchByOptions: Array<SelectOption> = [
-    {
-        description: "Tipo",
-        value: "status", // Aquí cambiamos "type" por "status"
-    },
-    {
-        description: "Periodo",
-        value: "period",
-    }
-];
-
-// Mapeo de claves del backend
 const backendKeys: Record<string, string> = {
-    period: "periodId",  // El filtro por periodo se mapea con periodId
-    status: "status",    // El filtro por status se mapea con status
+    period: "periodId",
+    status: "status",
 };
 
 export type EnrollmentFilterFormValues = {
     searchBy: string;
     criteria: string | number;
-    status?: string;  // Añadimos status como un campo opcional
+    periodId?: string | number;
+    status?: string;
 };
 
-export const EnrollmentFilter = (props: { onFilter: (value: Record<string, PlainValue>) => void }) => {
+export const EnrollmentFilter = (props: { onFilter: (value: Record<string, PlainValue>) => void, selectedPeriodId: string | number }) => {
     const {control, handleSubmit, watch, setValue} = useForm<EnrollmentFilterFormValues>({
         defaultValues: {
-            searchBy: "status",  // Cambiamos el valor predeterminado a "status"
+            searchBy: "status",
+            periodId: props.selectedPeriodId || "",
             criteria: "",
         },
         reValidateMode: "onChange",
@@ -39,48 +28,59 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
 
     const searchBy = watch("searchBy");
 
-    /** 🔹 Cada vez que cambia el tipo de búsqueda, limpiamos el campo criterio */
     useEffect(() => {
         setValue("criteria", "");
     }, [searchBy, setValue]);
 
-    /** 🔹 Al enviar el filtro */
-    const handleFilter = ({searchBy, criteria, status}: EnrollmentFilterFormValues) => {
+    useEffect(() => {
+        setValue("periodId", props.selectedPeriodId);
+    }, [props.selectedPeriodId, setValue]);
+
+    const handleFilter = ({searchBy, criteria, periodId, status}: EnrollmentFilterFormValues) => {
         const backendKey = backendKeys[searchBy];
         const filters: Record<string, PlainValue> = {};
+
+        if (periodId) {
+            filters["periodId"] = periodId;
+        }
         if (backendKey && criteria) {
-            filters[backendKey] = criteria;  // Asigna el valor correspondiente a la clave del backend
+            filters[backendKey] = criteria;
         }
         if (status) {
-            filters["status"] = status;  // Si el filtro es por status, se agrega a los filtros
+            filters["status"] = status;
         }
-        props.onFilter(filters);  // Pasamos los filtros al componente padre
+        props.onFilter(filters);
     };
 
     return (
         <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap gap-2.5 items-center">
-            {/* Select para elegir el tipo de filtro (por tipo o por periodo) */}
-            <Controller
-                name="searchBy"
-                control={control}
-                render={({field}) => (
-                    <Select
-                        {...field}
-                        className="input input-sm w-44"
-                        options={searchByOptions}
-                    />
-                )}
-            />
+            {/* Filtro de Periodo */}
+            <div className="flex flex-col items-start gap-2">
+                <Controller
+                    name="periodId"
+                    control={control}
+                    render={({field}) => (
+                        <PeriodSelect
+                            id={props.selectedPeriodId}
+                            text="Selecciona el Periodo"
+                            {...field}
+                            required
+                            className="w-48"
+                            control={control}
+                        />
+                    )}
+                />
+            </div>
 
             {/* Filtro por estado */}
             {searchBy === "status" && (
                 <Controller
-                    name="status"  // Cambié "type" a "status" porque es el filtro que queremos
+                    name="status"
                     control={control}
                     render={({field}) => (
                         <Select
                             {...field}
-                            className="input input-sm w-48"
+                            className="select-sm w-32 select bg-transparent"
                             options={[
                                 {description: "Inscrito", value: "ENROLLED"},
                                 {description: "Pendiente", value: "PENDING"},
@@ -91,24 +91,7 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
                 />
             )}
 
-            {/* Filtro por periodo */}
-            {searchBy === "period" && (
-                <Controller
-                    name="criteria"
-                    control={control}
-                    render={({field}) => (
-                        <PeriodSelect
-                            {...field}
-                            control={control}
-                            required
-                            className="w-48"
-                        />
-                    )}
-                />
-            )}
-
-            {/* Botón para aplicar el filtro */}
-            <button type="submit" className="btn btn-sm btn-outline btn-primary h-10">
+            <button type="submit" className="btn btn-sm btn-outline btn-primary">
                 <i className="fa fa-search mr-1"/>
                 Filtrar
             </button>

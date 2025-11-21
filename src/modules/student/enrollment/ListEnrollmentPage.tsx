@@ -1,7 +1,6 @@
 import {useEffect, useState} from "react";
+import {PeriodService} from "../../../services/period/PeriodService.ts";
 import {EnrollmentService} from "../../../services/student/enrollment/EnrollmentService.ts";
-import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {Enrollment, EnrollmentStatus} from "../../../domain/student/Enrollment.ts";
 import {toast} from "react-toastify";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {Link} from "react-router-dom";
@@ -10,15 +9,23 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {EnrollmentBreadcrumb} from "../../breadcrumb/EnrollmentBreadcrumb.tsx";
 import {EnrollmentFilter} from "../../../domain/filters/student/EnrollmentFilter.tsx";
 import {AlertTable} from "../../../components/io/AlertTable.tsx";
-import {PeriodService} from "../../../services/period/PeriodService.ts";
+import {Page, Pagination} from "../../../domain/filters/Page.ts";
+import {Enrollment, EnrollmentStatus} from "../../../domain/student/Enrollment.ts";
 
-const enrollmentService: EnrollmentService = EnrollmentService.instance;
 const periodService: PeriodService = PeriodService.instance;
+const enrollmentService: EnrollmentService = EnrollmentService.instance;
 
 export const ListEnrollmentPage = () => {
     const [enrollments, setEnrollments] = useState<Page<Enrollment>>(Pagination.empty<Enrollment>());
     const [pagination, setPagination] = useState<Pagination>(Pagination.first);
-    const [filters, setFilters] = useState<{ active: boolean; periodId?: number; periodName?: string; status: EnrollmentStatus }>({active: true, status: EnrollmentStatus.ENROLLED,});
+    const [filters, setFilters] = useState<{
+        active: boolean;
+        periodId?: number;
+        periodName?: string;
+        status: EnrollmentStatus
+    }>({
+        active: true, status: EnrollmentStatus.ENROLLED,
+    });
     const [isPageLoading, setIsPageLoading] = useState(false);
     const [isPeriodLoaded, setIsPeriodLoaded] = useState(false);
 
@@ -33,7 +40,7 @@ export const ListEnrollmentPage = () => {
                     }));
                 }
             })
-            .catch(() => toast.error("No se pudo obtener el período activo."))
+            .catch(() => toast.error("No se pudo obtener el período activo"))
             .finally(() => setIsPeriodLoaded(true));
     }, []);
 
@@ -82,10 +89,9 @@ export const ListEnrollmentPage = () => {
                 <div className="card-header flex-wrap gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3 rounded-t-md">
                     <h3 className="card-title font-medium text-sm inline-flex items-center">
                         <span className="mr-2">Mostrando Inscripciones:</span>
-                        <EnrollmentStatusPill
-                            status={filters.status as EnrollmentStatus}/>
+                        <EnrollmentStatusPill status={filters.status as EnrollmentStatus}/>
                     </h3>
-                    <EnrollmentFilter onFilter={handleFilterChange}/>
+                    <EnrollmentFilter onFilter={handleFilterChange} selectedPeriodId={filters.periodId || ""}/>
                 </div>
 
                 <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -102,34 +108,23 @@ export const ListEnrollmentPage = () => {
                     </thead>
 
                     {!isPageLoading && enrollments?.content.length === 0 ? (
-                        <AlertTable
-                            message={'No se encontraron inscripciones con los filtros seleccionados'}
-                            insideTable={true}
-                        />
+                        <AlertTable message={'No se encontraron inscripciones con los filtros seleccionados'}
+                                    insideTable={true}/>
                     ) : !isPageLoading && (
                         <tbody>
                         {enrollments.content.map((enrollment: Enrollment, index: number) => (
                             <tr key={index}
                                 className="bg-white border-b last:border-b-0 hover:bg-gray-50 transition align-middle">
-                                <td className="px-6 py-3">
-                                    {enrollment.date ? new Date(enrollment.date).toLocaleDateString() : "---"}
-                                </td>
+                                <td className="px-6 py-3">{enrollment.date ? new Date(enrollment.date).toLocaleDateString() : "---"}</td>
                                 <td className="px-6 py-3">{enrollment.student.document}</td>
                                 <td className="px-6 py-3">{enrollment.student.firstname}</td>
                                 <td className="px-6 py-3">{enrollment.student.lastname}</td>
-                                <td className="px-6 py-3">
-                                    {enrollment.course?.grade}{" "}
-                                    {enrollment.course?.division && `(${enrollment.course.division})`}
-                                </td>
-                                <td className="px-6 py-3">
-                                    <EnrollmentStatusPill status={enrollment.status}/>
-                                </td>
+                                <td className="px-6 py-3">{enrollment.course?.grade}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
+                                <td className="px-6 py-3"><EnrollmentStatusPill status={enrollment.status}/></td>
                                 <td className="px-3 py-3 text-right">
-                                    <Link
-                                        to={`/enrollments/${enrollment.id}`}
-                                        className="font-medium text-blue-600 hover:underline whitespace-nowrap">
-                                        Detalles
-                                        <i className="fa fa-chevron-right text-2xs ms-1"/>
+                                    <Link to={`/enrollments/${enrollment.id}`}
+                                          className="font-medium text-blue-600 hover:underline whitespace-nowrap">
+                                        Detalles <i className="fa fa-chevron-right text-2xs ms-1"/>
                                     </Link>
                                 </td>
                             </tr>

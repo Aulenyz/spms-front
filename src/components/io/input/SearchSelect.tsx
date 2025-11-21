@@ -1,19 +1,22 @@
 import {ChangeEvent, forwardRef, KeyboardEvent, RefObject, useEffect, useRef, useState} from "react";
-import {nonNil, Optional, PlainValue, SelectOption, State} from "../../../domain/types/steoreotype.ts";
 import clsx from "clsx";
+import {SelectOption} from "../output/Select.tsx";
+import {nonNil, Optional, PlainValue, State} from "../../../domain/types/steoreotype.ts";
 import {titleCase} from "../../../utils/texts.ts";
 
 interface SearchableSelectProps {
+    text: string;
     hasError: boolean;
     value?: PlainValue;
     options: SelectOption[];
     onSearch?: (criteria: string) => void;
     onSelect: (value: Optional<PlainValue>) => void;
+    className?: string;
 }
 
 export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
     (props: SearchableSelectProps, inputRef) => {
-        const {options, onSelect, onSearch, value, hasError} = props;
+        const {options, onSelect, onSearch, value, hasError, className, text} = props;
         const [isFirst, setIsFirst]: State<boolean> = useState(true);
         const [isOpen, setIsOpen]: State<boolean> = useState(false);
         const [searchTerm, setSearchTerm]: State<string> = useState('');
@@ -82,15 +85,8 @@ export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
         };
 
         return (
-            <div className="relative w-full" ref={dropdownRef}>
-                <div className={clsx(
-                    "flex items-center w-full border rounded-lg input bg-transparent text-md",
-                    {
-                        'border-red-500': hasError,
-                        'hover:border-red-500': hasError,
-                        'focus-within:border-blue-500': !hasError,
-                    }
-                )}>
+            <div className={clsx("relative w-full", className)} ref={dropdownRef}>
+                <div>
                     <input
                         ref={inputRef}
                         type="text"
@@ -98,41 +94,38 @@ export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
                         onChange={handleSearch}
                         onKeyDown={handleKeyDown}
                         onFocus={() => setIsOpen(true)}
-                        className={clsx("w-full py-2 px-3 focus:outline-none rounded-lg", {
-                            'border-red-500': hasError
+                        className={clsx("w-full py-2 px-3 focus:outline-none rounded-lg select-sm bg-transparent", {
+                            'border-red-500': hasError,
+                            'border-gray-300': !hasError
                         })}
-                        placeholder="Seleccione..."
+                        placeholder={text}
                     />
-                    <i className="fa fa-angle-down text-gray-400 px-2"/>
                 </div>
 
                 {/* Dropdown */}
                 {isOpen && (
-                    <ul
-                        className={clsx(
-                            "absolute left-0 w-full mt-1 z-50 bg-white border border-gray-300 rounded-lg shadow-lg",
-                            "max-h-60 sm:max-h-72 md:max-h-80 overflow-y-auto"
-                        )}
+                    <ul className={clsx("absolute left-0 w-full mt-1 z-50 bg-white border border-gray-300 rounded-lg shadow-lg",
+                        "max-h-60 sm:max-h-72 md:max-h-80 overflow-y-auto"
+                    )}
                         style={{
-                            maxHeight: "min(50vh, 320px)" // Seguridad adicional para evitar overflow en pantallas muy pequeñas
+                            maxHeight: "min(50vh, 320px)"
                         }}
                     >
                         {options.length > 0 ? (
                             options.map((option, index) => (
-                                <li
-                                    key={String(option.value ?? option.description ?? index)}
+                                <li key={String(option.value ?? option.description ?? index)}
                                     onClick={() => handleOptionClick(option)}
-                                    className={clsx(
-                                        "px-4 py-2 cursor-pointer text-sm hover:bg-blue-100",
+                                    className={clsx("px-4 py-2 cursor-pointer text-sm hover:bg-blue-100",
                                         {"bg-blue-100": index === highlightedIndex}
-                                    )}
-                                >
+                                    )}>
                                     {titleCase(option.description)}
                                 </li>
                             ))
-                        ) : (<li className="px-4 py-2 text-gray-500 text-sm">
-                            No hay opciones disponibles
-                        </li>)}
+                        ) : (
+                            <li className="px-4 py-2 text-gray-500 text-sm">
+                                No hay opciones disponibles
+                            </li>
+                        )}
                     </ul>
                 )}
             </div>
