@@ -66,9 +66,12 @@ export const MainNavbar = () => {
                         >
                             <i className="fa fa-bars text-lg"></i>
                         </button>
-                        <h1 className="hidden sm:block text-[16px] font-semibold text-gray-700">
-                            Panel Principal
-                        </h1>
+                        <button
+                            onClick={() => navigate('/users')}
+                            className="hidden sm:block text-[16px] font-semibold text-gray-700 hover:text-blue-600 transition cursor-pointer"
+                        >
+                            Listado de Usuarios
+                        </button>
                     </div>
 
                     {/* ─── Derecha ───────────────────────────── */}
