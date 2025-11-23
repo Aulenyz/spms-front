@@ -119,7 +119,7 @@ export const ListEnrollmentPage = () => {
                                 <td className="px-6 py-3">{enrollment.student.document}</td>
                                 <td className="px-6 py-3">{enrollment.student.firstname}</td>
                                 <td className="px-6 py-3">{enrollment.student.lastname}</td>
-                                <td className="px-6 py-3">{enrollment.course?.grade}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
+                                <td className="px-6 py-3">{enrollment.course.specialization?.name}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
                                 <td className="px-6 py-3"><EnrollmentStatusPill status={enrollment.status}/></td>
                                 <td className="px-3 py-3 text-right">
                                     <Link to={`/enrollments/${enrollment.id}`}

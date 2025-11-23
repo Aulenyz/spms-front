@@ -16,6 +16,9 @@ const SidebarMenu = ({collapsed}: Props) => {
             <SidebarLink to="/enrollments/list" icon="fa-list" label="Listado de Inscripciones" collapsed={collapsed} />
             <SidebarLink to="/students/list" icon="fa-users" label="Listado de Estudiantes" collapsed={collapsed} />
 
+            <div className="text-xs font-semibold text-gray-500 uppercase mt-4">Gestion Académica</div>
+            <SidebarLink to="/specializations/list" icon="fa-book" label="Unidades Académicas" collapsed={collapsed} />
+
             {/* Ventas Section */}
             <div className="text-xs font-semibold text-gray-500 uppercase mt-4">Contabilidad</div>
             <SidebarLink to="/payments/list" icon="fa-dollar-sign" label="Listado de Ventas" collapsed={collapsed} />
