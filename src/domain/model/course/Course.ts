@@ -9,6 +9,7 @@ export interface Specialization extends BaseModel {
     name: string;
     description?: string;
     type: GradeType;
+    active: boolean;
 }
 
 export enum GradeType {
@@ -16,3 +17,10 @@ export enum GradeType {
     SECONDARY = "SECONDARY",
     TECHNICAL = "TECHNICAL",
 }
+
+export const GradeTypeLabel: Record<GradeType, string> = {
+    PRIMARY: "Primaria",
+    SECONDARY: "Secundaria",
+    TECHNICAL: "Técnico",
+};
+
