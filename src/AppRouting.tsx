@@ -15,7 +15,8 @@ export const AppRouting = () => {
     return (
         <Routes>
             <Route path="/" element={<MainLayout/>}>
-                <Route path="/*" element={<HomeRouting/>}/>\
+                <Route path="/*" element={<HomeRouting/>}/>
+                <Route path="/" element={<Navigate to="/home" replace/>}/>
                 <Route path="students/*" element={<StudentRouting/>}/>
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
