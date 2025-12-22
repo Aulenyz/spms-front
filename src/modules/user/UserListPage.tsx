@@ -1,36 +1,35 @@
 import {useEffect, useState} from "react";
-import {State} from "../../domain/types/steoreotype.ts";
+import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {UserService} from "../../services/user/UserService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
-import {User} from "../../domain/model/user/user.ts";
+import {User, UserStatus} from "../../domain/model/user/user.ts";
 import {Pager} from "../../components/io/input/Pager.tsx";
-import {toast} from "react-toastify";
 import {Link} from "react-router-dom";
 import {StudentGenderPill} from "../../components/io/output/pill/StudentGenderPill.tsx";
 import {UserStatusPill} from "../../components/io/output/pill/UserStatusPill.tsx";
 import {UserBreadcrumb} from "../breadcrumb/UserBreadcrumb.tsx";
+import {UserFilter} from "../../domain/filters/user/UserFilter.tsx";
 
 const userService: UserService = UserService.instance;
 
 export const UserListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
     const [users, setUsers]: State<Page<User>> = useState(Pagination.empty<User>());
-    const [loading, setLoading] = useState(false);
+    const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
+        status: "ACTIVE",
+    });
 
     useEffect(() => {
-        loadUsers();
-    }, [pagination]);
-
-    const loadUsers = () => {
-        setLoading(true);
-        userService.getAll({}, pagination)
-            .then(setUsers)
-            .catch(() => toast.error("Error cargando los usuarios"))
-            .finally(() => setLoading(false));
-    };
+        userService.getAll(filters, pagination).then(setUsers);
+    }, [pagination, filters]);
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
+    };
+
+    const handleUpdateFilter = (filters: KeyValueOf<string>) => {
+        setFilters({...filters});
+        handlePageChange(0);
     };
 
     return (
@@ -43,12 +42,11 @@ export const UserListPage = () => {
                 <div className="card-header flex-wrap gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3 rounded-t-md">
                     <h3 className="card-title font-medium text-sm inline-flex items-center">
                         <span className="mr-2">Mostrando Usuarios:</span>
-                        {/*<StudentStatusPill status={filters.status as StudentStatus}/>*/}
+                        <UserStatusPill status={filters.status as UserStatus}/>
                     </h3>
-                    {/*<StudentFilter onFilter={handleUpdateFilter}/>*/}
+                    <UserFilter onFilter={handleUpdateFilter}/>
                 </div>
 
-                {/* 🔹 Tabla (idéntico estilo que la de empleados) */}
                 <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>

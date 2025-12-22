@@ -8,7 +8,6 @@ const paymentService: PaymentService = PaymentService.instance;
 export const PaymentBreadcrumb = ({ selectedPeriodId }: { selectedPeriodId?: number }) => {
     const [status, setStatus]: State<Record<PaymentStatus, number>> = useState<Record<PaymentStatus, number>>({} as Record<PaymentStatus, number>);
 
-    // Este useEffect se ejecuta siempre que `selectedPeriodId` cambie
     useEffect(() => {
         if (selectedPeriodId) {
             paymentService.getTotalByStatus(selectedPeriodId).then(setStatus).catch((error) => {
