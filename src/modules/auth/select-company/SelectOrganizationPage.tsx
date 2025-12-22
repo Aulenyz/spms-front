@@ -38,15 +38,15 @@ export const SelectOrganizationPage = () => {
                 setIsLoading(false);
             }
         };
-        loadOrganizations();
+        loadOrganizations().then(r => console.log(r));
     }, []);
 
     const handleSelect = (org: UserOrganizationDTO) => {
         if (!org?.organization) return;
-        const selectedRnc = org.organization.document;
-        localStorage.setItem(StorageItem.CompanyRNC, selectedRnc);
+        const selectedRnc = org.id;
+        localStorage.setItem(StorageItem.CompanyRNC, String(selectedRnc));
         const verificado = localStorage.getItem(StorageItem.CompanyRNC);
-        if (verificado === selectedRnc) {
+        if (verificado === String(selectedRnc)) {
             navigate("/", {replace: true});
         } else {
             toast.error("Error al guardar el RNC. Intenta nuevamente.");
@@ -116,9 +116,6 @@ export const SelectOrganizationPage = () => {
                         <h2 className="text-lg font-semibold text-gray-800 text-center">
                             {org.organization.name}
                         </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {org.organization.document}
-                        </p>
                         <div className="mt-3 flex items-center gap-2 text-green-600 font-medium">
                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                             Activa

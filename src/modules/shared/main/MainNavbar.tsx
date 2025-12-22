@@ -27,7 +27,6 @@ export const MainNavbar = () => {
         }
     }, [notification]);
 
-    // 🔹 Cierra menú al hacer clic fuera o presionar Esc
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
@@ -58,7 +57,6 @@ export const MainNavbar = () => {
         <>
             <header className="sticky top-0 z-20 w-full bg-white shadow-sm border-b border-gray-100">
                 <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8">
-                    {/* ─── Izquierda ───────────────────────────── */}
                     <div className="flex items-center gap-3">
                         <button
                             className="lg:hidden p-2 rounded-md hover:bg-gray-100 text-gray-600"
@@ -70,11 +68,11 @@ export const MainNavbar = () => {
                             onClick={() => navigate('/users')}
                             className="hidden sm:block text-[16px] font-semibold text-gray-700 hover:text-blue-600 transition cursor-pointer"
                         >
-                            Listado de Usuarios
+                            <i className="fa fa-users text-blue-600 mr-2"></i>
+                            Gestion de Usuarios
                         </button>
                     </div>
 
-                    {/* ─── Derecha ───────────────────────────── */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* Buscar */}
                         <button
@@ -84,7 +82,6 @@ export const MainNavbar = () => {
                             <i className="fa fa-search text-lg"></i>
                         </button>
 
-                        {/* Notificaciones */}
                         <div className="relative">
                             <button
                                 ref={bellRef}
@@ -174,13 +171,10 @@ export const MainNavbar = () => {
                     </div>
                 </div>
             </header>
-
-            {/* Modal de cambio de contraseña */}
-            <LeftModal
-                title="Cambiar contraseña"
-                isOpen={showChangePassword}
-                onClose={() => setShowChangePassword(false)}
-                className="w-[400px] h-full z-[9999]"
+            <LeftModal title="Cambiar contraseña"
+                       isOpen={showChangePassword}
+                       onClose={() => setShowChangePassword(false)}
+                       className="w-[400px] h-full z-[9999]"
             >
                 <ChangePasswordForm onSubmit={() => setShowChangePassword(false)}/>
             </LeftModal>

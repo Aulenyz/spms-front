@@ -12,6 +12,24 @@ export enum UserStatus {
     CANCELLED = 'CANCELLED',
 }
 
+export const colorMap: Record<UserStatus, string> = {
+    [UserStatus.ACTIVE]: "bg-green-500",
+    [UserStatus.INACTIVE]: "bg-gray-400",
+    [UserStatus.CANCELLED]: "bg-red-500",
+};
+
+export const mapColor: Record<UserStatus, string> = {
+    [UserStatus.ACTIVE]: "bg-green-100 text-green-800 border-green-300",
+    [UserStatus.INACTIVE]: "bg-gray-100 text-gray-700 border-gray-300",
+    [UserStatus.CANCELLED]: "bg-red-100 text-red-800 border-red-300",
+};
+
+export const statusOrder: UserStatus[] = [
+    UserStatus.ACTIVE,
+    UserStatus.INACTIVE,
+    UserStatus.CANCELLED
+];
+
 export const UserStatusLabel: Record<keyof typeof UserStatus, string> = {
     INACTIVE: 'Inactivo',
     CANCELLED: 'Cancelado',

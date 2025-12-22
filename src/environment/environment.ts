@@ -3,5 +3,5 @@ export type EnvironmentProperty = {
 }
 
 export const environment: EnvironmentProperty = {
-    apiURL: 'https://spms-api.dev.resqpet.online/api/v1',
+    apiURL: 'http://localhost:8031/api/v1',
 }

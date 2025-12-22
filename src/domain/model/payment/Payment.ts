@@ -3,7 +3,6 @@ import {User} from "../user/user.ts";
 import {Guardian} from "../../student/Guardian.ts";
 import {Enrollment} from "../../student/Enrollment.ts";
 import {Period} from "../organization/Organization.tsx";
-import {SelectOption} from "../../types/steoreotype.ts";
 
 export interface Payment extends BaseModel {
     identifier: string;
@@ -15,12 +14,6 @@ export interface Payment extends BaseModel {
     enrollment: Enrollment;
     period: Period;
 }
-
-export const PaymentOptionMapper = ({id, identifier}: Payment): SelectOption => ({
-    value: id,
-    description: identifier
-});
-
 export enum PaymentMethod {
     CASH = 'CASH',
     TRANSFER = 'TRANSFER',
