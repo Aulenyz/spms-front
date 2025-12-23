@@ -9,7 +9,11 @@ import {MainLayout} from "./modules/shared/main/MainLayout.tsx";
 import {StudentRouting} from "./modules/student/StudentRouting.tsx";
 import {EnrollmentRouting} from "./modules/student/enrollment/EnrollmentRouting.tsx";
 import {PaymentRouting} from "./modules/payment/PaymentRouting.tsx";
-import { SpecializationRouting } from "./modules/specialization/SpecializationRouting.tsx";
+import {SpecializationRouting} from "./modules/specialization/SpecializationRouting.tsx";
+import {UserListPage} from "./modules/user/UserListPage.tsx";
+import {UserOptionsPage} from "./modules/user/tabs/UserOptionsPage.tsx";
+import {RoleListPage} from "./modules/user/role/RoleListPage.tsx";
+import {AuthorityListPage} from "./modules/user/authority/AuthorityListPage.tsx";
 
 export const AppRouting = () => {
     return (
@@ -21,6 +25,11 @@ export const AppRouting = () => {
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
+                <Route path="/users" element={<UserOptionsPage/>}>
+                    <Route index element={<UserListPage/>}/>
+                    <Route path="roles" element={<RoleListPage/>}/>
+                    <Route path="authorities" element={<AuthorityListPage/>}/>
+                </Route>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

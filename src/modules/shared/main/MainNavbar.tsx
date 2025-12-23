@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router-dom";
+import {NavLink, useNavigate, useSearchParams} from "react-router-dom";
 import {isNil} from "lodash";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
@@ -29,10 +29,7 @@ export const MainNavbar = () => {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node)
-            ) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowProfileMenu(false);
             }
         };
@@ -64,31 +61,34 @@ export const MainNavbar = () => {
                         >
                             <i className="fa fa-bars text-lg"></i>
                         </button>
-                        <button
-                            onClick={() => navigate('/users')}
-                            className="hidden sm:block text-[16px] font-semibold text-gray-700 hover:text-blue-600 transition cursor-pointer"
-                        >
-                            <i className="fa fa-users text-blue-600 mr-2"></i>
-                            Gestion de Usuarios
-                        </button>
+                        <NavLink to="/users"
+                                 className={({isActive}) => `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                                     isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
+                            <i className="fa fa-users text-lg"/>
+                            <span className="text-sm whitespace-nowrap">Gestión de Usuarios</span>
+                        </NavLink>
+
+                        <NavLink to="/organizations"
+                                 className={({isActive}) => `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                                     isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
+                            <i className="fa fa-building text-lg"/>
+                            <span className="text-sm whitespace-nowrap">Gestión Administrativa</span>
+                        </NavLink>
                     </div>
+
 
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* Buscar */}
                         <button
                             className="p-2 rounded-full hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
-                            title="Buscar"
-                        >
+                            title="Buscar">
                             <i className="fa fa-search text-lg"></i>
                         </button>
 
                         <div className="relative">
-                            <button
-                                ref={bellRef}
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 rounded-full hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
-                                title="Notificaciones"
-                            >
+                            <button ref={bellRef} onClick={() => setShowNotifications(!showNotifications)}
+                                    className="relative p-2 rounded-full hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                                    title="Notificaciones">
                                 <i className="fa fa-bell text-lg"></i>
                                 <span
                                     className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
@@ -112,17 +112,11 @@ export const MainNavbar = () => {
 
                         {/* Perfil */}
                         <div className="relative" ref={menuRef}>
-                            <button
-                                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center gap-2 focus:outline-none"
-                                title="Perfil de usuario"
-                            >
+                            <button onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                    className="flex items-center gap-2 focus:outline-none" title="Perfil de usuario">
                                 <LoadingContent loading={isNil(current)}>
-                                    <img
-                                        src={current?.info.image || "/default-avatar.png"}
-                                        alt="Foto de perfil"
-                                        className="w-9 h-9 rounded-full border-2 border-blue-500 object-cover"
-                                    />
+                                    <img src={current?.info.image || "/default-avatar.png"} alt="Foto de perfil"
+                                         className="w-9 h-9 rounded-full border-2 border-blue-500 object-cover"/>
                                 </LoadingContent>
                             </button>
 
@@ -130,11 +124,8 @@ export const MainNavbar = () => {
                                 <div
                                     className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg border border-gray-100 overflow-hidden animate-fade-in">
                                     <div className="flex items-center gap-3 p-3 border-b border-gray-100">
-                                        <img
-                                            src={current?.info.image || "/default-avatar.png"}
-                                            alt="Avatar"
-                                            className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover"
-                                        />
+                                        <img src={current?.info.image || "/default-avatar.png"} alt="Avatar"
+                                             className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover"/>
                                         <div className="flex flex-col">
                                             <span className="font-medium text-gray-800 text-sm">
                                                 {current?.info.firstname} {current?.info.lastname}
@@ -171,11 +162,8 @@ export const MainNavbar = () => {
                     </div>
                 </div>
             </header>
-            <LeftModal title="Cambiar contraseña"
-                       isOpen={showChangePassword}
-                       onClose={() => setShowChangePassword(false)}
-                       className="w-[400px] h-full z-[9999]"
-            >
+            <LeftModal title="Cambiar contraseña" isOpen={showChangePassword}
+                       onClose={() => setShowChangePassword(false)} className="w-[400px] h-full z-[9999]">
                 <ChangePasswordForm onSubmit={() => setShowChangePassword(false)}/>
             </LeftModal>
         </>

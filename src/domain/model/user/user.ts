@@ -76,6 +76,13 @@ export interface UserInfo extends BaseModel {
 export interface UserRole extends BaseModel {
     name: string;
     description: string;
+    countAuthorities: number;
+}
+
+export interface UserAuthority extends BaseModel {
+    key: number;
+    name: string;
+    description: string;
 }
 
 export const UserOptionMapper = ({id, info}: User): SelectOption => ({value: id, description: info.name});

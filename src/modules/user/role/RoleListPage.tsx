@@ -1,25 +1,23 @@
 import {useEffect, useState} from "react";
-import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
-import {UserService} from "../../services/user/UserService.ts";
-import {Page, Pagination} from "../../domain/filters/Page.ts";
-import {User, UserStatus} from "../../domain/model/user/user.ts";
-import {Pager} from "../../components/io/input/Pager.tsx";
 import {Link} from "react-router-dom";
-import {StudentGenderPill} from "../../components/io/output/pill/StudentGenderPill.tsx";
-import {UserStatusPill} from "../../components/io/output/pill/UserStatusPill.tsx";
-import {UserFilter} from "../../domain/filters/user/UserFilter.tsx";
+import {RoleService} from "../../../services/user/RoleService.ts";
+import {UserRole} from "../../../domain/model/user/user.ts";
+import {Page, Pagination} from "../../../domain/filters/Page.ts";
+import {KeyValueOf, State} from "../../../domain/types/steoreotype.ts";
+import {Pager} from "../../../components/io/input/Pager.tsx";
+import {RoleFilter} from "../../../domain/filters/user/RoleFilter.tsx";
 
-const userService: UserService = UserService.instance;
+const roleService: RoleService = RoleService.instance;
 
-export const UserListPage = () => {
+export const RoleListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [users, setUsers]: State<Page<User>> = useState(Pagination.empty<User>());
+    const [roles, setRoles]: State<Page<UserRole>> = useState(Pagination.empty<UserRole>());
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
 
     useEffect(() => {
-        userService.getAll(filters, pagination).then(setUsers);
+        roleService.getAll(filters, pagination).then(setRoles);
     }, [pagination, filters]);
 
     const handlePageChange = (page: number) => {
@@ -37,25 +35,25 @@ export const UserListPage = () => {
                 <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                     <div className="flex flex-col justify-center gap-2">
                         <h1 className="text-xl font-medium leading-none text-gray-900">
-                            Listado de Usuarios
+                            Listado de Roles
                         </h1>
                     </div>
+
                     <div className="flex items-center gap-2.5">
                         <a className="btn btn-sm btn-primary" href="#">
-                            <i className="fa fa-user-plus me-1"/>
+                            <i className="fa fa-plus mr-2"/>
                             Agregar
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div className="card relative overflow-x-auto mb-6 border border-gray-200 rounded-md shadow-sm">
+            <div className="card relative overflow-x-auto mb-2 border border-gray-200 rounded-md shadow-sm">
                 <div className="card-header flex-wrap gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3 rounded-t-md">
                     <h3 className="card-title font-medium text-sm inline-flex items-center">
-                        <span className="mr-2">Mostrando Usuarios:</span>
-                        <UserStatusPill status={filters.status as UserStatus}/>
+                        <span className="mr-2">Cantidad de Roles: {roles.content.length}</span>
                     </h3>
-                    <UserFilter onFilter={handleUpdateFilter}/>
+                    <RoleFilter onFilter={handleUpdateFilter}/>
                 </div>
 
                 <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -63,15 +61,13 @@ export const UserListPage = () => {
                     <tr>
                         <th scope="col" className="px-6 py-3 w-[5%]"></th>
                         <th scope="col" className="px-6 py-3">Nombre</th>
-                        <th scope="col" className="px-6 py-3">Documento</th>
-                        <th scope="col" className="px-6 py-3">Rol</th>
-                        <th scope="col" className="px-6 py-3">Género</th>
-                        <th scope="col" className="px-6 py-3">Estatus</th>
+                        <th scope="col" className="px-6 py-3">Descripción</th>
+                        <th scope="col" className="px-6 py-3">Cantidad de Permisos</th>
                         <th scope="col" className="px-3 py-3 w-[5%]"></th>
                     </tr>
                     </thead>
                     <tbody>
-                    {users.content.map((user: User, index: number) => (
+                    {roles.content.map((role: UserRole, index: number) => (
                         <tr key={index}
                             className="bg-white border-b last:border-b-0 hover:bg-gray-50 transition">
                             <td>
@@ -79,15 +75,9 @@ export const UserListPage = () => {
                                     <i className="fa fa-edit text-2xs ms-1"/>
                                 </button>
                             </td>
-                            <td className="px-6 py-3">{user.info.firstname} {user.info.lastname}</td>
-                            <td className="px-6 py-3">{user.document}</td>
-                            <td className="px-6 py-3">{user.role.name.charAt(0).toUpperCase() + user.role.name.slice(1).toLowerCase()}</td>
-                            <td className="px-6 py-3">
-                                <StudentGenderPill gender={user.info.gender}/>
-                            </td>
-                            <td className="px-6 py-3">
-                                <UserStatusPill status={user.status}/>
-                            </td>
+                            <td className="px-6 py-3">{role.name}</td>
+                            <td className="px-6 py-3">{role.description}</td>
+                            <td className="px-6 py-3">{role.countAuthorities}</td>
                             <td className="px-3 py-3 text-right">
                                 <Link to="#" className="font-medium text-blue-600 hover:underline whitespace-nowrap">
                                     Detalles
@@ -100,7 +90,7 @@ export const UserListPage = () => {
                 </table>
 
                 <div>
-                    <Pager onChange={handlePageChange} page={users}/>
+                    <Pager onChange={handlePageChange} page={roles}/>
                 </div>
             </div>
         </div>
