@@ -68,9 +68,7 @@ export const MainNavbar = () => {
                             <span className="text-sm whitespace-nowrap">Gestión de Usuarios</span>
                         </NavLink>
 
-                        <NavLink to="/organizations"
-                                 className={({isActive}) => `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                                     isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
+                        <NavLink to="/courses/templates" className={({isActive}) => `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
                             <i className="fa fa-building text-lg"/>
                             <span className="text-sm whitespace-nowrap">Gestión Administrativa</span>
                         </NavLink>

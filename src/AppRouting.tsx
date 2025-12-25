@@ -14,6 +14,9 @@ import {UserListPage} from "./modules/user/UserListPage.tsx";
 import {UserOptionsPage} from "./modules/user/tabs/UserOptionsPage.tsx";
 import {RoleListPage} from "./modules/user/role/RoleListPage.tsx";
 import {AuthorityListPage} from "./modules/user/authority/AuthorityListPage.tsx";
+import {ListCourseTemplatePage} from "./modules/course/template/ListCourseTemplatePage.tsx";
+import {OrganizationOptionsPage} from "./modules/organization/OrganizationOptionsPage.tsx";
+import {SpecializationForm} from "./modules/specialization/create/SpecializationForm.tsx";
 
 export const AppRouting = () => {
     return (
@@ -25,8 +28,14 @@ export const AppRouting = () => {
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
+                <Route path="specializations/create" element={<SpecializationForm/>}/>
                 <Route path="/users" element={<UserOptionsPage/>}>
                     <Route index element={<UserListPage/>}/>
+                    <Route path="roles" element={<RoleListPage/>}/>
+                    <Route path="authorities" element={<AuthorityListPage/>}/>
+                </Route>
+                <Route path="/courses/templates" element={<OrganizationOptionsPage/>}>
+                    <Route index element={<ListCourseTemplatePage/>}/>
                     <Route path="roles" element={<RoleListPage/>}/>
                     <Route path="authorities" element={<AuthorityListPage/>}/>
                 </Route>

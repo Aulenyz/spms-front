@@ -5,13 +5,15 @@ import {Pager} from "../../components/io/input/Pager.tsx";
 import {SpecializationService} from "../../services/specialization/SpecializationService.ts";
 import {SpecializationCard} from "./SpecializationCard.tsx";
 import {SpecializationFilter} from "../../domain/filters/specification/SpecializationFilter.tsx";
+import {LeftModal} from "../../components/shared/LeftModal.tsx";
+import {SpecializationForm} from "./create/SpecializationForm.tsx";
 
 const specializationService = SpecializationService.instance;
 
 export const ListSpecializationPage = () => {
 
     const [pagination, setPagination] = useState({...Pagination.first, size: 8});
-
+    const [showChangePassword, setShowChangePassword] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
         type: "",
@@ -37,12 +39,22 @@ export const ListSpecializationPage = () => {
 
     return (
         <div className="pt-6 pl-9 pr-5">
-
-            {/* Título principal */}
-            <div className="mb-6">
-                <h1 className="text-xl font-semibold text-gray-800">
-                    Unidades Académicas
-                </h1>
+            <div className="flex items-center gap-2.5 mb-6">
+                <div>
+                    <h1 className="text-xl font-semibold text-gray-800">
+                        Unidades Académicas
+                    </h1>
+                </div>
+                <button onClick={() => {
+                    setShowChangePassword(true);
+                }} className="btn btn-sm btn-primary ml-auto">
+                    <i className="fa fa-plus me-1"></i>
+                    <span>Agregar</span>
+                </button>
+                <LeftModal title="Agregar Especialidad" isOpen={showChangePassword}
+                           onClose={() => setShowChangePassword(false)} className="w-[400px] h-full z-[9999]">
+                    <SpecializationForm onSubmit={() => setShowChangePassword(false)}/>
+                </LeftModal>
             </div>
 
             <div className="card border border-gray-200 rounded-md shadow-sm">
@@ -57,8 +69,6 @@ export const ListSpecializationPage = () => {
                         <SpecializationFilter onFilter={handleFilters}/>
                     </div>
                 </div>
-
-
                 <div className="px-4 py-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {specializations.content.map((spec) => (
@@ -66,11 +76,9 @@ export const ListSpecializationPage = () => {
                         ))}
                     </div>
                 </div>
-
                 {/* Footer: paginación */}
                 <Pager onChange={handlePageChange} page={specializations}/>
             </div>
-
         </div>
     );
 };

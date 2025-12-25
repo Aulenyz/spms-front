@@ -5,11 +5,22 @@ export interface Course extends BaseModel {
     specialization: Specialization | null;
 }
 
+export interface CourseTemplate extends BaseModel {
+    count: number;
+    specialization: Specialization;
+}
+
 export interface Specialization extends BaseModel {
     name: string;
     description?: string;
     type: GradeType;
     active: boolean;
+}
+
+export interface SpecializationFormValues {
+    name: string;
+    description?: string;
+    type: GradeType;
 }
 
 export enum GradeType {
