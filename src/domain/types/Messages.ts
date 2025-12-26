@@ -9,4 +9,6 @@ export class Messages {
     static Unavailable: string = 'No disponible';
     static LengthOfN = (length: number) => `Este campo debe tener ${length} caracteres o menos.`;
     static InvalidGradeType: string = 'Debe ingresar un tipo de grado.';
+    static InvalidEmail: string = 'Debe ingresar un correo electronico valido.';
+    static InvalidKey: string = 'Debe contener solo letras mayúsculas y guión bajo (_)';
 }

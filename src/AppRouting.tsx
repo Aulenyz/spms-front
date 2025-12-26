@@ -17,6 +17,7 @@ import {AuthorityListPage} from "./modules/user/authority/AuthorityListPage.tsx"
 import {ListCourseTemplatePage} from "./modules/course/template/ListCourseTemplatePage.tsx";
 import {OrganizationOptionsPage} from "./modules/organization/OrganizationOptionsPage.tsx";
 import {SpecializationForm} from "./modules/specialization/create/SpecializationForm.tsx";
+import {UserInvitationListPage} from "./modules/user/invitation/UserInvitationListPage.tsx";
 
 export const AppRouting = () => {
     return (
@@ -33,6 +34,7 @@ export const AppRouting = () => {
                     <Route index element={<UserListPage/>}/>
                     <Route path="roles" element={<RoleListPage/>}/>
                     <Route path="authorities" element={<AuthorityListPage/>}/>
+                    <Route path="invitations" element={<UserInvitationListPage/>}/>
                 </Route>
                 <Route path="/courses/templates" element={<OrganizationOptionsPage/>}>
                     <Route index element={<ListCourseTemplatePage/>}/>

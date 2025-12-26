@@ -5,12 +5,15 @@ import {KeyValueOf, State} from "../../../domain/types/steoreotype.ts";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {RoleFilter} from "../../../domain/filters/user/RoleFilter.tsx";
 import {AuthorityService} from "../../../services/user/AuthorityService.ts";
+import {LeftModal} from "../../../components/shared/LeftModal.tsx";
+import {AuthorityForm} from "./create/AuthorityForm.tsx";
 
 const authorityService: AuthorityService = AuthorityService.instance;
 
 export const AuthorityListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
     const [authorities, setAuthorities]: State<Page<UserAuthority>> = useState(Pagination.empty<UserAuthority>());
+    const [showChangePassword, setShowChangePassword]: State<boolean> = useState(false);
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({});
 
     useEffect(() => {
@@ -34,6 +37,18 @@ export const AuthorityListPage = () => {
                         <h1 className="text-xl font-medium leading-none text-gray-900">
                             Variables del Sistema
                         </h1>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <button onClick={() => {
+                            setShowChangePassword(true);
+                        }} className="btn btn-sm btn-primary">
+                            <i className="fa fa-plus mr-2"></i>
+                            <span>Agregar</span>
+                        </button>
+                        <LeftModal title="Agregar Variable" isOpen={showChangePassword}
+                                   onClose={() => setShowChangePassword(false)} className="w-[400px] h-full z-[9999]">
+                            <AuthorityForm onSubmit={() => setShowChangePassword(false)}/>
+                        </LeftModal>
                     </div>
                 </div>
             </div>

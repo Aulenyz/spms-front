@@ -27,8 +27,8 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
         reValidateMode: 'onChange'
     });
 
-    const doCreate = (params: SpecializationFormValues) => {
-        specializationService.create(params)
+    const doCreateSpecialization = (params: SpecializationFormValues) => {
+        specializationService.create('', params)
             .then(() => {
                 toast.success('Especialidad creada con exito');
                 onSubmit?.();
@@ -39,7 +39,7 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
     }
 
     return (
-        <Form className="py-4" name="Specialization Form" submit={handleSubmit(doCreate)}>
+        <Form className="py-4" name="Specialization Form" submit={handleSubmit(doCreateSpecialization)}>
             <Input label="Nombre*"
                    placeholder="Nombre de la especialidad"
                    error={errors.name?.message}

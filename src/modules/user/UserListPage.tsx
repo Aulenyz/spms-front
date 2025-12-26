@@ -8,12 +8,15 @@ import {Link} from "react-router-dom";
 import {StudentGenderPill} from "../../components/io/output/pill/StudentGenderPill.tsx";
 import {UserStatusPill} from "../../components/io/output/pill/UserStatusPill.tsx";
 import {UserFilter} from "../../domain/filters/user/UserFilter.tsx";
+import {LeftModal} from "../../components/shared/LeftModal.tsx";
+import {UserInvitationForm} from "./invitation/create/UserInvitationForm.tsx";
 
 const userService: UserService = UserService.instance;
 
 export const UserListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
     const [users, setUsers]: State<Page<User>> = useState(Pagination.empty<User>());
+    const [showChangePassword, setShowChangePassword]: State<boolean> = useState(false);
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
@@ -41,10 +44,16 @@ export const UserListPage = () => {
                         </h1>
                     </div>
                     <div className="flex items-center gap-2.5">
-                        <a className="btn btn-sm btn-primary" href="#">
-                            <i className="fa fa-user-plus me-1"/>
-                            Agregar
-                        </a>
+                        <button onClick={() => {
+                            setShowChangePassword(true);
+                        }} className="btn btn-sm btn-success">
+                            <i className="fa fa-paper-plane mr-2"></i>
+                            <span>Invitar usuario</span>
+                        </button>
+                        <LeftModal title="Invitar usuario" isOpen={showChangePassword}
+                                   onClose={() => setShowChangePassword(false)} className="w-[400px] h-full z-[9999]">
+                            <UserInvitationForm onSubmit={() => setShowChangePassword(false)}/>
+                        </LeftModal>
                     </div>
                 </div>
             </div>
@@ -61,8 +70,7 @@ export const UserListPage = () => {
                 <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th scope="col" className="px-6 py-3 w-[5%]"></th>
-                        <th scope="col" className="px-6 py-3">Nombre</th>
+                        <th scope="col" className="px-10 py-3">Nombre</th>
                         <th scope="col" className="px-6 py-3">Documento</th>
                         <th scope="col" className="px-6 py-3">Rol</th>
                         <th scope="col" className="px-6 py-3">Género</th>
@@ -74,12 +82,7 @@ export const UserListPage = () => {
                     {users.content.map((user: User, index: number) => (
                         <tr key={index}
                             className="bg-white border-b last:border-b-0 hover:bg-gray-50 transition">
-                            <td>
-                                <button className="px-6 py-3">
-                                    <i className="fa fa-edit text-2xs ms-1"/>
-                                </button>
-                            </td>
-                            <td className="px-6 py-3">{user.info.firstname} {user.info.lastname}</td>
+                            <td className="px-10 py-3">{user.info.firstname} {user.info.lastname}</td>
                             <td className="px-6 py-3">{user.document}</td>
                             <td className="px-6 py-3">{user.role.name.charAt(0).toUpperCase() + user.role.name.slice(1).toLowerCase()}</td>
                             <td className="px-6 py-3">

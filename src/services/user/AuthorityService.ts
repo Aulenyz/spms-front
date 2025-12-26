@@ -12,4 +12,14 @@ export class AuthorityService extends BaseService<UserAuthority> {
     constructor() {
         super('/authorities');
     }
+
+    async existsByName(name: string): Promise<boolean> {
+        const res = await this.get<{ result: boolean; }>(`/name/${name}/exists`);
+        return res.result;
+    }
+
+    async existsByKey(key: string): Promise<boolean> {
+        const res = await this.get<{ result: boolean; }>(`/key/${key}/exists`);
+        return res.result;
+    }
 }

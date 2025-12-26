@@ -19,4 +19,9 @@ export class RoleService extends BaseService<UserRole> {
         return this.get<Page<UserRole>>('/search', {...pagination, ...filters});
     }
 
+    async existsByName(name: string): Promise<boolean> {
+        const res = await this.get<{ result: boolean; }>(`/name/${name}/exists`);
+        return res.result;
+    }
+
 }

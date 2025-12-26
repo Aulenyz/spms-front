@@ -58,6 +58,45 @@ export interface User extends BaseModel {
     organization: Organization;
 }
 
+
+export interface MiniUser extends BaseModel {
+    name: string;
+    email: string;
+    image: string;
+    username: string;
+    status: UserStatus;
+}
+
+export interface UserInvitation extends BaseModel {
+    email: string;
+    role: UserRole;
+    createdBy: MiniUser;
+    status: InvitationStatus;
+}
+
+export interface UserInvitationFormValues {
+    email: string;
+    roleId: number;
+}
+
+export enum InvitationStatus {
+    ACCEPTED = 'ACCEPTED',
+    PENDING = 'PENDING',
+    CANCELLED = 'CANCELLED',
+}
+
+export const invitationColorMap: Record<InvitationStatus, string> = {
+    [InvitationStatus.ACCEPTED]: "bg-green-500",
+    [InvitationStatus.PENDING]: "bg-gray-400",
+    [InvitationStatus.CANCELLED]: "bg-red-500",
+};
+
+export const InvitationStatusLabel: Record<keyof typeof InvitationStatus, string> = {
+    ACCEPTED: 'Aceptada',
+    PENDING: 'Pendiente',
+    CANCELLED: 'Cancelada'
+}
+
 export interface Organization extends BaseModel {
     name: string;
     document: string;
@@ -79,8 +118,19 @@ export interface UserRole extends BaseModel {
     countAuthorities: number;
 }
 
+export interface RoleFormValues {
+    name: string;
+    description: string;
+}
+
 export interface UserAuthority extends BaseModel {
-    key: number;
+    key: string;
+    name: string;
+    description: string;
+}
+
+export interface AuthorityFormValues {
+    key: string;
     name: string;
     description: string;
 }

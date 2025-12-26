@@ -21,7 +21,7 @@ export const ChangePasswordForm = ({onSubmit}: { onSubmit?: () => void }) => {
     });
 
     const doChangePassword = (params: ChangePassword) => {
-        changePasswordService.create(params)
+        changePasswordService.create('', params)
             .then(() => {
                 toast.success('Contraseña cambiada con exito');
                 onSubmit?.();

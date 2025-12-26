@@ -27,7 +27,7 @@ export const RecoverPasswordSchema = () => {
 
     const doRecoverPassword = (params: RecoverPassword) => {
         setLoading(true);
-        recoveryService.create(params)
+        recoveryService.create('', params)
             .then(() => {
                 toast.success("Password Cambiada con exito.");
                 navigate('/auth/login', {replace: true});

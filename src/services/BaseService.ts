@@ -15,8 +15,8 @@ export abstract class BaseService<R = unknown> {
         return this.get<T>('/lookup', filter);
     }
 
-    create<T>(data: Partial<T>): Promise<R> {
-        return this.post<R>('', data);
+    create<T>(endpoint: string, data: Partial<T>): Promise<R> {
+        return this.post<R>(endpoint, data);
     }
 
     update<T, R>(id: number | undefined, data: Partial<T>): Promise<R> {
