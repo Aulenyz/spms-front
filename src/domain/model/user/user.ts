@@ -116,6 +116,11 @@ export interface UserRole extends BaseModel {
     name: string;
     description: string;
     countAuthorities: number;
+    authorities: RoleAuthority[];
+}
+
+export interface RoleAuthority extends BaseModel {
+    authority: UserAuthority;
 }
 
 export interface RoleFormValues {

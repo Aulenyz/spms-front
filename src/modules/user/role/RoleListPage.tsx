@@ -1,5 +1,4 @@
 import {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
 import {RoleService} from "../../../services/user/RoleService.ts";
 import {UserRole} from "../../../domain/model/user/user.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -8,13 +7,17 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {RoleFilter} from "../../../domain/filters/user/RoleFilter.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {RoleForm} from "./create/RoleForm.tsx";
+import {Tooltip} from "../../../components/shared/Tooltip.tsx";
+import {AuthoritiesModal} from "./AuthoritiesModal.tsx";
 
 const roleService: RoleService = RoleService.instance;
 
 export const RoleListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
     const [roles, setRoles]: State<Page<UserRole>> = useState(Pagination.empty<UserRole>());
+    const [showAuthorities, setShowAuthorities]: State<boolean> = useState(false);
     const [showChangePassword, setShowChangePassword]: State<boolean> = useState(false);
+    const [selectedRole, setSelectedRole]: State<UserRole | undefined> = useState<UserRole>();
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
@@ -32,7 +35,7 @@ export const RoleListPage = () => {
         handlePageChange(0);
     };
 
-    const reloadRoles = () => {
+    const refresh = () => {
         roleService.getAll(filters, pagination).then(setRoles);
     };
 
@@ -48,7 +51,7 @@ export const RoleListPage = () => {
 
                     <div className="flex items-center gap-2.5">
                         <button onClick={() => {
-                            reloadRoles();
+                            refresh();
                             setShowChangePassword(true);
                         }} className="btn btn-sm btn-primary">
                             <i className="fa fa-plus mr-2"></i>
@@ -92,17 +95,32 @@ export const RoleListPage = () => {
                             <td className="px-6 py-3">{role.name}</td>
                             <td className="px-6 py-3">{role.description}</td>
                             <td className="px-6 py-3">{role.countAuthorities}</td>
-                            <td className="px-3 py-3 text-right">
-                                <Link to="#" className="font-medium text-blue-600 hover:underline whitespace-nowrap">
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs ms-1"/>
-                                </Link>
+                            <td className="py-3">
+                                <Tooltip message={'Permisos'} placement={'left'}>
+                                    <button
+                                        className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                                        onClick={() => {
+                                            setSelectedRole(role);
+                                            setShowAuthorities(true);
+                                        }}>
+                                        <i className="fa fa-circle-info !text-xl"/>
+                                    </button>
+                                </Tooltip>
                             </td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
-
+                {selectedRole && (
+                    <AuthoritiesModal
+                        open={showAuthorities}
+                        onClose={() => setShowAuthorities(false)}
+                        roleName={selectedRole.name}
+                        roleId={selectedRole.id}
+                        initialAuthorities={selectedRole.authorities.map(a => a.authority.id)}
+                        onSaved={refresh}
+                    />
+                )}
                 <div>
                     <Pager onChange={handlePageChange} page={roles}/>
                 </div>

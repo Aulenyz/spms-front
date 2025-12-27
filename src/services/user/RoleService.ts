@@ -24,4 +24,11 @@ export class RoleService extends BaseService<UserRole> {
         return res.result;
     }
 
+    assign(roleId: number, authorityIds: number[]) {
+        return super.post<void>(`/${roleId}/assign`, {authorityIds});
+    }
+
+    unassign(roleId: number, authorityIds: number[]) {
+        return super.put<void>(`/${roleId}/unassign`, {authorityIds});
+    }
 }

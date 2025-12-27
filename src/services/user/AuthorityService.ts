@@ -1,5 +1,6 @@
 import {BaseService} from "../BaseService.ts";
 import {UserAuthority} from "../../domain/model/user/user.ts";
+import {Page, Pagination} from "../../domain/filters/Page.ts";
 
 export class AuthorityService extends BaseService<UserAuthority> {
 
@@ -11,6 +12,10 @@ export class AuthorityService extends BaseService<UserAuthority> {
 
     constructor() {
         super('/authorities');
+    }
+
+    search(term: string, pagination: Pagination = Pagination.default) {
+        return super.get<Page<UserAuthority>>('/search', {...pagination, term});
     }
 
     async existsByName(name: string): Promise<boolean> {
