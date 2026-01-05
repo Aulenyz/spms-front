@@ -60,13 +60,6 @@ export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: nu
                 </div>
             </div>
 
-            {/* Botón de registro */}
-            <div className="flex items-center gap-2.5">
-                <a className="btn btn-sm btn-primary" href="#">
-                    <i className="fa fa-user-plus me-1"/>
-                    Registrar
-                </a>
-            </div>
             {error && <ErrorMessage message={error}/>}
         </div>
     );
