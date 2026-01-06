@@ -1,4 +1,5 @@
 import {LeftModal} from "../../../../components/shared/LeftModal.tsx";
+import SidebarLink from "../../../shared/main/SidebarLink";
 
 interface Props {
     isOpen: boolean;
@@ -7,17 +8,12 @@ interface Props {
 
 export const EnrollmentInscriptionModal = ({isOpen, onClose}: Props) => {
     return (
-        <LeftModal
-            title="Gestión de Pagos de Inscripción"
-            isOpen={isOpen}
-            onClose={onClose}
-            className="w-[1200px] h-full z-[9999]"
-        >
+        <LeftModal title="Gestión de Pagos de Inscripción" isOpen={isOpen} onClose={onClose} className="w-[1200px] h-full z-[9999]">
             <div className="h-full overflow-y-auto bg-slate-100 p-6">
                 {/* HEADER */}
                 <div className="mb-6">
                     <h1 className="text-2xl font-black text-slate-900">
-                        Gestión de Pagos de Inscripción
+                        Gestión de Pagos
                     </h1>
                     <p className="text-slate-500">
                         Seleccione un estudiante, su representante y agregue los conceptos a facturar.
@@ -27,7 +23,6 @@ export const EnrollmentInscriptionModal = ({isOpen, onClose}: Props) => {
                 <div className="grid grid-cols-12 gap-6">
                     {/* LEFT COLUMN */}
                     <div className="col-span-8 flex flex-col gap-6">
-
                         {/* ================= ESTUDIANTE ================= */}
                         <section className="bg-white rounded-xl border border-slate-200 shadow-sm">
                             <div className="p-5 border-b flex justify-between items-center bg-slate-50">
@@ -38,10 +33,8 @@ export const EnrollmentInscriptionModal = ({isOpen, onClose}: Props) => {
                                     Estudiante
                                 </h3>
 
-                                <button
-                                    className="text-sm px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-                                    Buscar estudiante
-                                </button>
+                                <SidebarLink icon="fa-user-plus" label="Gestión de Pagos" collapsed={collapsed} onClick={() => setShowEnrollmentModal(true)}/>
+                                <AddStudentModal isOpen={showEnrollmentModal} onClose={() => setShowEnrollmentModal(false)}/>
                             </div>
 
                             <div className="p-5">
