@@ -30,7 +30,11 @@ const SelectInputRender = ({ error, label, children, ...props }: SelectInputPara
                 </div>
             )}
 
-            <select ref={ref}{...props} className={clsx("input bg-transparent", {"border-red-500": Boolean(error),})}>
+            <select
+                ref={ref}
+                {...props}
+                className={clsx("select", {"border-red-500": Boolean(error)})}
+            >
                 {children}
             </select>
             {error && (

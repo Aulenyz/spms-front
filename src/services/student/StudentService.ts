@@ -1,5 +1,6 @@
 import {BaseService} from "../BaseService.ts";
 import {Student, StudentStatus} from "../../domain/student/Student.ts";
+import {Page, Pagination} from "../../domain/filters/Page.ts";
 
 export class StudentService extends BaseService<Student> {
 
@@ -11,6 +12,10 @@ export class StudentService extends BaseService<Student> {
 
     constructor() {
         super('/students');
+    }
+
+    search(term: string, pagination: Pagination = Pagination.first): Promise<Page<Student>> {
+        return this.get<Page<Student>>('/search', {...pagination, term});
     }
 
     async getTotalByStatus(): Promise<Record<StudentStatus, number>> {

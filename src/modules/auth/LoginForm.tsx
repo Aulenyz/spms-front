@@ -19,11 +19,10 @@ export const LoginForm = () => {
 
     return (
         <Form
-            className="card-body flex flex-col gap-4 p-6"
+            className="auth-minimal-form"
             name="Login Form"
             submit={handleSubmit(authenticate)}
         >
-            {/* Campo: Usuario */}
             <div className="flex flex-col">
                 <Input
                     label="Usuario / Documento"
@@ -36,7 +35,7 @@ export const LoginForm = () => {
             {/* Campo: Contraseña */}
             <div className="flex flex-col">
                 <Input
-                    label="Contraseña"
+                    label="Contrasena"
                     type="password"
                     {...register("password")}
                     error={errors.password?.message}
@@ -44,14 +43,14 @@ export const LoginForm = () => {
             </div>
 
             <button className="btn btn-primary flex justify-center grow">
-                INICIAR SESIÓN
+                Iniciar sesion
                 {loading && <i className="fa fa-spin fa-spinner"/>}
             </button>
 
             <Link to="/auth/send-recover"
                   className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center justify-center gap-2 transition-colors mt-1">
                 <i className="fa fa-unlock-alt text-blue-500"></i>
-                Recuperar contraseña
+                Recuperar contrasena
             </Link>
 
             <ErrorMessage message={message}/>

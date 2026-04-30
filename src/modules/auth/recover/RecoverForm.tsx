@@ -29,32 +29,27 @@ export const RecoverPasswordSchema = () => {
         setLoading(true);
         recoveryService.create('', params)
             .then(() => {
-                toast.success("Password Cambiada con exito.");
+                toast.success("Contrasena actualizada.");
                 navigate('/auth/login', {replace: true});
             }, () => {
-                toast.error("Error cambiando Password.");
+                toast.error("No se pudo actualizar la contrasena.");
             })
 
     };
     return (
-        <Form className="card-body flex flex-col gap-5 p-10" name="Login Form" submit={handleSubmit(doRecoverPassword)}>
-            <div className="text-center mb-2.5">
-                <h3 className="text-lg font-medium text-gray-900 leading-none mt-2.5">
-                    Cambiar Contraseña
-                </h3>
-            </div>
+        <Form className="auth-minimal-form" name="Login Form" submit={handleSubmit(doRecoverPassword)}>
             <div className="flex flex-col">
-                <Input label={'Nueva Contraseña'} type="password"
+                <Input label={'Nueva contrasena'} type="password"
                        {...register('password')}
                        error={errors.password?.message}/>
             </div>
             <div className="flex flex-col mt-2">
-                <Input label={'Repetir Contraseña'} type="password"
+                <Input label={'Repetir contrasena'} type="password"
                        {...register('repeated')}
                        error={errors.repeated?.message}/>
             </div>
             <button className="btn btn-primary flex justify-center grow">
-                Restablecer Contraseña
+                Restablecer contrasena
                 {loading && <i className="fa fa-spin fa-spinner"/>}
             </button>
         </Form>

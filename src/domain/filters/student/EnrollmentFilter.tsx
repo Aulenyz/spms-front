@@ -53,9 +53,8 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
     };
 
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap gap-2.5 items-center">
-            {/* Filtro de Periodo */}
-            <div className="flex flex-col items-start gap-2">
+        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-48">
                 <Controller
                     name="periodId"
                     control={control}
@@ -65,30 +64,31 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
                             text="Selecciona el Periodo"
                             {...field}
                             required
-                            className="w-48"
+                            className="w-full"
                             control={control}
                         />
                     )}
                 />
             </div>
 
-            {/* Filtro por estado */}
             {searchBy === "status" && (
-                <Controller
-                    name="status"
-                    control={control}
-                    render={({field}) => (
-                        <Select
-                            {...field}
-                            className="select-sm w-32 select bg-transparent"
-                            options={[
-                                {description: "Inscrito", value: "ENROLLED"},
-                                {description: "Pendiente", value: "PENDING"},
-                                {description: "Retirado", value: "WITHDRAWN"},
-                            ]}
-                        />
-                    )}
-                />
+                <div className="w-full sm:w-[150px]">
+                    <Controller
+                        name="status"
+                        control={control}
+                        render={({field}) => (
+                            <Select
+                                {...field}
+                                className="select-sm w-full"
+                                options={[
+                                    {description: "Inscrito", value: "ENROLLED"},
+                                    {description: "Pendiente", value: "PENDING"},
+                                    {description: "Retirado", value: "WITHDRAWN"},
+                                ]}
+                            />
+                        )}
+                    />
+                </div>
             )}
 
             <button type="submit" className="btn btn-sm btn-outline btn-primary">

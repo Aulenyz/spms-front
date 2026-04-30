@@ -60,21 +60,21 @@ export const UserFilter = (props: { onFilter: (value: Record<string, string>) =>
     useEffect(() => setValue('criteria', ''), [watch('status'), watch('searchBy')]);
 
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap gap-2.5">
-            <div className="flex">
-                <Select {...register('status')} className="select-sm w-32" options={useStatusFilter}></Select>
-                <Select {...register('searchBy')} className="select-sm w-32 mx-2.5" options={SearchByOptions}/>
-                <label className="input input-sm w-56">
-                    <i className="fa fa-user me-1"/>
-                    <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
-                </label>
+        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-[140px]">
+                <Select {...register('status')} className="select-sm w-full" options={useStatusFilter}></Select>
             </div>
-            <div className="flex flex-wrap gap-2.5">
-                <button className="btn btn-sm btn-outline btn-primary">
-                    <i className="fa fa-search"/>
-                    Filtrar
-                </button>
+            <div className="w-full sm:w-[140px]">
+                <Select {...register('searchBy')} className="select-sm w-full" options={SearchByOptions}/>
             </div>
+            <label className="input input-sm w-full sm:w-56">
+                <i className="fa fa-user me-1"/>
+                <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
+            </label>
+            <button className="btn btn-sm btn-outline btn-primary">
+                <i className="fa fa-search"/>
+                Filtrar
+            </button>
         </form>
     );
 };

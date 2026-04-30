@@ -7,78 +7,82 @@ import {SpecializationCard} from "./SpecializationCard.tsx";
 import {SpecializationFilter} from "../../domain/filters/specification/SpecializationFilter.tsx";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
 import {SpecializationForm} from "./create/SpecializationForm.tsx";
+import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
+import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
+import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 
 const specializationService = SpecializationService.instance;
 
 export const ListSpecializationPage = () => {
-
-    const [pagination, setPagination] = useState({...Pagination.first, size: 8});
-    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [pagination, setPagination] = useState(Pagination.first);
+    const [showModal, setShowModal] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
         type: "",
     });
+    const [specializations, setSpecializations] = useState<Page<Specialization>>(Pagination.empty<Specialization>());
 
-    const [specializations, setSpecializations] =
-        useState<Page<Specialization>>(Pagination.empty<Specialization>());
-
-    const load = () => {
+    useEffect(() => {
         specializationService.getAll(filters, pagination).then(setSpecializations);
-    };
-
-    useEffect(load, [pagination, filters]);
+    }, [pagination, filters]);
 
     const handlePageChange = (page: number) => {
-        setPagination(prev => ({...prev, page}));
+        setPagination((prev) => ({...prev, page}));
     };
 
-    const handleFilters = (f: Record<string, any>) => {
-        setFilters(f);
-        setPagination(prev => ({...prev, page: 0}));
+    const handlePageSizeChange = (size: number) => {
+        setPagination((prev) => ({...prev, page: 0, size}));
+    };
+
+    const handleFilters = (nextFilters: Record<string, any>) => {
+        setFilters(nextFilters);
+        setPagination((prev) => ({...prev, page: 0}));
     };
 
     return (
-        <div className="pt-6 pl-9 pr-5">
-            <div className="flex items-center gap-2.5 mb-6">
-                <div>
-                    <h1 className="text-xl font-semibold text-gray-800">
-                        Unidades Académicas
-                    </h1>
-                </div>
-                <button onClick={() => {
-                    setShowChangePassword(true);
-                }} className="btn btn-sm btn-primary ml-auto">
-                    <i className="fa fa-plus me-1"></i>
-                    <span>Agregar</span>
-                </button>
-                <LeftModal title="Agregar Especialidad" isOpen={showChangePassword}
-                           onClose={() => setShowChangePassword(false)} className="w-[400px] h-full z-[9999]">
-                    <SpecializationForm onSubmit={() => setShowChangePassword(false)}/>
-                </LeftModal>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                eyebrow="Academico"
+                title="Unidades"
+                description="Administra las unidades academicas base usadas por cursos y plantillas."
+            />
 
-            <div className="card border border-gray-200 rounded-md shadow-sm">
-
-                <div
-                    className="card-header flex justify-between items-end flex-wrap gap-4 border-b border-gray-100 bg-gray-50 px-4 py-3 rounded-t-md">
-                    <h1 className="text-gray-500 text-sm">
-                        Catálogo de Unidades Académicas disponibles.
-                    </h1>
-
-                    <div className="flex justify-end">
-                        <SpecializationFilter onFilter={handleFilters}/>
-                    </div>
-                </div>
-                <div className="px-4 py-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <DataTableCard
+                title="Unidades academicas"
+                description="Consulta y organiza la estructura academica disponible."
+                actions={
+                    <>
+                        <button onClick={() => setShowModal(true)} className="btn btn-sm btn-primary">
+                            <i className="fa fa-plus me-1"/>
+                            <span>Agregar</span>
+                        </button>
+                        <LeftModal
+                            title="Agregar unidad"
+                            isOpen={showModal}
+                            onClose={() => setShowModal(false)}
+                            className="w-[400px] h-full z-[9999]"
+                        >
+                            <SpecializationForm onSubmit={() => setShowModal(false)}/>
+                        </LeftModal>
+                    </>
+                }
+                filters={<SpecializationFilter onFilter={handleFilters}/>}
+                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={specializations}/>}
+            >
+                {specializations.content.length === 0 ? (
+                    <EmptyState
+                        title="No hay unidades academicas"
+                        description="Ajusta los filtros o agrega una nueva unidad."
+                        icon="fa-book-open"
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {specializations.content.map((spec) => (
                             <SpecializationCard key={spec.id} specialization={spec}/>
                         ))}
                     </div>
-                </div>
-                {/* Footer: paginación */}
-                <Pager onChange={handlePageChange} page={specializations}/>
-            </div>
+                )}
+            </DataTableCard>
         </div>
     );
 };

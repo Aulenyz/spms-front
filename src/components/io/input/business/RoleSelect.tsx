@@ -69,7 +69,7 @@ export const RoleSelect = forwardRef<HTMLDivElement, RoleSelectParams>(
                                 options={options}
                                 value={field.value}
                                 hasError={Boolean(props.error)}
-                                className="select-sm w-fit select bg-transparent"
+                                className="select-sm w-full"
                                 ref={ref as any}
                             />
                         </>

@@ -9,3 +9,12 @@ export interface Guardian extends BaseModel {
     address?: string;
     name?: string;
 }
+
+export interface GuardianFormValues {
+    document: string;
+    firstname: string;
+    lastname: string;
+    phone: string;
+    email?: string;
+    address?: string;
+}

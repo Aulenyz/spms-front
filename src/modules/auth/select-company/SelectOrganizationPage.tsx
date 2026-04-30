@@ -1,129 +1,224 @@
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
-import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {toast} from "react-toastify";
-import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
 import logo from "../../../assets/images/logo.png";
+import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
+import {ThemeToggle} from "../../../components/ui/theme/ThemeToggle.tsx";
+import {APPVersion} from "../../../components/io/output/shared/APPVersion.tsx";
+import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
 import {StorageItem} from "../../../domain/types/StorageItem.ts";
+import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
+
+const SPACE_GRADIENTS = [
+    "linear-gradient(135deg, #0f62fe, #2563eb)",
+    "linear-gradient(135deg, #12805c, #0f766e)",
+    "linear-gradient(135deg, #c47b07, #ea580c)",
+    "linear-gradient(135deg, #7c3aed, #9333ea)",
+];
+
+const resolveSpaceGradient = (name: string) => {
+    const hash = name.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
+    return SPACE_GRADIENTS[hash % SPACE_GRADIENTS.length];
+};
 
 export const SelectOrganizationPage = () => {
     const [organizations, setOrganizations] = useState<UserOrganizationDTO[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
     const navigate = useNavigate();
+    const {logout}: AuthContextValue = useAuthContext();
 
     useEffect(() => {
         const loadOrganizations = async () => {
             try {
                 const response = await UserOrganizationService.instance.current();
+
                 if (Array.isArray(response) && response.length > 0) {
                     if (response.length === 1 && response[0].organization) {
-                        const org = response[0].organization;
-                        localStorage.setItem(StorageItem.CompanyRNC, org.document);
+                        localStorage.setItem(StorageItem.CompanyRNC, response[0].organization.document);
                         navigate("/", {replace: true});
                         return;
                     }
+
                     setOrganizations(response);
-                } else if (response?.organization) {
-                    const org = response.organization;
-                    localStorage.setItem(StorageItem.CompanyRNC, org.document);
-                    console.log("RNC guardado automáticamente:", org.document);
-                    navigate("/", {replace: true});
-                } else {
-                    toast.warning("No se encontró ninguna organización asociada.");
+                    return;
                 }
-            } catch (error) {
-                toast.error("No se pudo cargar la organización.");
+
+                if (response?.organization) {
+                    localStorage.setItem(StorageItem.CompanyRNC, response.organization.document);
+                    navigate("/", {replace: true});
+                    return;
+                }
+
+                toast.warning("No se encontro ningun espacio disponible.");
+            } catch {
+                toast.error("No se pudieron cargar los espacios.");
             } finally {
                 setIsLoading(false);
             }
         };
-        loadOrganizations().then(r => console.log(r));
-    }, []);
+
+        loadOrganizations();
+    }, [navigate]);
 
     const handleSelect = (org: UserOrganizationDTO) => {
-        if (!org?.organization) return;
-        const selectedRnc = org.id;
-        localStorage.setItem(StorageItem.CompanyRNC, String(selectedRnc));
-        const verificado = localStorage.getItem(StorageItem.CompanyRNC);
-        if (verificado === String(selectedRnc)) {
-            navigate("/", {replace: true});
-        } else {
-            toast.error("Error al guardar el RNC. Intenta nuevamente.");
+        if (!org?.organization) {
+            return;
         }
+
+        setSelectedId(org.id);
+        localStorage.setItem(StorageItem.CompanyRNC, org.organization.document);
+        navigate("/", {replace: true});
     };
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#f9fbff]">
-                <LoadingContent loading={true} className="text-blue-600 text-6xl"/>
-                <p className="text-gray-600 mt-3 font-medium">Cargando organizaciones...</p>
-            </div>
-        );
-    }
+            <div className="auth-screen">
+                <div className="auth-shell">
+                    <div className="auth-shell-head">
+                        <div className="auth-shell-brand">
+                            <span className="auth-shell-brand-mark">
+                                <img src={logo} alt={APP_SHORT_NAME} className="auth-shell-brand-mark-image"/>
+                            </span>
+                            <div className="leading-tight">
+                                <strong className="block text-sm text-[var(--text-primary)]">{APP_SHORT_NAME}</strong>
+                                <span className="text-xs text-[var(--text-secondary)]">Espacios</span>
+                            </div>
+                        </div>
+                        <ThemeToggle/>
+                    </div>
 
-    if (organizations.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#f9fbff] text-center">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-3">
-                    No se encontró ninguna organización
-                </h2>
-                <p className="text-gray-500 mb-6">
-                    Comunícate con el administrador para obtener acceso.
-                </p>
-                <button
-                    onClick={() => navigate("/auth/login")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition-all"
-                >
-                    Volver al inicio de sesión
-                </button>
+                    <div className="auth-shell-main">
+                        <div className="auth-shell-panel max-w-md text-center">
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[18px]" style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                <i className="fa fa-spinner fa-spin text-lg"/>
+                            </div>
+                            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Cargando espacios</h1>
+                            <p className="mt-2 text-sm text-[var(--text-secondary)]">Espera un momento.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#f9fbff] px-6 py-10">
-            <img src={logo} alt="Logo" className="w-24 h-24 mb-4 opacity-90"/>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-10 text-center">
-                Seleccione la Proveedor
-            </h1>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl w-full justify-center">
-                {organizations.map((org) => (
-                    <div
-                        key={org.organization.id}
-                        onClick={() => handleSelect(org)}
-                        className="cursor-pointer bg-white shadow-md hover:shadow-xl border border-gray-100 rounded-2xl p-6 flex flex-col items-center transition-all duration-300 hover:scale-[1.02]"
-                    >
-                        <div
-                            className="w-20 h-20 flex items-center justify-center rounded-full text-white text-2xl font-bold mb-4"
-                            style={{
-                                backgroundColor:
-                                    "#" +
-                                    Math.floor(Math.random() * 16777215)
-                                        .toString(16)
-                                        .padStart(6, "0"),
-                            }}
-                        >
-                            {org.organization.name
-                                .split(" ")
-                                .map((w) => w.charAt(0))
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()}
-                        </div>
-
-                        <h2 className="text-lg font-semibold text-gray-800 text-center">
-                            {org.organization.name}
-                        </h2>
-                        <div className="mt-3 flex items-center gap-2 text-green-600 font-medium">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                            Activa
+        <div className="auth-screen">
+            <div className="auth-shell">
+                <div className="auth-shell-head">
+                    <div className="auth-shell-brand">
+                        <span className="auth-shell-brand-mark">
+                            <img src={logo} alt={APP_SHORT_NAME} className="auth-shell-brand-mark-image"/>
+                        </span>
+                        <div className="leading-tight">
+                            <strong className="block text-sm text-[var(--text-primary)]">{APP_SHORT_NAME}</strong>
+                            <span className="text-xs text-[var(--text-secondary)]">Espacios</span>
                         </div>
                     </div>
-                ))}
+                    <ThemeToggle/>
+                </div>
+
+                <div className="auth-shell-main">
+                    <div className="w-full max-w-[980px] space-y-6">
+                        <div className="mx-auto max-w-[560px] text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px]" style={{background: "var(--accent-soft)"}}>
+                                <img src={logo} alt="Logo institucional" className="h-8 w-8 object-contain"/>
+                            </div>
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                                {APP_DESCRIPTOR}
+                            </p>
+                            <h1 className="text-[2rem] font-semibold tracking-tight text-[var(--text-primary)]">
+                                {APP_FULL_NAME}
+                            </h1>
+                            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                Selecciona el espacio con el que vas a trabajar.
+                            </p>
+                        </div>
+
+                        {organizations.length === 0 ? (
+                            <div className="auth-shell-panel mx-auto max-w-md text-center">
+                                <h2 className="text-xl font-semibold text-[var(--text-primary)]">No hay espacios disponibles</h2>
+                                <p className="mt-2 text-sm text-[var(--text-secondary)]">Contacta al administrador para obtener acceso.</p>
+                                <div className="mt-5 flex justify-center">
+                                    <button type="button" onClick={() => logout?.()} className="btn btn-sm btn-primary">
+                                        Cerrar sesion
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="auth-space-grid">
+                                    {organizations.map((org) => {
+                                        const initials = org.organization.name
+                                            .split(" ")
+                                            .map((word) => word.charAt(0))
+                                            .slice(0, 2)
+                                            .join("")
+                                            .toUpperCase();
+
+                                        const isSelected = selectedId === org.id;
+
+                                        return (
+                                            <button
+                                                key={org.organization.id}
+                                                type="button"
+                                                onClick={() => handleSelect(org)}
+                                                className="auth-space-card"
+                                            >
+                                                <div className="space-y-5">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <span
+                                                            className="inline-flex h-14 w-14 items-center justify-center rounded-[18px] text-lg font-semibold text-white"
+                                                            style={{background: resolveSpaceGradient(org.organization.name)}}
+                                                        >
+                                                            {initials}
+                                                        </span>
+                                                        <span
+                                                            className="rounded-full px-3 py-1 text-xs font-semibold"
+                                                            style={{
+                                                                background: isSelected ? "var(--accent-soft)" : "var(--success-soft)",
+                                                                color: isSelected ? "var(--accent)" : "var(--success)",
+                                                            }}
+                                                        >
+                                                            {isSelected ? "Entrando" : "Disponible"}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-left">
+                                                        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+                                                            {org.organization.name}
+                                                        </h2>
+                                                        <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                                                            Abrir este espacio para continuar al panel.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-6 flex items-center justify-between border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
+                                                    <span className="text-xs text-[var(--text-tertiary)]">Acceso listo</span>
+                                                    <span className="table-link">
+                                                        Entrar
+                                                        <i className="fa fa-arrow-right text-2xs"/>
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="flex justify-center pt-2">
+                                    <button type="button" onClick={() => logout?.()} className="btn btn-sm btn-light">
+                                        Cerrar sesion
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <APPVersion className="mt-6 text-center text-[var(--text-tertiary)]"/>
             </div>
-            <p className="text-sm text-gray-400 mt-10">Versión 0.0.1</p>
         </div>
     );
 };

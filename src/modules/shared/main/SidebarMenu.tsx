@@ -1,5 +1,5 @@
 import SidebarLink from "./SidebarLink";
-import {EnrollmentInscriptionModal} from "../../student/enrollment/modal/EnrollmentInscriptionModal.tsx";
+import {CommercialCollectionModal} from "../../student/enrollment/modal/EnrollmentInscriptionModal.tsx";
 import {useState} from "react";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 const SidebarMenu = ({collapsed}: Props) => {
-    const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
+    const [showCollectionModal, setShowCollectionModal] = useState(false);
 
     return (
         <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-1">
@@ -18,8 +18,9 @@ const SidebarMenu = ({collapsed}: Props) => {
             {/* Ventas Section */}
             <div className="text-xs font-semibold text-gray-500 uppercase mt-4">Contabilidad</div>
             {/* Botón de registro */}
-            <SidebarLink icon="fa-user-plus" label="Gestión de Pagos" collapsed={collapsed} onClick={() => setShowEnrollmentModal(true)}/>
-            <EnrollmentInscriptionModal isOpen={showEnrollmentModal} onClose={() => setShowEnrollmentModal(false)}/>
+            <SidebarLink icon="fa-receipt" label="Nuevo Aporte" collapsed={collapsed}
+                         onClick={() => setShowCollectionModal(true)}/>
+            <CommercialCollectionModal isOpen={showCollectionModal} onClose={() => setShowCollectionModal(false)}/>
             <SidebarLink to="/payments/list" icon="fa-dollar-sign" label="Listado de Pagos" collapsed={collapsed}/>
 
             {/* Inscripciones Section */}

@@ -34,9 +34,8 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
     }, [selectedPeriodId, setValue]);
 
     return (
-        <div className="flex gap-4 items-center">
-            {/* Filtro de Periodo */}
-            <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-48">
                 <Controller
                     name="periodId"
                     control={control}
@@ -46,17 +45,16 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                             text="Selecciona el Periodo"
                             {...field}
                             required
-                            className="w-48"
+                            className="w-full"
                             control={control}
                         />
                     )}
                 />
             </div>
 
-            {/* Filtro de Estado */}
-            <div className="flex flex-col items-start gap-2">
+            <div className="w-full sm:w-[150px]">
                 <select
-                    className="select-sm w-32 select bg-transparent"
+                    className="select select-sm w-full"
                     value={watch("status")}
                     onChange={(e) => handleChange("status", e.target.value)}
                 >
@@ -71,15 +69,14 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                 </select>
             </div>
 
-            {/* Filtro de Método de Pago */}
-            <div className="flex flex-col items-start gap-2">
+            <div className="w-full sm:w-[170px]">
                 <select
-                    className="select-sm w-32 select bg-transparent"
+                    className="select select-sm w-full"
                     value={watch("method")}
                     onChange={(e) => handleChange("method", e.target.value)}
                 >
                     <option value="" disabled>
-                        Método de Pago
+                        Metodo de pago
                     </option>
                     {Object.keys(PaymentMethod).map((methodKey) => {
                         const key = methodKey as keyof typeof PaymentMethod;
@@ -92,10 +89,9 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                 </select>
             </div>
 
-            {/* Filtro de Identificador */}
-            <div className="flex flex-col items-start gap-2">
+            <div className="w-full sm:w-56">
                 <input
-                    className="input input-sm w-56"
+                    className="input input-sm w-full"
                     type="text"
                     value={watch("identifier")}
                     onChange={(e) => handleChange("identifier", e.target.value)}

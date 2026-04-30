@@ -23,12 +23,10 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
     };
 
     return (
-        <div className="flex gap-4 items-end flex-wrap">
-
-            {/* Estado */}
-            <div className="flex flex-col items-start gap-1">
+        <div className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-[140px]">
                 <select
-                    className="select select-sm w-32 bg-transparent"
+                    className="select select-sm w-full"
                     value={watch("active")}
                     onChange={(e) => handleChange("active", e.target.value)}
                 >
@@ -37,10 +35,9 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                 </select>
             </div>
 
-            {/* Tipo */}
-            <div className="flex flex-col items-start gap-1">
+            <div className="w-full sm:w-[160px]">
                 <select
-                    className="select select-sm w-40 bg-transparent"
+                    className="select select-sm w-full"
                     value={watch("type")}
                     onChange={(e) => handleChange("type", e.target.value)}
                 >
@@ -57,10 +54,9 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                 </select>
             </div>
 
-            {/* Nombre */}
-            <div className="flex flex-col items-start gap-1">
+            <div className="w-full sm:w-56">
                 <input
-                    className="input input-sm w-56"
+                    className="input input-sm w-full"
                     type="text"
                     placeholder="Buscar por nombre"
                     value={watch("name")}
@@ -68,7 +64,6 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                 />
             </div>
 
-            {/* Botón */}
             <button type="button" className="btn btn-sm btn-outline btn-primary" onClick={handleFilter}>
                 <i className="fa fa-search mr-1"/>
                 Filtrar

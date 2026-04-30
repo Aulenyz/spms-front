@@ -17,47 +17,45 @@ export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: nu
     useEffect(() => {
         periodService.current().then((period) => {
             setCurrentPeriod(period);
-        }).catch((error) => {
+        }).catch((currentError) => {
             setError("Error al obtener el periodo actual");
-            console.error("Error al obtener el periodo actual", error);
+            console.error("Error al obtener el periodo actual", currentError);
         });
     }, []);
+
     useEffect(() => {
         const periodId = selectedPeriodId || currentPeriod?.id;
         if (periodId) {
-            enrollmentService.getTotalByStatus(periodId).then(setStatus).catch((error) => {
+            enrollmentService.getTotalByStatus(periodId).then(setStatus).catch((statusError) => {
                 setError("Error al obtener los totales por estado");
-                console.error("Error al obtener los totales por estado", error);
+                console.error("Error al obtener los totales por estado", statusError);
             });
         }
     }, [selectedPeriodId, currentPeriod]);
 
     return (
-        <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-            <div className="flex flex-col justify-center gap-2">
-                <h1 className="text-xl font-medium leading-none text-gray-900">
-                    Listado de Inscripciones
-                </h1>
-                <div className="flex items-center flex-wrap gap-2 font-medium">
-                    {/* Mostrar los totales por estado de inscripción */}
-                    {Object.keys(status).map((value: string, index: number) => {
-                        const key = value as keyof typeof EnrollmentStatus;
-                        const colorClass = EnrollmentStatusColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
-                        return (
-                            <div
-                                key={index}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-full border ${colorClass}`}
-                            >
-                                <span className="text-sm font-medium">
-                                    {EnrollmentStatusLabel[key]}:
-                                </span>
-                                <span className="text-sm font-semibold">
-                                    {status[key]}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
+        <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
+            style={{
+                borderColor: "var(--border-soft)",
+                background: "color-mix(in srgb, var(--surface) 95%, transparent)",
+                boxShadow: "var(--shadow-soft)",
+            }}
+        >
+            <div className="flex flex-wrap items-center gap-2">
+                {Object.keys(status).map((value: string, index: number) => {
+                    const key = value as keyof typeof EnrollmentStatus;
+                    const colorClass = EnrollmentStatusColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
+                    return (
+                        <div
+                            key={index}
+                            className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
+                        >
+                            <span className="text-sm font-medium">{EnrollmentStatusLabel[key]}:</span>
+                            <span className="text-sm font-semibold">{status[key]}</span>
+                        </div>
+                    );
+                })}
             </div>
 
             {error && <ErrorMessage message={error}/>}

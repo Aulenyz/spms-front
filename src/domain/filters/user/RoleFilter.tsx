@@ -29,19 +29,15 @@ export const RoleFilter = (props: { onFilter: (value: Record<string, string>) =>
     useEffect(() => setValue('criteria', ''), [watch('searchBy')]);
 
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap gap-2.5">
-            <div className="flex">
-                <label className="input input-sm w-56">
-                    <i className="fa fa-user me-1"/>
-                    <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
-                </label>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-                <button className="btn btn-sm btn-outline btn-primary">
-                    <i className="fa fa-search"/>
-                    Filtrar
-                </button>
-            </div>
+        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+            <label className="input input-sm w-full sm:w-56">
+                <i className="fa fa-user me-1"/>
+                <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
+            </label>
+            <button className="btn btn-sm btn-outline btn-primary">
+                <i className="fa fa-search"/>
+                Filtrar
+            </button>
         </form>
     );
 };

@@ -4,11 +4,24 @@ import {Page, Pageable} from "../../../domain/filters/Page.ts";
 export type PagerParams = {
     page: Page<unknown>;
     onChange: (page: number) => void;
+    onPageSizeChange?: (size: number) => void;
+    pageSizeOptions?: number[];
     showSummary?: boolean;
     compact?: boolean;
+    className?: string;
+    paginationClassName?: string;
 };
 
-export const Pager = ({page, onChange, showSummary = true, compact = false,}: PagerParams) => {
+export const Pager = ({
+    page,
+    onChange,
+    onPageSizeChange,
+    pageSizeOptions = [5, 10, 20],
+    showSummary = true,
+    compact = false,
+    className,
+    paginationClassName,
+}: PagerParams) => {
     const pageable: Pageable = page.page ?? new Pageable();
     const {
         number: currentPage,
@@ -17,17 +30,15 @@ export const Pager = ({page, onChange, showSummary = true, compact = false,}: Pa
         totalElements,
     }: Pageable = pageable;
 
-    const start: number = currentPage * pageSize + 1;
-    const end: number = Math.min(start + page.content.length - 1, totalElements);
+    const hasRecords: boolean = totalElements > 0 && page.content.length > 0;
+    const start: number = hasRecords ? currentPage * pageSize + 1 : 0;
+    const end: number = hasRecords ? Math.min(start + page.content.length - 1, totalElements) : 0;
     const isFirst: boolean = currentPage === 0;
-    const isLast: boolean = currentPage + 1 === totalPages;
+    const isLast: boolean = totalPages <= 1 || currentPage + 1 >= totalPages;
 
     const pageNumbers: Array<number> = [];
-    const maxVisiblePages: number = 4;
-    const startPage: number = Math.max(
-        0,
-        currentPage - Math.floor(maxVisiblePages / 2)
-    );
+    const maxVisiblePages: number = compact ? 3 : 5;
+    const startPage: number = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
     const endPage: number = Math.min(totalPages, startPage + maxVisiblePages);
 
     for (let i = startPage; i < endPage; i++) {
@@ -35,47 +46,51 @@ export const Pager = ({page, onChange, showSummary = true, compact = false,}: Pa
     }
 
     return (
-        <div className={clsx(
-            "card-footer flex flex-col md:flex-row justify-center md:justify-between text-gray-600 font-medium",
-            compact ? "gap-2 text-[11px]" : "gap-5 text-2sm"
-        )}>
+        <div className={clsx("pager", {"pager-compact": compact}, className)}>
+            <div className="pager-meta">
+                {showSummary && !compact && (
+                    <div className="pager-summary">
+                        Mostrando <strong>{page.content.length}</strong> de <strong>{totalElements}</strong> registros
+                    </div>
+                )}
 
-            {showSummary && !compact && (
-                <div className="flex items-center gap-2 order-2 md:order-1">
-                    Mostrando {page.content.length} de {totalElements} elementos encontrados
-                </div>
-            )}
+                {!compact && onPageSizeChange && (
+                    <label className="pager-size-control">
+                        <span>Ver</span>
+                        <select
+                            className="select select-sm pager-size-select"
+                            value={pageSize}
+                            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+                        >
+                            {pageSizeOptions.map((sizeOption) => (
+                                <option key={sizeOption} value={sizeOption}>
+                                    {sizeOption}
+                                </option>
+                            ))}
+                        </select>
+                        <span>por pagina</span>
+                    </label>
+                )}
+            </div>
 
-            <div
-                className={clsx(
-                    "flex items-center order-1 md:order-2",
-                    compact ? "gap-2" : "gap-4"
-                )}>
-
-                <span
-                    data-datatable-info="true"
-                    className={clsx(compact ? "text-xs" : "text-sm")}>
+            <div className={clsx("pager-controls", paginationClassName)}>
+                <span data-datatable-info="true" className="pager-range">
                     {start} - {end} de {totalElements}
                 </span>
 
-                <div
-                    className={clsx("pagination flex items-center",
-                        compact ? "space-x-1" : "space-x-2"
-                    )}
-                    data-datatable-pagination="true">
-
-                    <button className={clsx("btn", compact ? "px-1.5 py-0.5 text-xs" : "",
-                        {disabled: isFirst}
-                    )}
-                            onClick={() => !isFirst && onChange(0)}
-                            disabled={isFirst}>
+                <div className="pager-nav" data-datatable-pagination="true">
+                    <button
+                        type="button"
+                        className="pager-button"
+                        onClick={() => !isFirst && onChange(0)}
+                        disabled={isFirst}
+                    >
                         <i className="fa fa-angle-double-left !text-2xs"/>
                     </button>
 
                     <button
-                        className={clsx("btn", compact ? "px-1.5 py-0.5 text-xs" : "",
-                            {disabled: isFirst}
-                        )}
+                        type="button"
+                        className="pager-button"
                         onClick={() => !isFirst && onChange(currentPage - 1)}
                         disabled={isFirst}
                     >
@@ -83,20 +98,21 @@ export const Pager = ({page, onChange, showSummary = true, compact = false,}: Pa
                     </button>
 
                     {pageNumbers.map((pageNumber) => (
-                        <button key={pageNumber} className={clsx("btn",
-                            compact ? "px-1.5 py-0.5 text-xs" : "",
-                            {active: pageNumber === currentPage}
-                        )}
-                                onClick={() => onChange(pageNumber)}
+                        <button
+                            key={pageNumber}
+                            type="button"
+                            className={clsx("pager-button", {
+                                "pager-button-active": pageNumber === currentPage,
+                            })}
+                            onClick={() => onChange(pageNumber)}
                         >
                             {pageNumber + 1}
                         </button>
                     ))}
 
                     <button
-                        className={clsx("btn", compact ? "px-1.5 py-0.5 text-xs" : "",
-                            {disabled: isLast}
-                        )}
+                        type="button"
+                        className="pager-button"
                         onClick={() => !isLast && onChange(currentPage + 1)}
                         disabled={isLast}
                     >
@@ -104,9 +120,8 @@ export const Pager = ({page, onChange, showSummary = true, compact = false,}: Pa
                     </button>
 
                     <button
-                        className={clsx("btn", compact ? "px-1.5 py-0.5 text-xs" : "",
-                            {disabled: isLast}
-                        )}
+                        type="button"
+                        className="pager-button"
                         onClick={() => !isLast && onChange(totalPages - 1)}
                         disabled={isLast}
                     >

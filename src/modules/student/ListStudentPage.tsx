@@ -9,6 +9,9 @@ import {StudentStatusPill} from "../../components/io/output/pill/StudentStatusPi
 import {Pager} from "../../components/io/input/Pager.tsx";
 import {StudentBreadcrumb} from "../breadcrumb/StudentBreadcrumb.tsx";
 import {StudentFilter} from "../../domain/filters/student/StudentFilter.tsx";
+import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
+import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
+import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 
 const studentService: StudentService = StudentService.instance;
 
@@ -27,68 +30,74 @@ export const ListStudentPage = () => {
         setPagination((prev) => ({...prev, page}));
     };
 
-    const handleUpdateFilter = (filters: KeyValueOf<string>) => {
-        setFilters({...filters});
+    const handlePageSizeChange = (size: number) => {
+        setPagination((prev) => ({...prev, page: 0, size}));
+    };
+
+    const handleUpdateFilter = (nextFilters: KeyValueOf<string>) => {
+        setFilters({...nextFilters});
         handlePageChange(0);
     };
 
     return (
-        <div className="pt-6 pl-9 pr-5">
-            <div>
-                <StudentBreadcrumb/>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                eyebrow="Estudiantes"
+                title="Listado de estudiantes"
+                description="Consulta registro, genero y estado academico desde una sola vista."
+            />
 
-            <div className="card relative overflow-x-auto mb-6 border border-gray-200 rounded-md shadow-sm">
-                <div className="card-header flex-wrap gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3 rounded-t-md">
-                    <h3 className="card-title font-medium text-sm inline-flex items-center">
-                        <span className="mr-2">Mostrando Estudiantes:</span>
-                        <StudentStatusPill status={filters.status as StudentStatus}/>
-                    </h3>
-                    <StudentFilter onFilter={handleUpdateFilter}/>
-                </div>
+            <StudentBreadcrumb/>
 
-                {/* 🔹 Tabla (idéntico estilo que la de empleados) */}
-                <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <DataTableCard
+                title="Estudiantes"
+                description="Filtra el listado por estado y revisa la informacion principal de cada alumno."
+                status={<StudentStatusPill status={filters.status as StudentStatus}/>}
+                filters={<StudentFilter onFilter={handleUpdateFilter}/>}
+                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={students}/>}
+            >
+                <table className="table-shell">
+                    <thead>
                     <tr>
-                        <th scope="col" className="px-6 py-3">Estudiante</th>
-                        <th scope="col" className="px-6 py-3">Nombre</th>
-                        <th scope="col" className="px-6 py-3">Apellido</th>
-                        <th scope="col" className="px-6 py-3">Género</th>
-                        <th scope="col" className="px-6 py-3">Estatus</th>
-                        <th scope="col" className="px-3 py-3 w-[5%]"></th>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Apellido</th>
+                        <th scope="col">Genero</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col"></th>
                     </tr>
                     </thead>
                     <tbody>
+                    {students.content.length === 0 && (
+                        <tr>
+                            <td colSpan={6}>
+                                <EmptyState
+                                    title="No hay estudiantes para mostrar"
+                                    description="Prueba otros filtros para ver mas resultados."
+                                    icon="fa-user-graduate"
+                                />
+                            </td>
+                        </tr>
+                    )}
+
                     {students.content.map((student: Student, index: number) => (
-                        <tr key={index}
-                            className="bg-white border-b last:border-b-0 hover:bg-gray-50 transition">
-                            <td className="px-6 py-3">
-                                {student.document}
-                            </td>
-                            <td className="px-6 py-3">{student.firstname}</td>
-                            <td className="px-6 py-3">{student.lastname}</td>
-                            <td className="px-6 py-3">
-                                <StudentGenderPill gender={student.gender}/>
-                            </td>
-                            <td className="px-6 py-3">
-                                <StudentStatusPill status={student.status}/>
-                            </td>
-                            <td className="px-3 py-3 text-right">
-                                <Link to="#" className="font-medium text-blue-600 hover:underline whitespace-nowrap">
+                        <tr key={index}>
+                            <td><strong>{student.document}</strong></td>
+                            <td>{student.firstname}</td>
+                            <td>{student.lastname}</td>
+                            <td><StudentGenderPill gender={student.gender}/></td>
+                            <td><StudentStatusPill status={student.status}/></td>
+                            <td className="text-right">
+                                <Link to="#" className="table-link whitespace-nowrap">
                                     Detalles
-                                    <i className="fa fa-chevron-right text-2xs ms-1"/>
+                                    <i className="fa fa-chevron-right text-2xs"/>
                                 </Link>
                             </td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
-
-                <div>
-                    <Pager onChange={handlePageChange} page={students}/>
-                </div>
-            </div>
+            </DataTableCard>
         </div>
     );
 };

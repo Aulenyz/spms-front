@@ -9,6 +9,13 @@ export interface Student extends BaseModel {
     status: StudentStatus
 }
 
+export interface StudentFormValues {
+    firstname: string;
+    lastname: string;
+    gender: Gender;
+    birthDate: string;
+}
+
 export enum StudentStatus {
     ACTIVE = 'ACTIVE',
     INACTIVE = 'INACTIVE',
@@ -36,4 +43,3 @@ export const colorMap: Record<StudentStatus, string> = {
     [StudentStatus.GRADUATED]: "bg-blue-500",
     [StudentStatus.WITHDRAWN]: "bg-red-500"
 };
-

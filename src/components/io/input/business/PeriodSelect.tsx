@@ -74,7 +74,7 @@ export const PeriodSelect = forwardRef<HTMLDivElement, PeriodSelectParams>(
                                 options={options}
                                 value={field.value}
                                 hasError={Boolean(props.error)}
-                                className="select-sm w-32 select bg-transparent"
+                                className="select-sm w-full"
                                 ref={ref as any}
                             />
                         </>

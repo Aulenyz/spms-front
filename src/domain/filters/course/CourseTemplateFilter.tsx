@@ -47,20 +47,18 @@ export const CourseTemplateFilter = (props: { onFilter: (value: Record<string, s
     useEffect(() => setValue('criteria', ''), [watch('type'), watch('searchBy')]);
 
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap gap-2.5">
-            <div className="flex flex-wrap gap-2.5">
-                <Select {...register('type')} className="select-sm w-32" options={useTypeFilter}></Select>
-                <label className="input input-sm w-56">
-                    <i className="fa fa-user me-1"/>
-                    <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
-                </label>
+        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-[140px]">
+                <Select {...register('type')} className="select-sm w-full" options={useTypeFilter}></Select>
             </div>
-            <div className="flex flex-wrap gap-2.5">
-                <button className="btn btn-sm btn-outline btn-primary">
-                    <i className="fa fa-search"/>
-                    Filtrar
-                </button>
-            </div>
+            <label className="input input-sm w-full sm:w-56">
+                <i className="fa fa-user me-1"/>
+                <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
+            </label>
+            <button className="btn btn-sm btn-outline btn-primary">
+                <i className="fa fa-search"/>
+                Filtrar
+            </button>
         </form>
     );
 };

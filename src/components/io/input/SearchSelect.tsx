@@ -85,7 +85,7 @@ export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
         };
 
         return (
-            <div className={clsx("relative w-full", className)} ref={dropdownRef}>
+            <div className="relative w-full" ref={dropdownRef}>
                 <div>
                     <input
                         ref={inputRef}
@@ -94,35 +94,29 @@ export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
                         onChange={handleSearch}
                         onKeyDown={handleKeyDown}
                         onFocus={() => setIsOpen(true)}
-                        className={clsx("w-full py-2 px-3 focus:outline-none rounded-lg select-sm bg-transparent", {
-                            'border-red-500': hasError,
-                            'border-gray-300': !hasError
+                        className={clsx("input select select-sm search-select-input", className, {
+                            "border-red-500": hasError,
                         })}
                         placeholder={text}
                     />
                 </div>
 
-                {/* Dropdown */}
                 {isOpen && (
-                    <ul className={clsx("absolute left-0 w-full mt-1 z-50 bg-white border border-gray-300 rounded-lg shadow-lg",
-                        "max-h-60 sm:max-h-72 md:max-h-80 overflow-y-auto"
-                    )}
-                        style={{
-                            maxHeight: "min(50vh, 320px)"
-                        }}
-                    >
+                    <ul className="search-select-dropdown" style={{maxHeight: "min(50vh, 320px)"}}>
                         {options.length > 0 ? (
                             options.map((option, index) => (
-                                <li key={String(option.value ?? option.description ?? index)}
+                                <li
+                                    key={String(option.value ?? option.description ?? index)}
                                     onClick={() => handleOptionClick(option)}
-                                    className={clsx("px-4 py-2 cursor-pointer text-sm hover:bg-blue-100",
-                                        {"bg-blue-100": index === highlightedIndex}
-                                    )}>
+                                    className={clsx("search-select-option cursor-pointer", {
+                                        "search-select-option-active": index === highlightedIndex,
+                                    })}
+                                >
                                     {titleCase(option.description)}
                                 </li>
                             ))
                         ) : (
-                            <li className="px-4 py-2 text-gray-500 text-sm">
+                            <li className="search-select-option">
                                 No hay opciones disponibles
                             </li>
                         )}

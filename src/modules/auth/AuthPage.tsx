@@ -9,7 +9,7 @@ export const AuthPage = () => {
         <Routes>
             <Route path="/" element={<Navigate to="/auth/login" replace/>}/>
             <Route path='login' element={<LoginPage/>}/>
-            <Route path='reset' element={<LoginPage/>}/>
+            <Route path='reset' element={<RecoverPage/>}/>
             <Route path='recover' element={<RecoverPage/>}/>
             <Route path='send-recover' element={<SendRecoverPasswordPage/>}/>
             <Route path="select-organization" element={<SelectOrganizationPage />} />

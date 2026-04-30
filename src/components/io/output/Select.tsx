@@ -14,7 +14,7 @@ export interface SelectParams extends PropsWithoutRef<JSX.IntrinsicElements["sel
 const selectRenderer = ({label, options, ...props}: SelectParams, ref: ForwardedRef<HTMLSelectElement>) => {
     return (
         <div>
-            {label && <label htmlFor="email" className="form-label">{label}</label>}
+            {label && <label className="form-label">{label}</label>}
             <div>
                 <select ref={ref} {...props} className={clsx(props.className, 'select')}>
                     {options.map(({value, description}: SelectOption, index: number) => {
