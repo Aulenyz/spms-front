@@ -9,6 +9,7 @@ import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {AuthorityForm} from "./create/AuthorityForm.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
+import {AuthorityBreadcrumb} from "../../breadcrumb/AuthorityBreadcrumb.tsx";
 
 const authorityService: AuthorityService = AuthorityService.instance;
 
@@ -36,58 +37,55 @@ export const AuthorityListPage = () => {
     };
 
     return (
-        <DataTableCard
-            title="Permisos"
-            description="Gestiona las llaves de acceso disponibles para reglas y acciones del sistema."
-            status={<span className="page-header-eyebrow">Registros: {authorities.content.length}</span>}
-            actions={
-                <>
-                    <button onClick={() => setShowModal(true)} className="btn btn-sm btn-primary">
-                        <i className="fa fa-plus me-1"/>
-                        <span>Agregar</span>
-                    </button>
-                    <LeftModal
-                        title="Agregar permiso"
-                        isOpen={showModal}
-                        onClose={() => setShowModal(false)}
-                        className="w-[400px] h-full z-[9999]"
-                    >
-                        <AuthorityForm onSubmit={() => setShowModal(false)}/>
-                    </LeftModal>
-                </>
-            }
-            filters={<RoleFilter onFilter={handleUpdateFilter}/>}
-            footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={authorities}/>}
-        >
-            <table className="table-shell">
-                <thead>
-                <tr>
-                    <th scope="col">Llave</th>
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Descripcion</th>
-                </tr>
-                </thead>
-                <tbody>
-                {authorities.content.length === 0 && (
+        <div className="space-y-6">
+            <AuthorityBreadcrumb onCreate={() => setShowModal(true)}/>
+
+            <DataTableCard
+                title="Permisos"
+                description="Gestiona las llaves de acceso disponibles para reglas y acciones del sistema."
+                status={<span className="page-header-eyebrow">Registros: {authorities.content.length}</span>}
+                filters={<RoleFilter onFilter={handleUpdateFilter}/>}
+                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={authorities}/>}
+            >
+                <table className="table-shell">
+                    <thead>
                     <tr>
-                        <td colSpan={3}>
-                            <EmptyState
-                                title="No hay permisos registrados"
-                                description="Agrega un nuevo permiso o cambia los filtros para continuar."
-                                icon="fa-sliders"
-                            />
-                        </td>
+                        <th scope="col">Llave</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Descripcion</th>
                     </tr>
-                )}
-                {authorities.content.map((authority: UserAuthority, index: number) => (
-                    <tr key={index}>
-                        <td><strong>{authority.key}</strong></td>
-                        <td>{authority.name}</td>
-                        <td>{authority.description}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </DataTableCard>
+                    </thead>
+                    <tbody>
+                    {authorities.content.length === 0 && (
+                        <tr>
+                            <td colSpan={3}>
+                                <EmptyState
+                                    title="No hay permisos registrados"
+                                    description="Agrega un nuevo permiso o cambia los filtros para continuar."
+                                    icon="fa-sliders"
+                                />
+                            </td>
+                        </tr>
+                    )}
+                    {authorities.content.map((authority: UserAuthority, index: number) => (
+                        <tr key={index}>
+                            <td><strong>{authority.key}</strong></td>
+                            <td>{authority.name}</td>
+                            <td>{authority.description}</td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </DataTableCard>
+
+            <LeftModal
+                title="Agregar permiso"
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                className="w-[400px] h-full z-[9999]"
+            >
+                <AuthorityForm onSubmit={() => setShowModal(false)}/>
+            </LeftModal>
+        </div>
     );
 };

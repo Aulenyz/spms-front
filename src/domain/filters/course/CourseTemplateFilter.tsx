@@ -1,8 +1,9 @@
 import {useForm} from "react-hook-form";
 import {useEffect} from "react";
-import {Select, SelectOption} from "../../../components/io/output/Select.tsx";
+import {SelectOption} from "../../../components/io/output/Select.tsx";
 import {UseForm} from "../../types/steoreotype.ts";
 import {GradeType} from "../../model/course/Course.ts";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 const placeholders: Record<string, string> = {
     name: 'Ingrese el nombre',
@@ -31,7 +32,7 @@ export type CourseTemplateFilterFormValue = {
 
 export const CourseTemplateFilter = (props: { onFilter: (value: Record<string, string>) => void }) => {
 
-    const {register, handleSubmit, watch, setValue}: UseForm<CourseTemplateFilterFormValue> = useForm<CourseTemplateFilterFormValue>({
+    const {register, watch, setValue}: UseForm<CourseTemplateFilterFormValue> = useForm<CourseTemplateFilterFormValue>({
         defaultValues: {
             searchBy: 'name'
         },
@@ -46,19 +47,33 @@ export const CourseTemplateFilter = (props: { onFilter: (value: Record<string, s
 
     useEffect(() => setValue('criteria', ''), [watch('type'), watch('searchBy')]);
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            handleFilter({
+                type: watch("type"),
+                searchBy: watch("searchBy"),
+                criteria: watch("criteria") ?? "",
+            });
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("type"), watch("searchBy"), watch("criteria")]);
+
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+        <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
             <div className="w-full sm:w-[140px]">
-                <Select {...register('type')} className="select-sm w-full" options={useTypeFilter}></Select>
+                <DropdownSelect
+                    text="Tipo"
+                    hasError={false}
+                    options={useTypeFilter}
+                    value={watch("type")}
+                    onSelect={(value) => setValue("type", value as GradeType)}
+                    className="w-full"
+                />
             </div>
             <label className="input input-sm w-full sm:w-56">
                 <i className="fa fa-user me-1"/>
                 <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
             </label>
-            <button className="btn btn-sm btn-outline btn-primary">
-                <i className="fa fa-search"/>
-                Filtrar
-            </button>
         </form>
     );
 };

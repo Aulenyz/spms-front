@@ -11,6 +11,8 @@ import {Student} from "../../../../domain/student/Student.ts";
 import {StudentStep} from "../../../payment/components/StudentStep.tsx";
 import {GuardianService} from "../../../../services/student/guardian/GuardianService.ts";
 import {Pagination} from "../../../../domain/filters/Page.ts";
+import {Course} from "../../../../domain/model/course/Course.ts";
+import {CourseSelect} from "../../../payment/components/CourseSelect.tsx";
 
 type PaymentConcept = {
     id: string;
@@ -42,6 +44,7 @@ type WizardStep = "ESTUDIANTE" | "PADRES" | "APORTES" | "REVISION";
 export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
     const [step, setStep] = useState<WizardStep>("ESTUDIANTE");
     const [student, setStudent] = useState<Student | null>(null);
+    const [course, setCourse] = useState<Course | null>(null);
     const [guardians, setGuardians] = useState<Guardian[]>([]);
     const [clientName, setClientName] = useState("Cliente general");
     const [documentNumber, setDocumentNumber] = useState("001-0000000-0");
@@ -86,6 +89,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
 
         setStep("ESTUDIANTE");
         setStudent(null);
+        setCourse(null);
         setGuardians([]);
         setConceptLabel("");
         setConceptAmount("");
@@ -138,6 +142,11 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
             setStep("ESTUDIANTE");
             return;
         }
+        if (!course?.id) {
+            toast.error("Selecciona el curso.");
+            setStep("ESTUDIANTE");
+            return;
+        }
         if (guardians.length === 0) {
             toast.error("Agrega al menos un representante.");
             setStep("PADRES");
@@ -162,7 +171,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
     }
 
     const Stepper = () => {
-        const steps: {id: WizardStep; label: string; icon: string}[] = [
+        const steps: { id: WizardStep; label: string; icon: string }[] = [
             {id: "ESTUDIANTE", label: "Estudiante", icon: "fa-id-card"},
             {id: "PADRES", label: "Representantes", icon: "fa-user-group"},
             {id: "APORTES", label: "Aportes", icon: "fa-receipt"},
@@ -173,9 +182,9 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
 
         const canGoTo = (next: WizardStep) => {
             if (next === "ESTUDIANTE") return true;
-            if (next === "PADRES") return Boolean(student?.id);
-            if (next === "APORTES") return Boolean(student?.id) && guardians.length > 0;
-            if (next === "REVISION") return Boolean(student?.id) && guardians.length > 0 && concepts.length > 0;
+            if (next === "PADRES") return Boolean(student?.id) && Boolean(course?.id);
+            if (next === "APORTES") return Boolean(student?.id) && Boolean(course?.id) && guardians.length > 0;
+            if (next === "REVISION") return Boolean(student?.id) && Boolean(course?.id) && guardians.length > 0 && concepts.length > 0;
             return false;
         };
 
@@ -246,7 +255,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
     };
 
     const InvoicePreviewCard = () => (
-        <aside className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+        <aside
+            className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-300">
@@ -254,7 +264,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                     </p>
                     <p className="text-base font-black text-slate-950 dark:text-white">Factura/Aporte</p>
                 </div>
-                <span className="rounded-2xl bg-slate-50 px-3 py-2 text-right text-xs font-semibold text-slate-700 dark:bg-white/5 dark:text-slate-100">
+                <span
+                    className="rounded-2xl bg-slate-50 px-3 py-2 text-right text-xs font-semibold text-slate-700 dark:bg-white/5 dark:text-slate-100">
                     {saleReference}
                 </span>
             </div>
@@ -269,6 +280,17 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                             </p>
                             <p className="mt-1 text-slate-600 dark:text-slate-300">ID: {student.id}</p>
                         </>
+                    ) : (
+                        <p className="mt-1 text-slate-500 dark:text-slate-300">Sin seleccionar</p>
+                    )}
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/5">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">Curso</p>
+                    {course ? (
+                        <p className="mt-1 font-semibold text-slate-900 dark:text-white">
+                            {String(course.specialization?.name ?? "")} {course.division ? `- ${String(course.division)}` : ""}
+                        </p>
                     ) : (
                         <p className="mt-1 text-slate-500 dark:text-slate-300">Sin seleccionar</p>
                     )}
@@ -309,7 +331,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                 </div>
 
                 <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/5">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">
+                    <div
+                        className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">
                         <span>Conceptos</span>
                         <span className="font-semibold">{concepts.length}</span>
                     </div>
@@ -321,7 +344,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                 <div key={concept.id} className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{concept.label}</p>
-                                        {concept.note && <p className="truncate text-xs text-slate-500 dark:text-slate-300">{concept.note}</p>}
+                                        {concept.note &&
+                                            <p className="truncate text-xs text-slate-500 dark:text-slate-300">{concept.note}</p>}
                                     </div>
                                     <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(concept.amount)}</p>
                                 </div>
@@ -354,9 +378,9 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
     );
 
     const canContinue = () => {
-        if (step === "ESTUDIANTE") return Boolean(student?.id);
-        if (step === "PADRES") return Boolean(student?.id) && guardians.length > 0;
-        if (step === "APORTES") return Boolean(student?.id) && guardians.length > 0 && concepts.length > 0;
+        if (step === "ESTUDIANTE") return Boolean(student?.id) && Boolean(course?.id);
+        if (step === "PADRES") return Boolean(student?.id) && Boolean(course?.id) && guardians.length > 0;
+        if (step === "APORTES") return Boolean(student?.id) && Boolean(course?.id) && guardians.length > 0 && concepts.length > 0;
         return true;
     };
 
@@ -364,6 +388,10 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
         if (step === "ESTUDIANTE") {
             if (!student?.id) {
                 toast.error("Primero selecciona el estudiante.");
+                return;
+            }
+            if (!course?.id) {
+                toast.error("Selecciona el curso para continuar.");
                 return;
             }
             setStep("PADRES");
@@ -428,27 +456,33 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                 className="relative h-full w-[80vw] max-w-[1280px] overflow-hidden border-l border-slate-200/80 bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_58%,#ffffff_100%)] text-slate-900 shadow-[0_30px_80px_rgba(15,23,42,0.32)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#0b1220_0%,#0b1220_35%,#111827_100%)] dark:text-slate-100"
             >
                 <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -top-24 right-12 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/15"/>
-                    <div className="absolute bottom-0 left-8 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl dark:bg-indigo-500/15"/>
+                    <div
+                        className="absolute -top-24 right-12 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/15"/>
+                    <div
+                        className="absolute bottom-0 left-8 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl dark:bg-indigo-500/15"/>
                 </div>
 
                 <div className="relative flex h-full flex-col">
-                    <header className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-5 py-4 lg:px-6 dark:border-white/10">
+                    <header
+                        className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-5 py-4 lg:px-6 dark:border-white/10">
                         <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700 dark:border-white/10 dark:bg-white/5 dark:text-cyan-200">
+                                <span
+                                    className="rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700 dark:border-white/10 dark:bg-white/5 dark:text-cyan-200">
                                     Caja escolar
                                 </span>
-                                <span className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white dark:bg-white/10 dark:text-slate-100">
+                                <span
+                                    className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white dark:bg-white/10 dark:text-slate-100">
                                     Aporte escolar
                                 </span>
                             </div>
                             <div className="space-y-2">
-                                <h2 id="commercial-collection-title" className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl dark:text-white">
+                                <h2 id="commercial-collection-title"
+                                    className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl dark:text-white">
                                     Aporte escolar
                                 </h2>
                                 <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                                    Registra aportes/pagos escolares y conceptos libres rapidamente.
+                                    Registra pagos escolares y conceptos libres rapidamente.
                                 </p>
                             </div>
                         </div>
@@ -465,7 +499,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                     <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-6">
                         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
                             <div className="space-y-4">
-                                <section className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                <section
+                                    className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
                                     <Stepper/>
                                 </section>
 
@@ -474,31 +509,61 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                 )}
 
                                 {step === "ESTUDIANTE" && (
-                                    <StudentStep
-                                        selected={student}
-                                        onSelect={(value) => {
-                                            setStudent(value);
-                                            setClientName(`${String(value.firstname ?? "")} ${String(value.lastname ?? "")}`.trim() || "Cliente general");
-                                            setDocumentNumber(String(value.document ?? ""));
-                                        }}
-                                    />
+                                    <>
+                                        <StudentStep
+                                            selected={student}
+                                            locked={Boolean(student?.id)}
+                                            onUnlock={() => {
+                                                setStudent(null);
+                                                setCourse(null);
+                                                setGuardians([]);
+                                            }}
+                                            onSelect={(value) => {
+                                                setStudent(value);
+                                                setCourse(null);
+                                                setClientName(`${String(value.firstname ?? "")} ${String(value.lastname ?? "")}`.trim() || "Cliente general");
+                                                setDocumentNumber(String(value.document ?? ""));
+                                            }}
+                                        />
+                                        {student?.id && (
+                                            <section
+                                                className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                                <div className="mb-3">
+                                                    <div
+                                                        className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white dark:bg-white/10">
+                                                        Paso 2B
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-300"/>
+                                                        Curso
+                                                    </div>
+                                                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                                        Escribe para buscar y selecciona el curso.
+                                                    </p>
+                                                </div>
+                                                <CourseSelect value={course} onChange={setCourse}/>
+                                            </section>
+                                        )}
+                                    </>
                                 )}
 
                                 {step === "APORTES" && (
                                     <>
-                                        <section className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
-                                        <div className="mb-4 flex items-center justify-between gap-3">
-                                            <div>
-                                                <h3 className="text-base font-bold text-slate-950 dark:text-white">Datos del aporte</h3>
-                                                <p className="text-sm text-slate-500 dark:text-slate-300">Completa los datos base del aporte escolar.</p>
-                                            </div>
-                                                <div className="rounded-2xl bg-slate-50 px-4 py-2 text-right dark:bg-white/5">
+                                        <section
+                                            className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                            <div className="mb-4 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-slate-950 dark:text-white">Datos
+                                                        del aporte</h3>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-300">Completa
+                                                        los datos base del aporte escolar.</p>
+                                                </div>
+                                                <div
+                                                    className="rounded-2xl bg-slate-50 px-4 py-2 text-right dark:bg-white/5">
                                                     <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-300">Referencia</p>
                                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">{saleReference}</p>
                                                 </div>
-                                        </div>
+                                            </div>
 
-                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="grid gap-4 md:grid-cols-2">
                                                 <Input
                                                     label="Cliente o tutor"
                                                     error={undefined}
@@ -562,145 +627,163 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                             </div>
                                         </section>
 
-                                <section className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
-                                    <div className="mb-5 flex items-center justify-between gap-3">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-950 dark:text-white">Aportes / conceptos</h3>
-                                            <p className="text-sm text-slate-500 dark:text-slate-300">Agrega cualquier aporte, aunque no exista en la app.</p>
-                                        </div>
-                                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                        <section
+                                            className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                            <div className="mb-5 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-slate-950 dark:text-white">Aportes
+                                                        / conceptos</h3>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-300">Agrega
+                                                        cualquier aporte, aunque no exista en la app.</p>
+                                                </div>
+                                                <span
+                                                    className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                                             {concepts.length} concepto{concepts.length === 1 ? "" : "s"}
                                         </span>
-                                    </div>
-
-                                    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.6fr_0.8fr_auto]">
-                                        <Input
-                                            label="Concepto"
-                                            error={undefined}
-                                            value={conceptLabel}
-                                            onChange={(event) => setConceptLabel(event.target.value)}
-                                            placeholder="Ej: Cuota de transporte"
-                                        />
-                                        <Input
-                                            label="Monto"
-                                            error={undefined}
-                                            type="number"
-                                            inputMode="decimal"
-                                            min="0"
-                                            step="0.01"
-                                            value={conceptAmount}
-                                            onChange={(event) => setConceptAmount(event.target.value)}
-                                            placeholder="0.00"
-                                        />
-                                        <Input
-                                            label="Detalle opcional"
-                                            error={undefined}
-                                            value={conceptNote}
-                                            onChange={(event) => setConceptNote(event.target.value)}
-                                            placeholder="Descripcion corta"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleAddConcept}
-                                            className="mt-6 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800"
-                                        >
-                                            <i className="fa fa-plus mr-2"/>
-                                            Agregar
-                                        </button>
-                                    </div>
-
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        {suggestedConcepts.map((concept) => (
-                                            <button
-                                                key={concept.label}
-                                                type="button"
-                                                onClick={() => handleQuickConcept(concept.label, concept.amount)}
-                                                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
-                                            >
-                                                + {concept.label}
-                                                <span className="ml-2 text-xs text-slate-500">{formatMoney(concept.amount)}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="mt-5 space-y-3">
-                                        {concepts.length === 0 ? (
-                                            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-8 text-center">
-                                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
-                                                    <i className="fa fa-receipt"/>
-                                                </div>
-                                                <h4 className="text-base font-semibold text-slate-900">Sin conceptos agregados</h4>
-                                                <p className="mt-1 text-sm text-slate-500">
-                                                    Escribe un concepto libre o usa una sugerencia rapida.
-                                                </p>
                                             </div>
-                                        ) : (
-                                            concepts.map((concept) => (
-                                                <article
-                                                    key={concept.id}
-                                                    className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 md:flex-row md:items-center md:justify-between"
+
+                                            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.6fr_0.8fr_auto]">
+                                                <Input
+                                                    label="Concepto"
+                                                    error={undefined}
+                                                    value={conceptLabel}
+                                                    onChange={(event) => setConceptLabel(event.target.value)}
+                                                    placeholder="Ej: Cuota de transporte"
+                                                />
+                                                <Input
+                                                    label="Monto"
+                                                    error={undefined}
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={conceptAmount}
+                                                    onChange={(event) => setConceptAmount(event.target.value)}
+                                                    placeholder="0.00"
+                                                />
+                                                <Input
+                                                    label="Detalle opcional"
+                                                    error={undefined}
+                                                    value={conceptNote}
+                                                    onChange={(event) => setConceptNote(event.target.value)}
+                                                    placeholder="Descripcion corta"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddConcept}
+                                                    className="mt-6 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800"
                                                 >
-                                                    <div className="min-w-0">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h4 className="text-sm font-semibold text-slate-950">{concept.label}</h4>
-                                                            {concept.note && (
-                                                                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                                                    {concept.note}
-                                                                </span>
-                                                            )}
+                                                    <i className="fa fa-plus mr-2"/>
+                                                    Agregar
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {suggestedConcepts.map((concept) => (
+                                                    <button
+                                                        key={concept.label}
+                                                        type="button"
+                                                        onClick={() => handleQuickConcept(concept.label, concept.amount)}
+                                                        className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+                                                    >
+                                                        + {concept.label}
+                                                        <span
+                                                            className="ml-2 text-xs text-slate-500">{formatMoney(concept.amount)}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className="mt-5 space-y-3">
+                                                {concepts.length === 0 ? (
+                                                    <div
+                                                        className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-8 text-center">
+                                                        <div
+                                                            className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+                                                            <i className="fa fa-receipt"/>
                                                         </div>
-                                                        <p className="mt-1 text-xs text-slate-500">
-                                                            Concepto libre agregado manualmente.
+                                                        <h4 className="text-base font-semibold text-slate-900">Sin
+                                                            conceptos agregados</h4>
+                                                        <p className="mt-1 text-sm text-slate-500">
+                                                            Escribe un concepto libre o usa una sugerencia rapida.
                                                         </p>
                                                     </div>
+                                                ) : (
+                                                    concepts.map((concept) => (
+                                                        <article
+                                                            key={concept.id}
+                                                            className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 md:flex-row md:items-center md:justify-between"
+                                                        >
+                                                            <div className="min-w-0">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <h4 className="text-sm font-semibold text-slate-950">{concept.label}</h4>
+                                                                    {concept.note && (
+                                                                        <span
+                                                                            className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                                                                    {concept.note}
+                                                                </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="mt-1 text-xs text-slate-500">
+                                                                    Concepto libre agregado manualmente.
+                                                                </p>
+                                                            </div>
 
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                                                            <div className="flex items-center gap-3">
+                                                        <span
+                                                            className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-950 shadow-sm">
                                                             {formatMoney(concept.amount)}
                                                         </span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeConcept(concept.id)}
-                                                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:text-rose-600"
-                                                            aria-label={`Eliminar concepto ${concept.label}`}
-                                                        >
-                                                            <i className="fa fa-times"/>
-                                                        </button>
-                                                    </div>
-                                                </article>
-                                            ))
-                                        )}
-                                    </div>
-                                </section>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeConcept(concept.id)}
+                                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:text-rose-600"
+                                                                    aria-label={`Eliminar concepto ${concept.label}`}
+                                                                >
+                                                                    <i className="fa fa-times"/>
+                                                                </button>
+                                                            </div>
+                                                        </article>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </section>
 
-                                <section className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
-                                    <h3 className="text-base font-bold text-slate-950 dark:text-white">Actividad y contexto</h3>
-                                    <div className="mt-4 space-y-3">
-                                        <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
-                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Estado</p>
-                                            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Aporte listo para revisar</p>
-                                        </div>
-                                        <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
-                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Origen</p>
-                                            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Ingreso manual desde caja escolar</p>
-                                        </div>
-                                        <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
-                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Nota</p>
-                                            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{notes}</p>
-                                        </div>
-                                    </div>
-                                </section>
-                            </>
-                        )}
+                                        <section
+                                            className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                            <h3 className="text-base font-bold text-slate-950 dark:text-white">Actividad
+                                                y contexto</h3>
+                                            <div className="mt-4 space-y-3">
+                                                <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
+                                                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Estado</p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Aporte
+                                                        listo para revisar</p>
+                                                </div>
+                                                <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
+                                                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Origen</p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Ingreso
+                                                        manual desde caja escolar</p>
+                                                </div>
+                                                <div className="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
+                                                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">Nota</p>
+                                                    <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{notes}</p>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </>
+                                )}
 
                                 {step === "REVISION" && (
-                                    <section className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
+                                    <section
+                                        className="rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5">
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <h3 className="text-base font-bold text-slate-950 dark:text-white">Revision final</h3>
-                                                <p className="text-sm text-slate-500 dark:text-slate-300">Verifica todo antes de registrar.</p>
+                                                <h3 className="text-base font-bold text-slate-950 dark:text-white">Revision
+                                                    final</h3>
+                                                <p className="text-sm text-slate-500 dark:text-slate-300">Verifica todo
+                                                    antes de registrar.</p>
                                             </div>
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                            <span
+                                                className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                                                 Lista para registrar
                                             </span>
                                         </div>
@@ -708,7 +791,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                         <div className="mt-4 grid gap-4 md:grid-cols-2">
                                             <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/5">
                                                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">Representantes</p>
-                                                <div className="mt-2 space-y-1 text-sm font-semibold text-slate-900 dark:text-white">
+                                                <div
+                                                    className="mt-2 space-y-1 text-sm font-semibold text-slate-900 dark:text-white">
                                                     {guardians.map((guardian) => (
                                                         <p key={guardian.document}>
                                                             {guardian.firstname} {guardian.lastname} - {guardian.document}
@@ -728,10 +812,12 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                             <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">Conceptos</p>
                                             <div className="mt-3 space-y-2">
                                                 {concepts.map((concept) => (
-                                                    <div key={concept.id} className="flex items-start justify-between gap-3">
+                                                    <div key={concept.id}
+                                                         className="flex items-start justify-between gap-3">
                                                         <div className="min-w-0">
                                                             <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{concept.label}</p>
-                                                            {concept.note && <p className="truncate text-xs text-slate-500 dark:text-slate-300">{concept.note}</p>}
+                                                            {concept.note &&
+                                                                <p className="truncate text-xs text-slate-500 dark:text-slate-300">{concept.note}</p>}
                                                         </div>
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(concept.amount)}</p>
                                                     </div>
@@ -741,7 +827,8 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                     </section>
                                 )}
 
-                                <section className="sticky bottom-0 -mx-5 border-t border-slate-200/80 bg-white/85 px-5 py-4 backdrop-blur dark:border-white/10 dark:bg-slate-950/40 xl:static xl:mx-0 xl:border-none xl:bg-transparent xl:px-0 xl:py-0 xl:backdrop-blur-0">
+                                <section
+                                    className="sticky bottom-0 -mx-5 border-t border-slate-200/80 bg-white/85 px-5 py-4 backdrop-blur dark:border-white/10 dark:bg-slate-950/40 xl:static xl:mx-0 xl:border-none xl:bg-transparent xl:px-0 xl:py-0 xl:backdrop-blur-0">
                                     <div className="flex items-center justify-between gap-3">
                                         <button
                                             type="button"

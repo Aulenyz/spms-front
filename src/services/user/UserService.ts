@@ -13,6 +13,11 @@ export class UserService extends BaseService<User> {
         super('/users');
     }
 
+    updateStatus(id: number | string, status: UserStatus): Promise<User> {
+        // Backend expects a raw enum in the request body.
+        return this.put<User>(`/${id}/status`, status);
+    }
+
     async current(): Promise<User> {
         return super.get<User>('/current');
     }

@@ -1,45 +1,49 @@
 import {useEffect, useState} from "react";
-import {State} from "../../domain/types/steoreotype.ts";
-import {mapColor, statusOrder, UserStatus, UserStatusLabel} from "../../domain/model/user/user.ts";
 import {UserService} from "../../services/user/UserService.ts";
+import {State} from "../../domain/types/steoreotype.ts";
+import {mapColor, UserStatus, UserStatusLabel} from "../../domain/model/user/user.ts";
 
 const userService: UserService = UserService.instance;
 
-export const UserBreadcrumb = () => {
-
-    const [status, setStatus]: State<Record<UserStatus, number>> = useState<Record<UserStatus, number>>({} as Record<UserStatus, number>)
+export const UserBreadcrumb = ({onInvite}: {onInvite: () => void}) => {
+    const [status, setStatus]: State<Record<UserStatus, number>> = useState<Record<UserStatus, number>>({} as Record<UserStatus, number>);
 
     useEffect(() => {
-        userService.getTotalByStatus().then(setStatus)
+        userService.getTotalByStatus().then(setStatus).catch(() => setStatus({} as Record<UserStatus, number>));
     }, []);
 
-    return (<div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-            <div className="flex flex-col justify-center gap-2">
-                <h1 className="text-xl font-medium leading-none text-gray-900">
-                    Listado de Usuarios
-                </h1>
-                <div className="flex items-center flex-wrap gap-2 font-medium">
-                    {statusOrder.map((key) => {
-                        if (status[key] === undefined) return null;
-                        const colorClass = mapColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
-                        return (
-                            <div key={key}
-                                 className={`flex items-center gap-1 px-2 py-1 rounded-full border ${colorClass}`}>
-                                <span className="text-sm font-medium">
-                                    {UserStatusLabel[key]}:
-                                </span>
-                                <span className="text-sm font-semibold">{status[key]} </span>
-                            </div>);
-                    })}
-                </div>
+    return (
+        <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
+            style={{
+                borderColor: "var(--border-soft)",
+                background: "color-mix(in srgb, var(--surface) 95%, transparent)",
+                boxShadow: "var(--shadow-soft)",
+            }}
+        >
+            <div className="flex flex-wrap items-center gap-2">
+                {Object.keys(status).map((value: string, index: number) => {
+                    const key = value as keyof typeof UserStatus;
+                    const colorClass = mapColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
+                    return (
+                        <div
+                            key={index}
+                            className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
+                        >
+                            <span className="text-sm font-medium">{UserStatusLabel[key]}:</span>
+                            <span className="text-sm font-semibold">{status[key as UserStatus]}</span>
+                        </div>
+                    );
+                })}
             </div>
 
-            <div className="flex items-center gap-2.5">
-                <a className="btn btn-sm btn-primary" href="#">
-                    <i className="fa fa-user-plus me-1"/>
-                    Registrar
-                </a>
+            <div className="flex items-center gap-2">
+                <button className="btn btn-sm btn-success" onClick={onInvite} type="button">
+                    <i className="fa fa-paper-plane me-1"/>
+                    Invitar usuario
+                </button>
             </div>
         </div>
-    )
-}
+    );
+};
+

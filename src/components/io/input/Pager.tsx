@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {Page, Pageable} from "../../../domain/filters/Page.ts";
+import {DropdownSelect} from "./DropdownSelect.tsx";
 
 export type PagerParams = {
     page: Page<unknown>;
@@ -13,15 +14,15 @@ export type PagerParams = {
 };
 
 export const Pager = ({
-    page,
-    onChange,
-    onPageSizeChange,
-    pageSizeOptions = [5, 10, 20],
-    showSummary = true,
-    compact = false,
-    className,
-    paginationClassName,
-}: PagerParams) => {
+                          page,
+                          onChange,
+                          onPageSizeChange,
+                          pageSizeOptions = [5, 10, 20],
+                          showSummary = true,
+                          compact = false,
+                          className,
+                          paginationClassName,
+                      }: PagerParams) => {
     const pageable: Pageable = page.page ?? new Pageable();
     const {
         number: currentPage,
@@ -57,17 +58,20 @@ export const Pager = ({
                 {!compact && onPageSizeChange && (
                     <label className="pager-size-control">
                         <span>Ver</span>
-                        <select
-                            className="select select-sm pager-size-select"
-                            value={pageSize}
-                            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-                        >
-                            {pageSizeOptions.map((sizeOption) => (
-                                <option key={sizeOption} value={sizeOption}>
-                                    {sizeOption}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="min-w-[120px]">
+                            <DropdownSelect
+                                text="Tamano"
+                                hasError={false}
+                                value={pageSize}
+                                onSelect={(value) => onPageSizeChange(Number(value))}
+                                options={pageSizeOptions.map((sizeOption) => ({
+                                    value: sizeOption,
+                                    description: String(sizeOption),
+                                }))}
+                                className="w-full"
+                                portal
+                            />
+                        </div>
                         <span>por pagina</span>
                     </label>
                 )}

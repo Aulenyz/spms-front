@@ -1,8 +1,9 @@
 import {useForm} from "react-hook-form";
 import {useEffect} from "react";
-import {Select, SelectOption} from "../../../components/io/output/Select.tsx";
+import {SelectOption} from "../../../components/io/output/Select.tsx";
 import {UseForm} from "../../types/steoreotype.ts";
 import {InvitationStatus} from "../../model/user/user.ts";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 const placeholders: Record<string, string> = {
     name: 'Ingrese el correo',
@@ -37,7 +38,6 @@ export const UserInvitationFilter = (props: { onFilter: (value: Record<string, s
 
     const {
         register,
-        handleSubmit,
         watch,
         setValue
     }: UseForm<UserInvitationFilterFormValue> = useForm<UserInvitationFilterFormValue>({
@@ -55,19 +55,33 @@ export const UserInvitationFilter = (props: { onFilter: (value: Record<string, s
 
     useEffect(() => setValue('criteria', ''), [watch('status'), watch('searchBy')]);
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            handleFilter({
+                status: watch("status"),
+                searchBy: watch("searchBy"),
+                criteria: watch("criteria") ?? "",
+            });
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("status"), watch("searchBy"), watch("criteria")]);
+
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+        <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
             <div className="w-full sm:w-[140px]">
-                <Select {...register('status')} className="select-sm w-full" options={useStatusFilter}></Select>
+                <DropdownSelect
+                    text="Estado"
+                    hasError={false}
+                    options={useStatusFilter}
+                    value={watch("status")}
+                    onSelect={(value) => setValue("status", value as InvitationStatus)}
+                    className="w-full"
+                />
             </div>
             <label className="input input-sm w-full sm:w-56">
                 <i className="fa fa-user me-1"/>
                 <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
             </label>
-            <button className="btn btn-sm btn-outline btn-primary">
-                <i className="fa fa-search"/>
-                Filtrar
-            </button>
         </form>
     );
 };

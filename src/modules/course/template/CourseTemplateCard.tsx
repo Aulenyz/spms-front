@@ -14,10 +14,13 @@ const TEMPLATE_GRADIENTS = [
 
 export const CourseTemplateCard = ({courseTemplate}: Props) => {
     const {specialization, count} = courseTemplate;
-    const {name, description, type} = specialization;
+    const name = specialization?.name ?? courseTemplate.name ?? "Plantilla";
+    const description = specialization?.description ?? "";
+    const type = specialization?.type ?? courseTemplate.type;
 
     const initials = useMemo(() => (
-        name
+        (name ?? "")
+            .toString()
             .split(" ")
             .map((word) => word.charAt(0).toUpperCase())
             .slice(0, 2)
@@ -63,7 +66,7 @@ export const CourseTemplateCard = ({courseTemplate}: Props) => {
                 <div className="flex items-center justify-between gap-3 border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
                     <div className="inline-flex items-center gap-2 text-sm" style={{color: "var(--text-secondary)"}}>
                         <i className="fa fa-layer-group"/>
-                        <span>{GradeTypeLabel[type]}</span>
+                        <span>{type ? GradeTypeLabel[type] : "Sin tipo"}</span>
                     </div>
                     <span
                         className="rounded-full px-2.5 py-1 text-xs font-semibold"

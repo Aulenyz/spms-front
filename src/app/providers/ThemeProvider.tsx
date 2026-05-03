@@ -16,6 +16,9 @@ type ThemeContextValue = {
 };
 
 const STORAGE_KEY = "spms-theme";
+// Temporary product decision: force light mode regardless of system/user preference.
+// Flip to `false` to re-enable dark mode using the stored/system value.
+const FORCE_LIGHT_MODE = true;
 
 const ThemeContext = createContext<ThemeContextValue>({
     theme: "light",
@@ -24,6 +27,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 const resolveInitialTheme = (): ThemeMode => {
+    if (FORCE_LIGHT_MODE) return "light";
     const storedTheme = window.localStorage.getItem(STORAGE_KEY);
     if (storedTheme === "light" || storedTheme === "dark") {
         return storedTheme;
@@ -36,16 +40,26 @@ export const ThemeProvider = ({children}: { children: ReactNode }) => {
     const [theme, setTheme] = useState<ThemeMode>(resolveInitialTheme);
 
     useEffect(() => {
-        document.documentElement.classList.toggle("dark", theme === "dark");
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-        window.localStorage.setItem(STORAGE_KEY, theme);
+        const effectiveTheme: ThemeMode = FORCE_LIGHT_MODE ? "light" : theme;
+
+        document.documentElement.classList.toggle("dark", effectiveTheme === "dark");
+        document.documentElement.dataset.theme = effectiveTheme;
+        document.documentElement.style.colorScheme = effectiveTheme;
+        window.localStorage.setItem(STORAGE_KEY, effectiveTheme);
+
+        if (FORCE_LIGHT_MODE && theme !== "light") {
+            // Keep state consistent to avoid consumers thinking we're in dark mode.
+            setTheme("light");
+        }
     }, [theme]);
 
     const value = useMemo<ThemeContextValue>(() => ({
         theme,
         setTheme,
-        toggleTheme: () => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark"),
+        toggleTheme: () => {
+            if (FORCE_LIGHT_MODE) return;
+            setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark");
+        },
     }), [theme]);
 
     return (

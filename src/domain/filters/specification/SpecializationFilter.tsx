@@ -1,5 +1,7 @@
 import {useForm} from "react-hook-form";
 import {GradeType, GradeTypeLabel} from "../../model/course/Course.ts";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
+import {useEffect} from "react";
 
 export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<string, any>) => void }) => {
     const {watch, setValue} = useForm({
@@ -22,36 +24,44 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
         });
     };
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            handleFilter();
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("name"), watch("type"), watch("active")]);
+
     return (
         <div className="flex flex-wrap items-end gap-2.5">
             <div className="w-full sm:w-[140px]">
-                <select
-                    className="select select-sm w-full"
+                <DropdownSelect
+                    text="Estado"
+                    hasError={false}
                     value={watch("active")}
-                    onChange={(e) => handleChange("active", e.target.value)}
-                >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                </select>
+                    onSelect={(value) => handleChange("active", String(value ?? "true"))}
+                    className="w-full"
+                    options={[
+                        {value: "true", description: "Activo"},
+                        {value: "false", description: "Inactivo"},
+                    ]}
+                />
             </div>
 
             <div className="w-full sm:w-[160px]">
-                <select
-                    className="select select-sm w-full"
+                <DropdownSelect
+                    text="Tipo"
+                    hasError={false}
                     value={watch("type")}
-                    onChange={(e) => handleChange("type", e.target.value)}
-                >
-                    <option value="">Todos</option>
-
-                    {Object.keys(GradeType).map((t) => {
-                        const key = t as keyof typeof GradeType;
-                        return (
-                            <option key={key} value={GradeType[key]}>
-                                {GradeTypeLabel[GradeType[key]]}
-                            </option>
-                        );
-                    })}
-                </select>
+                    onSelect={(value) => handleChange("type", String(value ?? ""))}
+                    className="w-full"
+                    options={[
+                        {value: "", description: "Todos"},
+                        ...Object.keys(GradeType).map((t) => {
+                            const key = t as keyof typeof GradeType;
+                            return {value: GradeType[key], description: GradeTypeLabel[GradeType[key]]};
+                        }),
+                    ]}
+                />
             </div>
 
             <div className="w-full sm:w-56">
@@ -63,11 +73,6 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                     onChange={(e) => handleChange("name", e.target.value)}
                 />
             </div>
-
-            <button type="button" className="btn btn-sm btn-outline btn-primary" onClick={handleFilter}>
-                <i className="fa fa-search mr-1"/>
-                Filtrar
-            </button>
         </div>
     );
 };

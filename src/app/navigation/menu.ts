@@ -23,32 +23,57 @@ export const navigationSections: NavigationSection[] = [
         ],
     },
     {
-        title: "Operacion",
+        title: "Gestión académica",
         items: [
-            {
-                label: "Inscripciones",
-                icon: "fa-file-signature",
-                to: "/enrollments/list",
-            },
             {
                 label: "Estudiantes",
                 icon: "fa-user-graduate",
                 to: "/students/list",
             },
             {
-                label: "Pagos",
-                icon: "fa-wallet",
-                to: "/payments/list",
+                label: "Cursos",
+                icon: "fa-book",
+                to: "/courses/list",
             },
             {
-                label: "Unidades",
+                label: "Materias",
                 icon: "fa-book-open",
+                to: "/subjects/list",
+            },
+            {
+                label: "Profesores",
+                icon: "fa-chalkboard-user",
+                to: "/teachers/list",
+            },
+            {
+                label: "Calificaciones",
+                icon: "fa-clipboard-check",
+                to: "/grades/list",
+            },
+            {
+                label: "Áreas especializadas",
+                icon: "fa-shapes",
                 to: "/specializations/list",
             },
         ],
     },
     {
-        title: "Configuracion",
+        title: "Gestión docente",
+        items: [
+            {
+                label: "Mis clases",
+                icon: "fa-chalkboard",
+                to: "/teacher/classes",
+            },
+            {
+                label: "Mi horario",
+                icon: "fa-calendar-days",
+                to: "/teacher/schedule",
+            },
+        ],
+    },
+    {
+        title: "Finanzas",
         items: [
             {
                 label: "Nueva cobranza",
@@ -57,20 +82,66 @@ export const navigationSections: NavigationSection[] = [
                 badge: "Nuevo",
             },
             {
-                label: "Usuarios",
+                label: "Facturas",
+                icon: "fa-file-invoice-dollar",
+                to: "/invoices/list",
+            },
+            {
+                label: "Pendientes de cobro",
+                icon: "fa-calendar-check",
+                to: "/tuition/list",
+            },
+            {
+                label: "Descuentos",
+                icon: "fa-tags",
+                to: "/discounts/list",
+            },
+        ],
+    },
+    {
+        title: "Administración",
+        items: [
+            {
+                label: "Inscripciones",
+                icon: "fa-file-signature",
+                to: "/enrollments/list",
+            },
+            {
+                label: "Gestión Usuarios",
                 icon: "fa-users-gear",
                 to: "/users",
             },
             {
-                label: "Plantillas",
+                label: "Padres / Tutores",
+                icon: "fa-people-roof",
+                to: "/guardians/list",
+            },
+        ],
+    },
+    {
+        title: "Configuración",
+        items: [
+            {
+                label: "Configuración plantillas",
                 icon: "fa-layer-group",
                 to: "/courses/templates",
+            },
+            {
+                label: "Configuración general",
+                icon: "fa-gear",
+                to: "/settings",
             },
         ],
     },
 ];
 
 export const secondaryQuickLinks: NavigationItem[] = [
-    {label: "Reportes", icon: "fa-file-lines"},
-    {label: "Ayuda", icon: "fa-life-ring"},
+    {
+        label: "Reportes",
+        icon: "fa-file-lines",
+    },
+    {
+        label: "Ayuda",
+        icon: "fa-life-ring",
+    },
 ];

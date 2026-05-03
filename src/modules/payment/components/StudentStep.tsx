@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import clsx from "clsx";
 import {toast} from "react-toastify";
 import {useForm} from "react-hook-form";
@@ -10,13 +10,15 @@ import {Student, StudentFormValues} from "../../../domain/student/Student.ts";
 import {StudentSchema} from "../../../schemas/StudentSchema.ts";
 import {StudentService} from "../../../services/student/StudentService.ts";
 import {Gender, Genders} from "../../../domain/model/user/user.ts";
-import {Page, Pagination} from "../../../domain/filters/Page.ts";
+import {Pagination} from "../../../domain/filters/Page.ts";
 
 type Mode = "SEARCH" | "CREATE";
 
 interface Props {
     selected: Student | null;
     onSelect: (student: Student) => void;
+    locked?: boolean;
+    onUnlock?: () => void;
 }
 
 const studentService = StudentService.instance;
@@ -33,11 +35,18 @@ const getApiErrorMessage = (error: unknown) => {
 
 const fullName = (student: Student) => `${student.firstname ?? ""} ${student.lastname ?? ""}`.trim();
 
-export const StudentStep = ({selected, onSelect}: Props) => {
+export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Props) => {
     const [mode, setMode] = useState<Mode>("SEARCH");
     const [term, setTerm] = useState("");
     const [isSearching, setIsSearching] = useState(false);
-    const [results, setResults] = useState<Page<Student>>(Pagination.empty<Student>());
+    const [items, setItems] = useState<Student[]>([]);
+    const [pageNumber, setPageNumber] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    const pageSize = 4;
+    const scrollRef = useRef<HTMLDivElement | null>(null);
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
 
     const {
         register,
@@ -54,7 +63,9 @@ export const StudentStep = ({selected, onSelect}: Props) => {
         if (mode === "CREATE") {
             return;
         }
-        setResults(Pagination.empty<Student>());
+        setItems([]);
+        setPageNumber(0);
+        setHasMore(false);
     }, [mode]);
 
     const hasSelected = Boolean(selected?.id);
@@ -69,6 +80,12 @@ export const StudentStep = ({selected, onSelect}: Props) => {
         );
     }, [selected]);
 
+    const computeHasMore = (page: {page?: {number?: number; totalPages?: number}}) => {
+        const current = page.page?.number ?? 0;
+        const total = page.page?.totalPages ?? 1;
+        return current + 1 < total;
+    };
+
     const handleSearch = async () => {
         const normalized = term.trim();
         if (!normalized) {
@@ -77,9 +94,11 @@ export const StudentStep = ({selected, onSelect}: Props) => {
         }
         setIsSearching(true);
         try {
-            const page = await studentService.search(normalized, {...Pagination.first, size: 8});
-            setResults(page);
-            if (page.content.length === 0) {
+            const page = await studentService.search(normalized, {...Pagination.first, size: pageSize});
+            setItems(page.content ?? []);
+            setPageNumber(page.page?.number ?? 0);
+            setHasMore(computeHasMore(page));
+            if ((page.content ?? []).length === 0) {
                 toast.info("No se encontro estudiante. Puedes crearlo.");
             }
         } catch (error) {
@@ -89,6 +108,51 @@ export const StudentStep = ({selected, onSelect}: Props) => {
         }
     };
 
+    const loadMore = async () => {
+        const normalized = term.trim();
+        if (!normalized || isSearching || isLoadingMore || !hasMore) return;
+
+        setIsLoadingMore(true);
+        try {
+            const nextPage = pageNumber + 1;
+            const page = await studentService.search(normalized, {page: nextPage, size: pageSize});
+            const nextItems = page.content ?? [];
+            setItems((prev) => {
+                const seen = new Set(prev.map((student) => student.id));
+                const merged = [...prev];
+                nextItems.forEach((student) => {
+                    if (!seen.has(student.id)) merged.push(student);
+                });
+                return merged;
+            });
+            setPageNumber(page.page?.number ?? nextPage);
+            setHasMore(computeHasMore(page));
+        } catch (error) {
+            toast.error(getApiErrorMessage(error) ?? "Error cargando mas estudiantes.");
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
+
+    useEffect(() => {
+        const root = scrollRef.current;
+        const sentinel = sentinelRef.current;
+        if (!root || !sentinel) return;
+        if (locked) return;
+        if (!hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (!entries.some((entry) => entry.isIntersecting)) return;
+                void loadMore();
+            },
+            {root, rootMargin: "180px 0px", threshold: 0}
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, locked, isLoadingMore, isSearching, pageNumber, term]);
+
     const handleCreate = async (values: StudentFormValues) => {
         try {
             const created = await studentService.create<StudentFormValues>("", values);
@@ -96,8 +160,11 @@ export const StudentStep = ({selected, onSelect}: Props) => {
             onSelect(created);
             reset();
             setMode("SEARCH");
-            setTerm(fullName(created));
-            setResults({...(Pagination.empty<Student>()), content: [created], page: {size: 1, number: 0, totalElements: 1, totalPages: 1}});
+            const createdDocument = String((created as Partial<Student>).document ?? "").trim();
+            setTerm(createdDocument || fullName(created));
+            setItems([created]);
+            setPageNumber(0);
+            setHasMore(false);
         } catch (error) {
             toast.error(getApiErrorMessage(error) ?? "Error creando el estudiante.");
         }
@@ -117,13 +184,14 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                         <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
                             Por matricula o nombre. Si no existe, puedes registrarlo aqui mismo.
                         </p>
-                        {selectedBadge}
+                        {!locked && selectedBadge}
                     </div>
 
                     <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/70 p-1 dark:border-white/10 dark:bg-white/5">
                         <button
                             type="button"
                             onClick={() => setMode("SEARCH")}
+                            disabled={locked}
                             className={clsx(
                                 "h-10 rounded-xl px-4 text-sm font-semibold transition",
                                 mode === "SEARCH"
@@ -136,6 +204,7 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                         <button
                             type="button"
                             onClick={() => setMode("CREATE")}
+                            disabled={locked}
                             className={clsx(
                                 "h-10 rounded-xl px-4 text-sm font-semibold transition",
                                 mode === "CREATE"
@@ -148,7 +217,27 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                     </div>
                 </div>
 
-                {mode === "SEARCH" && (
+                {locked && selected && (
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 dark:border-emerald-400/20 dark:bg-emerald-500/10">
+                        <div className="min-w-0">
+                            <p className="truncate text-sm font-extrabold text-emerald-900 dark:text-emerald-200">
+                                {fullName(selected) || "Estudiante"}
+                            </p>
+                            <p className="mt-1 truncate text-xs font-semibold text-emerald-800/80 dark:text-emerald-200/80">
+                                {selected.document ? `Matricula/Doc: ${selected.document}` : "Matricula/Doc: —"}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={onUnlock}
+                            className="inline-flex h-10 items-center justify-center rounded-2xl border border-emerald-200 bg-white px-4 text-xs font-bold uppercase tracking-[0.18em] text-emerald-800 transition hover:bg-emerald-50 dark:border-emerald-400/20 dark:bg-white/5 dark:text-emerald-200 dark:hover:bg-white/10"
+                        >
+                            Cambiar
+                        </button>
+                    </div>
+                )}
+
+                {mode === "SEARCH" && !locked && (
                     <form
                         className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end"
                         onSubmit={(event) => {
@@ -178,9 +267,20 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                     </form>
                 )}
 
-                {mode === "SEARCH" && results.content.length > 0 && (
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        {results.content.map((student) => {
+                {mode === "SEARCH" && !locked && items.length > 0 && (
+                    <div
+                        ref={scrollRef}
+                        className="mt-4 max-h-[260px] overflow-y-scroll overscroll-contain rounded-2xl border border-slate-200 bg-white/40 p-3 pr-2 touch-pan-y dark:border-white/10 dark:bg-white/5"
+                        onScroll={(event) => {
+                            const element = event.currentTarget;
+                            const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+                            if (distanceToBottom < 160) {
+                                void loadMore();
+                            }
+                        }}
+                    >
+                        <div className="grid gap-3 md:grid-cols-2">
+                        {items.map((student) => {
                             const isSelected = selected?.id === student.id;
                             return (
                                 <button
@@ -200,8 +300,7 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                                                 {fullName(student) || "Estudiante"}
                                             </p>
                                             <p className="mt-1 truncate text-xs font-semibold text-slate-500 dark:text-slate-300">
-                                                ID: {student.id}
-                                                {student.document ? ` - Doc: ${student.document}` : ""}
+                                                {student.document ? `Matricula/Doc: ${student.document}` : "Matricula/Doc: —"}
                                             </p>
                                         </div>
                                         <span
@@ -216,6 +315,18 @@ export const StudentStep = ({selected, onSelect}: Props) => {
                                 </button>
                             );
                         })}
+                        </div>
+
+                        <div ref={sentinelRef} className="h-1 w-full"/>
+
+                        <div className="pt-3 text-center">
+                            {isLoadingMore && (
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">Cargando mas...</span>
+                            )}
+                            {!isLoadingMore && hasMore && (
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">Desliza para ver mas</span>
+                            )}
+                        </div>
                     </div>
                 )}
 

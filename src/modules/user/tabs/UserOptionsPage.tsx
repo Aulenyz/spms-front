@@ -13,8 +13,7 @@ export const UserOptionsPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Gobernanza y acceso"
-                title="Administracion de usuarios"
+                title="Gestion de usuarios"
                 description="Gestiona cuentas, invitaciones, roles y permisos desde pantallas separadas y ordenadas."
             />
             <SectionTabs tabs={[

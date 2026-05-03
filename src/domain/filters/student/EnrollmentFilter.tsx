@@ -1,8 +1,8 @@
 import {Controller, useForm} from "react-hook-form";
 import {useEffect} from "react";
-import {Select} from "../../../components/io/output/Select.tsx";
 import {PlainValue} from "../../types/steoreotype.ts";
 import {PeriodSelect} from "../../../components/io/input/business/PeriodSelect.tsx";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 const backendKeys: Record<string, string> = {
     period: "periodId",
@@ -17,7 +17,7 @@ export type EnrollmentFilterFormValues = {
 };
 
 export const EnrollmentFilter = (props: { onFilter: (value: Record<string, PlainValue>) => void, selectedPeriodId: string | number }) => {
-    const {control, handleSubmit, watch, setValue} = useForm<EnrollmentFilterFormValues>({
+    const {control, watch, setValue} = useForm<EnrollmentFilterFormValues>({
         defaultValues: {
             searchBy: "status",
             periodId: props.selectedPeriodId || "",
@@ -52,8 +52,20 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
         props.onFilter(filters);
     };
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            handleFilter({
+                searchBy: watch("searchBy"),
+                criteria: watch("criteria"),
+                periodId: watch("periodId"),
+                status: watch("status"),
+            });
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("searchBy"), watch("criteria"), watch("periodId"), watch("status")]);
+
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+        <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
             <div className="w-full sm:w-48">
                 <Controller
                     name="periodId"
@@ -77,9 +89,12 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
                         name="status"
                         control={control}
                         render={({field}) => (
-                            <Select
-                                {...field}
-                                className="select-sm w-full"
+                            <DropdownSelect
+                                text="Estado"
+                                hasError={false}
+                                value={field.value}
+                                onSelect={field.onChange}
+                                className="w-full"
                                 options={[
                                     {description: "Inscrito", value: "ENROLLED"},
                                     {description: "Pendiente", value: "PENDING"},
@@ -91,10 +106,6 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
                 </div>
             )}
 
-            <button type="submit" className="btn btn-sm btn-outline btn-primary">
-                <i className="fa fa-search mr-1"/>
-                Filtrar
-            </button>
         </form>
     );
 };

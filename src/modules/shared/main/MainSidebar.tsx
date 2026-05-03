@@ -81,7 +81,7 @@ export const MainSidebar = ({
                                 <img src={logo} alt={APP_SHORT_NAME} className="app-brand-mark-image"/>
                             </span>
                             {!collapsed && (
-                                <span className="space-y-0.5">
+                                <span className="space-y-0.5    ">
                                     <strong>{APP_SHORT_NAME}</strong>
                                     <small>{APP_DESCRIPTOR}</small>
                                 </span>

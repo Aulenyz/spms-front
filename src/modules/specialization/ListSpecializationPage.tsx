@@ -14,7 +14,7 @@ import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 const specializationService = SpecializationService.instance;
 
 export const ListSpecializationPage = () => {
-    const [pagination, setPagination] = useState(Pagination.first);
+    const [pagination, setPagination] = useState(Pagination.ofSize(8));
     const [showModal, setShowModal] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
@@ -42,22 +42,42 @@ export const ListSpecializationPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Academico"
-                title="Unidades"
-                description="Administra las unidades academicas base usadas por cursos y plantillas."
+                title="Areas especializadas"
+                description="Administra las areas especializadas disponibles."
             />
 
+            <div
+                className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
+                style={{
+                    borderColor: "var(--border-soft)",
+                    background: "color-mix(in srgb, var(--surface) 95%, transparent)",
+                    boxShadow: "var(--shadow-soft)",
+                }}
+            >
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
+                        Mostrando {specializations.content.length} areas en esta pagina
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => setShowModal(true)}
+                    >
+                        <i className="fa fa-plus me-1"/>
+                        <span>Nueva area</span>
+                    </button>
+                </div>
+            </div>
+
             <DataTableCard
-                title="Unidades academicas"
-                description="Consulta y organiza la estructura academica disponible."
+                title="Areas especializadas"
+                description="Consulta las areas academica disponible."
                 actions={
                     <>
-                        <button onClick={() => setShowModal(true)} className="btn btn-sm btn-primary">
-                            <i className="fa fa-plus me-1"/>
-                            <span>Agregar</span>
-                        </button>
                         <LeftModal
-                            title="Agregar unidad"
+                            title="Agregar area"
                             isOpen={showModal}
                             onClose={() => setShowModal(false)}
                             className="w-[400px] h-full z-[9999]"
@@ -67,19 +87,28 @@ export const ListSpecializationPage = () => {
                     </>
                 }
                 filters={<SpecializationFilter onFilter={handleFilters}/>}
-                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={specializations}/>}
+                footer={
+                    <Pager
+                        onChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        pageSizeOptions={[4, 8, 12]}
+                        page={specializations}
+                    />
+                }
             >
                 {specializations.content.length === 0 ? (
                     <EmptyState
-                        title="No hay unidades academicas"
-                        description="Ajusta los filtros o agrega una nueva unidad."
+                        title="No hay areas especializadas"
+                        description="Ajusta los filtros o agrega una nueva area."
                         icon="fa-book-open"
                     />
                 ) : (
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                        {specializations.content.map((spec) => (
-                            <SpecializationCard key={spec.id} specialization={spec}/>
-                        ))}
+                        {[...specializations.content]
+                            .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                            .map((spec) => (
+                                <SpecializationCard key={spec.id} specialization={spec}/>
+                            ))}
                     </div>
                 )}
             </DataTableCard>

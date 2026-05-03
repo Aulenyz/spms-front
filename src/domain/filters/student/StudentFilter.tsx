@@ -1,8 +1,9 @@
 import {useForm} from "react-hook-form";
 import {useEffect} from "react";
 import {StudentStatus} from "../../student/Student.ts";
-import {Select, SelectOption} from "../../../components/io/output/Select.tsx";
+import {SelectOption} from "../../../components/io/output/Select.tsx";
 import {UseForm} from "../../types/steoreotype.ts";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 const placeholders: Record<string, string> = {
     firstname: 'Ingrese el nombre',
@@ -52,7 +53,7 @@ export type StudentFilterFormValue = {
 
 export const StudentFilter = (props: { onFilter: (value: Record<string, string>) => void }) => {
 
-    const {register, handleSubmit, watch, setValue}: UseForm<StudentFilterFormValue> = useForm<StudentFilterFormValue>({
+    const {register, watch, setValue}: UseForm<StudentFilterFormValue> = useForm<StudentFilterFormValue>({
         defaultValues: {
             status: StudentStatus.ACTIVE,
             searchBy: 'document'
@@ -68,22 +69,43 @@ export const StudentFilter = (props: { onFilter: (value: Record<string, string>)
 
     useEffect(() => setValue('criteria', ''), [watch('status'), watch('searchBy')]);
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            handleFilter({
+                status: watch("status"),
+                searchBy: watch("searchBy"),
+                criteria: watch("criteria") ?? "",
+            });
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("status"), watch("searchBy"), watch("criteria")]);
+
     return (
-        <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
+        <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
             <div className="w-full sm:w-[140px]">
-                <Select {...register('status')} className="select-sm w-full" options={useStatusFilter}></Select>
+                <DropdownSelect
+                    text="Estado"
+                    hasError={false}
+                    options={useStatusFilter}
+                    value={watch("status")}
+                    onSelect={(value) => setValue("status", value as StudentStatus)}
+                    className="w-full"
+                />
             </div>
             <div className="w-full sm:w-[140px]">
-                <Select {...register('searchBy')} className="select-sm w-full" options={SearchByOptions}/>
+                <DropdownSelect
+                    text="Buscar por"
+                    hasError={false}
+                    options={SearchByOptions}
+                    value={watch("searchBy")}
+                    onSelect={(value) => setValue("searchBy", String(value ?? "document"))}
+                    className="w-full"
+                />
             </div>
             <label className="input input-sm w-full sm:w-56">
                 <i className="fa fa-user me-1"/>
                 <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
             </label>
-            <button className="btn btn-sm btn-outline btn-primary">
-                <i className="fa fa-search"/>
-                Filtrar
-            </button>
         </form>
     );
 };

@@ -2,6 +2,7 @@ import { PaymentMethod, PaymentMethodLabel, PaymentStatus, PaymentStatusLabel } 
 import { PeriodSelect } from "../../../components/io/input/business/PeriodSelect.tsx";
 import { Controller, useForm } from "react-hook-form";
 import { useEffect } from "react";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filters: Record<string, any>) => void; selectedPeriodId: string | number | null; }) => {
     const { control, setValue, watch } = useForm({
@@ -17,21 +18,23 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
         setValue(key, value);
     };
 
-    const handleFilter = () => {
-        const filters = {
-            periodId: watch("periodId"),
-            status: watch("status"),
-            method: watch("method"),
-            identifier: watch("identifier"),
-        };
-        onFilter(filters);
-    };
-
     useEffect(() => {
         if (selectedPeriodId !== null) {
             setValue("periodId", selectedPeriodId);
         }
     }, [selectedPeriodId, setValue]);
+
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            onFilter({
+                periodId: watch("periodId"),
+                status: watch("status"),
+                method: watch("method"),
+                identifier: watch("identifier"),
+            });
+        }, 250);
+        return () => window.clearTimeout(timeout);
+    }, [watch("periodId"), watch("status"), watch("method"), watch("identifier")]);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -53,40 +56,37 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
             </div>
 
             <div className="w-full sm:w-[150px]">
-                <select
-                    className="select select-sm w-full"
+                <DropdownSelect
+                    text="Estado"
+                    hasError={false}
                     value={watch("status")}
-                    onChange={(e) => handleChange("status", e.target.value)}
-                >
-                    {Object.keys(PaymentStatus).map((statusKey) => {
+                    onSelect={(value) => handleChange("status", String(value ?? PaymentStatus.PAID))}
+                    className="w-full"
+                    options={Object.keys(PaymentStatus).map((statusKey) => {
                         const key = statusKey as keyof typeof PaymentStatus;
-                        return (
-                            <option key={key} value={PaymentStatus[key]}>
-                                {PaymentStatusLabel[PaymentStatus[key]]}
-                            </option>
-                        );
+                        return {
+                            value: PaymentStatus[key],
+                            description: PaymentStatusLabel[PaymentStatus[key]],
+                        };
                     })}
-                </select>
+                />
             </div>
 
             <div className="w-full sm:w-[170px]">
-                <select
-                    className="select select-sm w-full"
+                <DropdownSelect
+                    text="Metodo"
+                    hasError={false}
                     value={watch("method")}
-                    onChange={(e) => handleChange("method", e.target.value)}
-                >
-                    <option value="" disabled>
-                        Metodo de pago
-                    </option>
-                    {Object.keys(PaymentMethod).map((methodKey) => {
-                        const key = methodKey as keyof typeof PaymentMethod;
-                        return (
-                            <option key={key} value={PaymentMethod[key]}>
-                                {PaymentMethodLabel[PaymentMethod[key]]}
-                            </option>
-                        );
-                    })}
-                </select>
+                    onSelect={(value) => handleChange("method", String(value ?? ""))}
+                    className="w-full"
+                    options={[
+                        {value: "", description: "Todos"},
+                        ...Object.keys(PaymentMethod).map((methodKey) => {
+                            const key = methodKey as keyof typeof PaymentMethod;
+                            return {value: PaymentMethod[key], description: PaymentMethodLabel[PaymentMethod[key]]};
+                        }),
+                    ]}
+                />
             </div>
 
             <div className="w-full sm:w-56">
@@ -98,11 +98,6 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                     placeholder="Identificador"
                 />
             </div>
-
-            <button type="button" className="btn btn-sm btn-outline btn-primary" onClick={handleFilter}>
-                <i className="fa fa-search mr-1" />
-                Filtrar
-            </button>
         </div>
     );
 };

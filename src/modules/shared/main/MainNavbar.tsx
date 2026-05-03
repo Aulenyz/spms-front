@@ -5,21 +5,31 @@ import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.ts
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {ChangePasswordForm} from "../../changePassword/changePasswordForm.tsx";
 import {useQueryParams} from "../../../hooks/useQueryParams.tsx";
-import {ThemeToggle} from "../../../components/ui/theme/ThemeToggle.tsx";
+import {PeriodConfig, PeriodConfigService} from "../../../services/period/PeriodConfigService.ts";
 
 type MainNavbarProps = {
-    title: string;
     subtitle: string;
     onOpenSidebar: () => void;
+    breadcrumbs?: Array<{
+        label: string;
+        onClick?: () => void;
+    }>;
 };
 
-export const MainNavbar = ({title, subtitle, onOpenSidebar}: MainNavbarProps) => {
+export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavbarProps) => {
     const {notification} = useQueryParams();
     const {current, logout}: AuthContextValue = useAuthContext();
+    const [periodConfig, setPeriodConfig] = useState<PeriodConfig | null>(null);
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        PeriodConfigService.instance.after()
+            .then((config) => setPeriodConfig(config))
+            .catch(() => setPeriodConfig(null));
+    }, []);
 
     useEffect(() => {
         if (notification === "show") {
@@ -50,6 +60,17 @@ export const MainNavbar = ({title, subtitle, onOpenSidebar}: MainNavbarProps) =>
         };
     }, []);
 
+    const formatShortDate = (value?: string) => {
+        if (!value) return null;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return null;
+        return new Intl.DateTimeFormat("es", {day: "2-digit", month: "short", year: "numeric"}).format(date);
+    };
+
+    const startLabel = formatShortDate(periodConfig?.start);
+    const endLabel = formatShortDate(periodConfig?.end);
+    const enabled = Boolean(periodConfig?.enabled);
+
     return (
         <>
             <header className="app-topbar">
@@ -68,26 +89,68 @@ export const MainNavbar = ({title, subtitle, onOpenSidebar}: MainNavbarProps) =>
                             <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                                 {subtitle}
                             </p>
-                            <h1 className="truncate text-lg font-semibold text-[var(--text-primary)]">
-                                {title}
-                            </h1>
+                            {breadcrumbs.length > 0 && (
+                                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-semibold">
+                                    {breadcrumbs.map((crumb, index) => {
+                                        const clickable = typeof crumb.onClick === "function";
+                                        return (
+                                            <span key={`${crumb.label}-${index}`} className="inline-flex min-w-0 items-center gap-1.5">
+                                                {index > 0 && <span className="text-[var(--text-tertiary)]">/</span>}
+                                                {clickable ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={crumb.onClick}
+                                                        className="max-w-[220px] truncate text-[var(--accent)] transition hover:opacity-80 hover:underline"
+                                                        title={crumb.label}
+                                                    >
+                                                        {crumb.label}
+                                                    </button>
+                                                ) : (
+                                                    <span className="max-w-[220px] truncate text-[var(--text-secondary)]" title={crumb.label}>
+                                                        {crumb.label}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="hidden lg:flex">
-                            <label className="relative">
-                                <i className="fa fa-search sidebar-search-icon"/>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    placeholder="Buscar"
-                                    className="sidebar-search-input min-w-[220px] pl-10"
-                                />
-                            </label>
-                        </div>
+                        <div className="hidden lg:flex items-center gap-2">
+                            <div
+                                className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
+                                title="Calendario escolar"
+                            >
+                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+                                    Proximo ano escolar
+                                </span>
+                                <span className="ml-2">
+                                    {startLabel && endLabel
+                                        ? `Inicia ${startLabel} - Termina ${endLabel}`
+                                        : startLabel
+                                            ? `Inicia ${startLabel}`
+                                            : endLabel
+                                                ? `Termina ${endLabel}`
+                                                : "Sin configurar"}
+                                </span>
+                            </div>
 
-                        <ThemeToggle/>
+                            {enabled && (
+                                <button
+                                    type="button"
+                                    className="icon-button"
+                                    title="Configurar ano escolar"
+                                    onClick={() => {
+                                        // TODO: abrir modal de configuracion
+                                    }}
+                                >
+                                    <i className="fa fa-gear"/>
+                                </button>
+                            )}
+                        </div>
 
                         <div className="relative">
                             <button

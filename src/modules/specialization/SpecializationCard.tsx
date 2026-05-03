@@ -1,17 +1,9 @@
-import {useMemo} from "react";
 import {Link} from "react-router-dom";
 import {GradeTypeLabel, Specialization} from "../../domain/model/course/Course.ts";
 
 interface Props {
     specialization: Specialization;
 }
-
-const SPECIALIZATION_GRADIENTS = [
-    "linear-gradient(135deg, #0f62fe, #2563eb)",
-    "linear-gradient(135deg, #12805c, #0f766e)",
-    "linear-gradient(135deg, #c47b07, #ea580c)",
-    "linear-gradient(135deg, #7c3aed, #9333ea)",
-];
 
 export const SpecializationCard = ({specialization}: Props) => {
     const initials = specialization.name
@@ -20,11 +12,6 @@ export const SpecializationCard = ({specialization}: Props) => {
         .slice(0, 2)
         .join("");
 
-    const headerGradient = useMemo(() => {
-        const hash = specialization.name.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
-        return SPECIALIZATION_GRADIENTS[hash % SPECIALIZATION_GRADIENTS.length];
-    }, [specialization.name]);
-
     const statusLabel = specialization.active ? "Activa" : "Inactiva";
     const statusStyle = specialization.active
         ? {background: "var(--success-soft)", color: "var(--success)"}
@@ -32,44 +19,68 @@ export const SpecializationCard = ({specialization}: Props) => {
 
     return (
         <article
-            className="flex h-full min-h-[258px] flex-col overflow-hidden rounded-[24px] border transition-all duration-200 hover:-translate-y-1"
+            className="group relative flex h-full min-h-[230px] flex-col overflow-hidden rounded-[24px] border transition-all duration-200 hover:-translate-y-1"
             style={{
                 borderColor: "var(--border-soft)",
                 background: "var(--surface)",
                 boxShadow: "var(--shadow-card)",
             }}
         >
-            <div className="flex h-28 items-center justify-between px-5 py-4" style={{background: headerGradient}}>
-                <span className="inline-flex h-14 w-14 items-center justify-center rounded-[18px] bg-white/18 text-2xl font-semibold text-white backdrop-blur-sm">
-                    {initials}
-                </span>
-                <span className="rounded-full px-3 py-1 text-xs font-semibold" style={statusStyle}>
-                    {statusLabel}
-                </span>
-            </div>
+            {/* Accent strip */}
+            <div
+                className="absolute left-0 top-0 h-full w-1.5"
+                style={{
+                    background: specialization.active
+                        ? "linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 65%, white))"
+                        : "linear-gradient(180deg, color-mix(in srgb, var(--text-tertiary) 80%, white), var(--muted))",
+                }}
+            />
 
-            <div className="flex flex-1 flex-col justify-between gap-5 p-5">
+            <div className="flex flex-1 flex-col justify-between gap-3 p-5">
                 <div className="space-y-3">
-                    <h3 className="text-base font-semibold leading-6" style={{color: "var(--text-primary)"}}>
-                        {specialization.name}
-                    </h3>
-                    <p className="text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                        {specialization.description || "Sin descripcion registrada para esta unidad."}
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                            <span
+                                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] text-sm font-extrabold"
+                                style={{
+                                    background: "color-mix(in srgb, var(--accent-soft) 72%, transparent)",
+                                    color: "var(--accent)",
+                                    boxShadow: "inset 0 0 0 1px var(--border-soft)",
+                                }}
+                            >
+                                {initials}
+                            </span>
+                            <div className="min-w-0">
+                                <h3 className="truncate text-base font-semibold leading-6" style={{color: "var(--text-primary)"}}>
+                                    {specialization.name}
+                                </h3>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={statusStyle}>
+                                        {statusLabel}
+                                    </span>
+                                    <span
+                                        className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                        style={{background: "var(--muted)", color: "var(--text-secondary)"}}
+                                    >
+                                        {GradeTypeLabel[specialization.type]}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p className="line-clamp-3 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
+                        {specialization.description || "Sin descripcion registrada para esta area especializada."}
                     </p>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 text-sm" style={{color: "var(--text-secondary)"}}>
-                        <i className="fa fa-layer-group"/>
-                        <span>{GradeTypeLabel[specialization.type]}</span>
-                    </div>
-
+                <div className="pt-1">
                     <Link
                         to={`/specializations/${specialization.id}`}
-                        className="table-link"
+                        className="table-link inline-flex items-center gap-2"
                     >
-                        Detalles
-                        <i className="fa fa-chevron-right text-2xs"/>
+                        <span>Detalles</span>
+                        <i className="fa fa-chevron-right text-2xs transition-transform duration-200 group-hover:translate-x-0.5"/>
                     </Link>
                 </div>
             </div>

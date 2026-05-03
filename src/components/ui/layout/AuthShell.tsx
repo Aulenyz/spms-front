@@ -3,7 +3,6 @@ import {Link} from "react-router-dom";
 import {motion} from "framer-motion";
 import logo from "../../../assets/images/logo.png";
 import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
-import {ThemeToggle} from "../theme/ThemeToggle.tsx";
 import {APPVersion} from "../../io/output/shared/APPVersion.tsx";
 
 type AuthShellProps = {
@@ -190,7 +189,6 @@ export const AuthShell = ({
 
                         <div className="flex items-center gap-3">
                             <span className="auth-erp-topbar-chip">{APP_SHORT_NAME}</span>
-                            <ThemeToggle/>
                         </div>
                     </div>
 

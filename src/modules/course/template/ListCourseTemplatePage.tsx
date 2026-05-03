@@ -1,8 +1,8 @@
 import {useEffect, useState} from "react";
+import {useNavigate, useOutletContext} from "react-router-dom";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {CourseTemplate} from "../../../domain/model/course/Course.ts";
-import {CourseTemplateCard} from "./CourseTemplateCard.tsx";
+import {CourseTemplate, GradeTypeLabel} from "../../../domain/model/course/Course.ts";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {CourseTemplateFilter} from "../../../domain/filters/course/CourseTemplateFilter.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
@@ -11,6 +11,8 @@ import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 const courseTemplateService: CourseTemplateService = CourseTemplateService.instance;
 
 export const ListCourseTemplatePage = () => {
+    const navigate = useNavigate();
+    const {courseTemplateBump} = useOutletContext<{courseTemplateBump: number}>();
     const [pagination, setPagination] = useState(Pagination.first);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
@@ -20,7 +22,7 @@ export const ListCourseTemplatePage = () => {
 
     useEffect(() => {
         courseTemplateService.getAll(filters, pagination).then(setCourseTemplates);
-    }, [pagination, filters]);
+    }, [pagination, filters, courseTemplateBump]);
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -50,11 +52,36 @@ export const ListCourseTemplatePage = () => {
                     icon="fa-layer-group"
                 />
             ) : (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <table className="table-shell">
+                    <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Secciones</th>
+                        <th scope="col">Área especializada</th>
+                        <th scope="col" className="text-right">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
                     {courseTemplates.content.map((template) => (
-                        <CourseTemplateCard key={template.id} courseTemplate={template}/>
+                        <tr key={template.id}>
+                            <td><strong>{template.name ?? "Plantilla"}</strong></td>
+                            <td>{template.type ? GradeTypeLabel[template.type] : "-"}</td>
+                            <td>{template.count}</td>
+                            <td>{template.specialization?.name ?? "Sin área especializada"}</td>
+                            <td className="text-right">
+                                <button
+                                    className="btn btn-xs"
+                                    onClick={() => navigate(`/courses/templates/${template.id}`)}
+                                >
+                                    Detalles
+                                    <i className="fa fa-arrow-right ms-2"/>
+                                </button>
+                            </td>
+                        </tr>
                     ))}
-                </div>
+                    </tbody>
+                </table>
             )}
         </DataTableCard>
     );

@@ -3,7 +3,6 @@ import {useNavigate} from "react-router-dom";
 import {toast} from "react-toastify";
 import logo from "../../../assets/images/logo.png";
 import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
-import {ThemeToggle} from "../../../components/ui/theme/ThemeToggle.tsx";
 import {APPVersion} from "../../../components/io/output/shared/APPVersion.tsx";
 import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
 import {StorageItem} from "../../../domain/types/StorageItem.ts";
@@ -86,7 +85,6 @@ export const SelectOrganizationPage = () => {
                                 <span className="text-xs text-[var(--text-secondary)]">Espacios</span>
                             </div>
                         </div>
-                        <ThemeToggle/>
                     </div>
 
                     <div className="auth-shell-main">
@@ -116,7 +114,6 @@ export const SelectOrganizationPage = () => {
                             <span className="text-xs text-[var(--text-secondary)]">Espacios</span>
                         </div>
                     </div>
-                    <ThemeToggle/>
                 </div>
 
                 <div className="auth-shell-main">

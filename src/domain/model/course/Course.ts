@@ -6,8 +6,10 @@ export interface Course extends BaseModel {
 }
 
 export interface CourseTemplate extends BaseModel {
+    name?: string;
     count: number;
-    specialization: Specialization;
+    type?: GradeType;
+    specialization: Specialization | null;
 }
 
 export interface Specialization extends BaseModel {
@@ -34,4 +36,3 @@ export const GradeTypeLabel: Record<GradeType, string> = {
     SECONDARY: "Secundaria",
     TECHNICAL: "Técnico",
 };
-
