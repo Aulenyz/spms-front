@@ -15,6 +15,7 @@ import {
 } from "../../domain/model/user/user.ts";
 import {PublicUserService} from "../../services/public/PublicUserService.ts";
 import {PublicFileService} from "../../services/public/PublicFileService.ts";
+import {resolveErrorPath} from "../errors/resolveErrorPath.ts";
 
 const publicUserService = PublicUserService.instance;
 const publicFileService = PublicFileService.instance;
@@ -118,6 +119,11 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
             setField("image", uploaded);
             toast.success("Imagen cargada.");
         } catch (error) {
+            const errorPath = resolveErrorPath(error as {status?: number});
+            if (errorPath) {
+                navigate(errorPath, {replace: true});
+                return;
+            }
             setPreview("");
             setField("image", "");
             const apiMessage = getApiErrorMessage(error) ?? "No se pudo cargar la imagen.";
@@ -172,6 +178,11 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
             toast.success("Registro completado.");
             navigate("/auth/login", {replace: true});
         } catch (error) {
+            const errorPath = resolveErrorPath(error as {status?: number});
+            if (errorPath) {
+                navigate(errorPath, {replace: true});
+                return;
+            }
             setMessage(getApiErrorMessage(error) ?? "No se pudo completar el registro.");
         } finally {
             setSubmitting(false);

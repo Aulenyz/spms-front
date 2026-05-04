@@ -1,30 +1,17 @@
-import {Link} from 'react-router-dom'
+import {ErrorScreen} from "./ErrorScreen.tsx";
 
 export const Error404 = () => {
     return (
-        <>
-            <h1 className='fw-bolder fs-2hx text-gray-900 mb-4'>Página No Encontrada</h1>
-            <div className='fw-semibold fs-6 text-gray-500 mb-7'>La página solicitada no pudo ser encontrada. <br/>Puede
-                deberse a que haya sido movida a otra ruta o removida.
-            </div>
-            <div className='mb-3'>
-                <img
-                    src={'ok'}
-                    className='mw-100 mh-300px theme-light-show'
-                    alt='Missing image'
-                />
-                <img
-                    src={'pkl'}
-                    className='mw-100 mh-300px theme-dark-show'
-                    alt='Missing IMage'
-                />
-            </div>
-            <div className='mb-0'>
-                <Link to='/' className='btn btn-sm btn-primary'>
-                    Return Home
-                </Link>
-            </div>
-            {/* end::Link */}
-        </>
-    )
-}
+        <ErrorScreen
+            code="404"
+            title="Página no encontrada"
+            icon="fa-compass-drafting"
+            message="La ruta que intentas abrir no existe o ya no está disponible."
+            hint="Verifica la dirección o vuelve a una sección principal del sistema para continuar."
+            actions={[
+                {label: "Ir al inicio", to: "/home"},
+                {label: "Ir a estudiantes", to: "/students/list", variant: "light"},
+            ]}
+        />
+    );
+};

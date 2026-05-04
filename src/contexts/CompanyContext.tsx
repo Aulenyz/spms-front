@@ -28,7 +28,6 @@ export const CompanyProvider: FC<{ children: ReactNode }> = ({children}) => {
     const setRnc = (value: string) => {
         localStorage.setItem(StorageItem.CompanyRNC, value);
         setRncState(value);
-        console.log("RNC guardado en localStorage:", value);
     };
 
     const clearRnc = () => {

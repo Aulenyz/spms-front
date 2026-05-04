@@ -1,4 +1,9 @@
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
+
 export const AuthorityBreadcrumb = ({onCreate}: {onCreate: () => void}) => {
+    const {hasAuthority} = useAuthContext();
+
     return (
         <div
             className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
@@ -14,13 +19,14 @@ export const AuthorityBreadcrumb = ({onCreate}: {onCreate: () => void}) => {
                 </span>
             </div>
 
-            <div className="flex items-center gap-2">
-                <button onClick={onCreate} className="btn btn-sm btn-primary" type="button">
-                    <i className="fa fa-plus me-1"/>
-                    Nuevo permiso
-                </button>
-            </div>
+            {hasAuthority(AuthorityKey.AUTHORITY_CREATE) && (
+                <div className="flex items-center gap-2">
+                    <button onClick={onCreate} className="btn btn-sm btn-primary" type="button">
+                        <i className="fa fa-plus me-1"/>
+                        Nuevo permiso
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
-

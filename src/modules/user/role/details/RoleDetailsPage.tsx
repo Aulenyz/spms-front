@@ -7,6 +7,8 @@ import {AuthorityService} from "../../../../services/user/AuthorityService.ts";
 import {RoleService} from "../../../../services/user/RoleService.ts";
 import {UserAuthority, UserRole} from "../../../../domain/model/user/user.ts";
 import {Page, Pagination} from "../../../../domain/filters/Page.ts";
+import {useAuthContext} from "../../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../../domain/model/user/authorities.ts";
 
 type TabKey = "details" | "authorities";
 
@@ -39,6 +41,7 @@ const getInitials = (value: string) =>
         .toUpperCase();
 
 export const RoleDetailsPage = () => {
+    const {hasAuthority} = useAuthContext();
     const {id} = useParams<{id: string}>();
     const location = useLocation();
     const stateRole = (location.state as {role?: UserRole} | null)?.role;
@@ -234,7 +237,7 @@ export const RoleDetailsPage = () => {
                     }}
                 >
                     <div className="flex flex-wrap items-center gap-2">
-                        {TABS.map((item) => (
+                        {TABS.filter((item) => item.key !== "authorities" || hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES)).map((item) => (
                             <button
                                 key={item.key}
                                 type="button"
@@ -258,7 +261,7 @@ export const RoleDetailsPage = () => {
                         ))}
                     </div>
 
-                    {tab === "authorities" && (
+                    {tab === "authorities" && hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
                         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                             <div className="relative w-full sm:w-[420px]">
                                 <i className="fa fa-search absolute left-3 top-3 text-sm" style={{color: "var(--text-tertiary)"}}/>
@@ -321,17 +324,19 @@ export const RoleDetailsPage = () => {
                                         Mueve permisos entre columnas desde la pestana Permisos (arrastrando).
                                     </div>
                                     <div className="mt-4">
-                                        <button onClick={() => setTab("authorities")} className="btn btn-sm btn-primary" type="button">
-                                            <i className="fa fa-sliders me-1"/>
-                                            Administrar permisos
-                                        </button>
+                                        {hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
+                                            <button onClick={() => setTab("authorities")} className="btn btn-sm btn-primary" type="button">
+                                                <i className="fa fa-sliders me-1"/>
+                                                Administrar permisos
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {tab === "authorities" && (
+                    {tab === "authorities" && hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
                         <div className="grid gap-4 p-4 lg:grid-cols-2">
                             <div
                                 className={clsx("rounded-[22px] border p-4 transition", dragOver === "unassigned" ? "shadow-sm" : "")}

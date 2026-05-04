@@ -3,6 +3,7 @@ import {ErrorsLayout} from "./ErrorsLayout.tsx";
 import {Error404} from "./components/Error404.tsx";
 import {Error500} from "./components/Error500.tsx";
 import {Error403} from "./components/Error403.tsx";
+import {Error503} from "./components/Error503.tsx";
 
 export const ErrorPage = () => (
     <Routes>
@@ -10,6 +11,7 @@ export const ErrorPage = () => (
             <Route path='403' element={<Error403/>}/>
             <Route path='404' element={<Error404/>}/>
             <Route path='500' element={<Error500/>}/>
+            <Route path='503' element={<Error503/>}/>
             <Route index element={<Error404/>}/>
         </Route>
     </Routes>

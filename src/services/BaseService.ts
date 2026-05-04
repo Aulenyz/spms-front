@@ -80,15 +80,25 @@ export abstract class BaseService<R = unknown> {
         // Executes HTTP Call
         return new Promise<T>((resolve, reject): void => {
             fetch(url, options).then((response: Response) => this.handleResponse<T>(response))
-                .then(resolve, reject).catch(reject)
+                .then(resolve, reject)
+                .catch(() => reject({status: 503, message: 'No fue posible conectar con el servidor.'}))
         });
     }
 
     private async handleResponse<T>(res: Response): Promise<T> {
         if (!res.ok) {
             const text: string = await res.text();
-            const payload: object = await JSON.parse(text);
-            return Promise.reject(payload);
+            let payload: any = {};
+            try {
+                payload = text ? JSON.parse(text) : {};
+            } catch {
+                payload = {message: text || res.statusText};
+            }
+            return Promise.reject({
+                status: res.status,
+                message: payload?.message || res.statusText,
+                ...payload,
+            });
         }
         try {
             const payload: T = await this.getPayload(res);

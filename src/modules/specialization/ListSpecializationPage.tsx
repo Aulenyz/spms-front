@@ -10,10 +10,13 @@ import {SpecializationForm} from "./create/SpecializationForm.tsx";
 import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const specializationService = SpecializationService.instance;
 
 export const ListSpecializationPage = () => {
+    const {hasAuthority} = useAuthContext();
     const [pagination, setPagination] = useState(Pagination.ofSize(8));
     const [showModal, setShowModal] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
@@ -60,15 +63,17 @@ export const ListSpecializationPage = () => {
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => setShowModal(true)}
-                    >
-                        <i className="fa fa-plus me-1"/>
-                        <span>Nueva area</span>
-                    </button>
-                </div>
+                {hasAuthority(AuthorityKey.SPECIALIZATION_CREATE) && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <i className="fa fa-plus me-1"/>
+                            <span>Nueva area</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             <DataTableCard
@@ -76,14 +81,16 @@ export const ListSpecializationPage = () => {
                 description="Consulta las areas academica disponible."
                 actions={
                     <>
-                        <LeftModal
-                            title="Agregar area"
-                            isOpen={showModal}
-                            onClose={() => setShowModal(false)}
-                            className="w-[400px] h-full z-[9999]"
-                        >
-                            <SpecializationForm onSubmit={() => setShowModal(false)}/>
-                        </LeftModal>
+                        {hasAuthority(AuthorityKey.SPECIALIZATION_CREATE) && (
+                            <LeftModal
+                                title="Agregar area"
+                                isOpen={showModal}
+                                onClose={() => setShowModal(false)}
+                                className="w-[400px] h-full z-[9999]"
+                            >
+                                <SpecializationForm onSubmit={() => setShowModal(false)}/>
+                            </LeftModal>
+                        )}
                     </>
                 }
                 filters={<SpecializationFilter onFilter={handleFilters}/>}

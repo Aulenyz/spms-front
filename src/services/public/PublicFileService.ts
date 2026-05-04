@@ -15,21 +15,26 @@ export class PublicFileService {
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(`${environment.apiURL}/files/upload`, {
-            method: "POST",
-            body: formData,
-        });
+        try {
+            const response = await fetch(`${environment.apiURL}/files/upload`, {
+                method: "POST",
+                body: formData,
+            });
 
-        if (!response.ok) {
-            const text = await response.text();
-            try {
-                throw JSON.parse(text);
-            } catch {
-                throw {message: text || response.statusText, status: response.status};
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    throw JSON.parse(text);
+                } catch {
+                    throw {message: text || response.statusText, status: response.status};
+                }
             }
-        }
 
-        const payload = await response.json() as ResultResponse<string>;
-        return payload.result;
+            const payload = await response.json() as ResultResponse<string>;
+            return payload.result;
+        } catch (error) {
+            if (typeof error === "object" && error !== null && "status" in error) throw error;
+            throw {status: 503, message: "No fue posible conectar con el sistema."};
+        }
     }
 }

@@ -14,6 +14,8 @@ import {SubjectBreadcrumb} from "../breadcrumb/SubjectBreadcrumb.tsx";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
 import {SubjectForm} from "./SubjectForm.tsx";
 import {CourseActivePill} from "../../components/io/output/pill/CourseActivePill.tsx";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const subjectService = SubjectService.instance;
 
@@ -28,6 +30,7 @@ const getApiErrorMessage = (error: unknown) => {
 };
 
 export const ListSubjectPage = () => {
+    const {hasAuthority} = useAuthContext();
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(6));
     const [subjects, setSubjects]: State<Page<Subject>> = useState(Pagination.empty<Subject>());
     const [refreshKey, setRefreshKey] = useState(0);
@@ -133,50 +136,56 @@ export const ListSubjectPage = () => {
                                         </div>
 
                                         <div className="relative flex-shrink-0" ref={menuId === subject.id ? menuRef : undefined}>
-                                            <button
-                                                type="button"
-                                                className="icon-button h-9 w-9"
-                                                onClick={() => setMenuId((prev) => prev === subject.id ? null : subject.id)}
-                                                title="Opciones"
-                                            >
-                                                <i className="fa fa-gear text-sm"/>
-                                            </button>
+                                            {(hasAuthority(AuthorityKey.SUBJECT_EDIT) || hasAuthority(AuthorityKey.SUBJECT_STATUS_UPDATE)) && (
+                                                <button
+                                                    type="button"
+                                                    className="icon-button h-9 w-9"
+                                                    onClick={() => setMenuId((prev) => prev === subject.id ? null : subject.id)}
+                                                    title="Opciones"
+                                                >
+                                                    <i className="fa fa-gear text-sm"/>
+                                                </button>
+                                            )}
 
-                                            {menuId === subject.id && (
+                                            {menuId === subject.id && (hasAuthority(AuthorityKey.SUBJECT_EDIT) || hasAuthority(AuthorityKey.SUBJECT_STATUS_UPDATE)) && (
                                                 <div className="floating-panel right-0 top-full mt-2 w-64">
                                                     <div className="floating-panel-header">Opciones</div>
                                                     <div className="space-y-1 p-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setMenuId(null);
-                                                                setEditing(subject);
-                                                            }}
-                                                            className="profile-menu-item w-full"
-                                                        >
-                                                            <i className="fa fa-pen text-[var(--accent)]"/>
-                                                            <span>Editar materia</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            disabled={togglingId === subject.id}
-                                                            onClick={() => {
-                                                                setTogglingId(subject.id);
-                                                                subjectService
-                                                                    .updateStatus(subject.id)
-                                                                    .then(() => {
-                                                                        toast.success("Estado actualizado.");
-                                                                        setMenuId(null);
-                                                                        refresh();
-                                                                    })
-                                                                    .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar el estado."))
-                                                                    .finally(() => setTogglingId(null));
-                                                            }}
-                                                            className="profile-menu-item w-full"
-                                                        >
-                                                            <i className="fa fa-toggle-on text-[var(--accent)]"/>
-                                                            <span>{subject.active ? "Marcar como inactiva" : "Marcar como activa"}</span>
-                                                        </button>
+                                                        {hasAuthority(AuthorityKey.SUBJECT_EDIT) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setMenuId(null);
+                                                                    setEditing(subject);
+                                                                }}
+                                                                className="profile-menu-item w-full"
+                                                            >
+                                                                <i className="fa fa-pen text-[var(--accent)]"/>
+                                                                <span>Editar materia</span>
+                                                            </button>
+                                                        )}
+                                                        {hasAuthority(AuthorityKey.SUBJECT_STATUS_UPDATE) && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={togglingId === subject.id}
+                                                                onClick={() => {
+                                                                    setTogglingId(subject.id);
+                                                                    subjectService
+                                                                        .updateStatus(subject.id)
+                                                                        .then(() => {
+                                                                            toast.success("Estado actualizado.");
+                                                                            setMenuId(null);
+                                                                            refresh();
+                                                                        })
+                                                                        .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar el estado."))
+                                                                        .finally(() => setTogglingId(null));
+                                                                }}
+                                                                className="profile-menu-item w-full"
+                                                            >
+                                                                <i className="fa fa-toggle-on text-[var(--accent)]"/>
+                                                                <span>{subject.active ? "Marcar como inactiva" : "Marcar como activa"}</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -196,14 +205,16 @@ export const ListSubjectPage = () => {
                                     <span className="text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
                                         Materia academica
                                     </span>
-                                    <button
-                                        type="button"
-                                        className="table-link"
-                                        onClick={() => setEditing(subject)}
-                                    >
-                                        Editar
-                                        <i className="fa fa-chevron-right text-2xs"/>
-                                    </button>
+                                    {hasAuthority(AuthorityKey.SUBJECT_EDIT) && (
+                                        <button
+                                            type="button"
+                                            className="table-link"
+                                            onClick={() => setEditing(subject)}
+                                        >
+                                            Editar
+                                            <i className="fa fa-chevron-right text-2xs"/>
+                                        </button>
+                                    )}
                                 </div>
                             </article>
                         ))}
@@ -225,7 +236,7 @@ export const ListSubjectPage = () => {
 
             <LeftModal
                 title="Editar materia"
-                isOpen={Boolean(editing)}
+                isOpen={hasAuthority(AuthorityKey.SUBJECT_EDIT) && Boolean(editing)}
                 onClose={() => setEditing(null)}
                 className="w-[420px] h-full z-[9999]"
             >

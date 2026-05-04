@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {isNil} from "lodash";
+import {toast} from "react-toastify";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
@@ -24,7 +25,7 @@ type MainNavbarProps = {
 
 export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavbarProps) => {
     const {notification} = useQueryParams();
-    const {current, logout}: AuthContextValue = useAuthContext();
+    const {current, logout, switchOrganization}: AuthContextValue = useAuthContext();
     const {rnc, setRnc} = useCompany();
     const [periodConfig, setPeriodConfig] = useState<PeriodConfig | null>(null);
     const [organizations, setOrganizations] = useState<UserOrganizationDTO[]>([]);
@@ -62,8 +63,8 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                 const res = await UserOrganizationService.instance.current();
                 const list = Array.isArray(res) ? res : (res?.organization ? [res] : []);
                 setOrganizations(list);
-                if (!rnc && list.length === 1 && list[0]?.organization?.document) {
-                    setRnc(list[0].organization.document);
+                if (!rnc && list.length === 1 && list[0]?.organization?.id) {
+                    setRnc(resolveOrganizationHeaderValue(list[0].organization));
                 }
             } catch {
                 setOrganizations([]);
@@ -124,9 +125,14 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
         return joinURLParts(environment.apiURL, raw.startsWith("/") ? raw : `/${raw}`);
     };
 
+    const resolveOrganizationHeaderValue = (organization?: {id?: string | number} | null) => {
+        if (organization?.id === undefined || organization?.id === null) return "";
+        return String(organization.id);
+    };
+
     const startLabel = formatShortDate(periodConfig?.start);
     const enabled = Boolean(periodConfig?.enabled);
-    const currentOrg = currentOrganization ?? organizations.find((o) => o.organization.document === rnc)?.organization ?? null;
+    const currentOrg = currentOrganization ?? organizations.find((o) => resolveOrganizationHeaderValue(o.organization) === rnc)?.organization ?? null;
 
     const orgInitials = useMemo(() => {
         const name = (currentOrg?.name ?? "").trim();
@@ -231,15 +237,20 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                                                 <div className="grid gap-2 max-h-[320px] overflow-auto pr-1">
                                                     {organizations.map((item) => {
                                                         const org = item.organization;
-                                                        const selected = org.document === rnc;
+                                                        const headerValue = resolveOrganizationHeaderValue(org);
+                                                        const selected = headerValue === rnc;
                                                         return (
                                                             <button
                                                                 key={org.id}
                                                                 type="button"
-                                                                onClick={() => {
+                                                                onClick={async () => {
                                                                     if (selected) return;
-                                                                    setRnc(org.document);
-                                                                    window.location.reload();
+                                                                    try {
+                                                                        await switchOrganization(headerValue);
+                                                                        window.location.reload();
+                                                                    } catch {
+                                                                        toast.error("No se pudo cambiar el espacio de trabajo.");
+                                                                    }
                                                                 }}
                                                                 className="rounded-[22px] border p-3 text-left transition"
                                                                 style={{

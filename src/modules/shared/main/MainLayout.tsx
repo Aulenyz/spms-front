@@ -4,6 +4,8 @@ import {MainSidebar} from "./MainSidebar.tsx";
 import {MainNavbar} from "./MainNavbar.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {LoadingPage} from "../../../components/io/output/LoadingPage.tsx";
+import {resolveRouteAuthority} from "../../../app/security/routeAuthorities.ts";
+import {resolveFirstAuthorizedPath} from "../../../app/navigation/menu.ts";
 
 const resolvePageMeta = (pathname: string) => {
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
@@ -20,6 +22,10 @@ const resolvePageMeta = (pathname: string) => {
 
     if (pathname.startsWith("/subjects")) {
         return {title: "Materias", subtitle: "Gestion academica"};
+    }
+
+    if (pathname.startsWith("/help")) {
+        return {title: "Ayuda", subtitle: "Soporte y preguntas frecuentes"};
     }
 
     if (pathname.startsWith("/courses")) {
@@ -118,6 +124,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     }
 
     if (pathname.startsWith("/subjects")) return [{label: "Materias", to: pathname}];
+    if (pathname.startsWith("/help")) return [{label: "Ayuda", to: "/help"}];
 
     if (pathname.startsWith("/payments")) return [{label: "Pagos", to: pathname}];
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
@@ -140,7 +147,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
 };
 
 export const MainLayout = () => {
-    const {validating, authenticated}: AuthContextValue = useAuthContext();
+    const {validating, authenticated, hasAuthority}: AuthContextValue = useAuthContext();
     const location = useLocation();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
@@ -155,6 +162,19 @@ export const MainLayout = () => {
 
     if (!authenticated) {
         return <Navigate to="/auth/login" replace/>;
+    }
+
+    const firstAuthorizedPath = resolveFirstAuthorizedPath(hasAuthority);
+    if (location.pathname === "/") {
+        return <Navigate to={firstAuthorizedPath ?? "/errors/403"} replace/>;
+    }
+
+    const requiredAuthority = resolveRouteAuthority(location.pathname);
+    if (requiredAuthority && !hasAuthority(requiredAuthority)) {
+        if (location.pathname === "/home" && firstAuthorizedPath && firstAuthorizedPath !== "/home") {
+            return <Navigate to={firstAuthorizedPath} replace/>;
+        }
+        return <Navigate to="/errors/403" replace/>;
     }
 
     return (

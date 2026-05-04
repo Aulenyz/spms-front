@@ -9,6 +9,8 @@ import {RoleService} from "../../../services/user/RoleService.ts";
 import {UserStatusPill} from "../../../components/io/output/pill/UserStatusPill.tsx";
 import {StudentGenderPill} from "../../../components/io/output/pill/StudentGenderPill.tsx";
 import {RightModal} from "../../../components/shared/RightModal.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
 type TabKey = "profile" | "role" | "activity" | "settings";
 
@@ -41,6 +43,7 @@ const getInitials = (value: string) =>
         .toUpperCase();
 
 export const UserDetailsPage = () => {
+    const {hasAuthority} = useAuthContext();
     const {id} = useParams<{id: string}>();
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<User | null>(null);
@@ -275,16 +278,18 @@ export const UserDetailsPage = () => {
                         <h2 className="max-w-[min(92vw,720px)] truncate text-xl font-semibold" style={{color: "var(--text-primary)"}}>
                             {name}
                         </h2>
-                        <button
-                            type="button"
-                            className="icon-button h-9 w-9"
-                            title="Editar"
-                            disabled={!user}
-                            onClick={() => setShowEdit(true)}
-                        >
-                            <i className="fa fa-pen"/>
-                        </button>
-                        <div className="relative" ref={menuRef}>
+                        {hasAuthority(AuthorityKey.USER_EDIT) && (
+                            <button
+                                type="button"
+                                className="icon-button h-9 w-9"
+                                title="Editar"
+                                disabled={!user}
+                                onClick={() => setShowEdit(true)}
+                            >
+                                <i className="fa fa-pen"/>
+                            </button>
+                        )}
+                        {hasAuthority(AuthorityKey.USER_STATUS_UPDATE) && <div className="relative" ref={menuRef}>
                             <button
                                 type="button"
                                 className="icon-button h-9 w-9"
@@ -350,7 +355,7 @@ export const UserDetailsPage = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
 
                     <div className="mt-2 text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
@@ -374,7 +379,7 @@ export const UserDetailsPage = () => {
 
                     <RightModal
                         title="Editar usuario"
-                        isOpen={showEdit}
+                        isOpen={hasAuthority(AuthorityKey.USER_EDIT) && showEdit}
                         onClose={() => setShowEdit(false)}
                         className="w-[420px] h-full z-[9999]"
                     >

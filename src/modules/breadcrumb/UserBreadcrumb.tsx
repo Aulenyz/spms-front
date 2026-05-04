@@ -2,10 +2,13 @@ import {useEffect, useState} from "react";
 import {UserService} from "../../services/user/UserService.ts";
 import {State} from "../../domain/types/steoreotype.ts";
 import {mapColor, UserStatus, UserStatusLabel} from "../../domain/model/user/user.ts";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const userService: UserService = UserService.instance;
 
 export const UserBreadcrumb = ({onInvite}: {onInvite: () => void}) => {
+    const {hasAuthority} = useAuthContext();
     const [status, setStatus]: State<Record<UserStatus, number>> = useState<Record<UserStatus, number>>({} as Record<UserStatus, number>);
 
     useEffect(() => {
@@ -37,13 +40,14 @@ export const UserBreadcrumb = ({onInvite}: {onInvite: () => void}) => {
                 })}
             </div>
 
-            <div className="flex items-center gap-2">
-                <button className="btn btn-sm btn-success" onClick={onInvite} type="button">
-                    <i className="fa fa-paper-plane me-1"/>
-                    Invitar usuario
-                </button>
-            </div>
+            {hasAuthority(AuthorityKey.USER_INVITATION_CREATE) && (
+                <div className="flex items-center gap-2">
+                    <button className="btn btn-sm btn-success" onClick={onInvite} type="button">
+                        <i className="fa fa-paper-plane me-1"/>
+                        Invitar usuario
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
-

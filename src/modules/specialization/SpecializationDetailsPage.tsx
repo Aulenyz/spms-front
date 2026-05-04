@@ -9,6 +9,8 @@ import {RightModal} from "../../components/shared/RightModal.tsx";
 import {DropdownSelect} from "../../components/io/input/DropdownSelect.tsx";
 import {SelectOption} from "../../components/io/output/Select.tsx";
 import {GradeType} from "../../domain/model/course/Course.ts";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 type TabKey = "courses" | "templates" | "teachers" | "settings";
 
@@ -45,6 +47,7 @@ const typeOptions: SelectOption[] = Object.values(GradeType).map((type) => ({
 }));
 
 export const SpecializationDetailsPage = () => {
+    const {hasAuthority} = useAuthContext();
     const {id} = useParams<{id: string}>();
     const [loading, setLoading] = useState(false);
     const [entity, setEntity] = useState<Specialization | null>(null);
@@ -251,17 +254,19 @@ export const SpecializationDetailsPage = () => {
                         <h2 className="max-w-[min(92vw,720px)] truncate text-xl font-semibold" style={{color: "var(--text-primary)"}}>
                             {title}
                         </h2>
-                        <button
-                            type="button"
-                            className="icon-button h-9 w-9"
-                            title="Editar"
-                            disabled={!entity}
-                            onClick={() => setShowEdit(true)}
-                        >
-                            <i className="fa fa-pen"/>
-                        </button>
+                        {hasAuthority(AuthorityKey.SPECIALIZATION_EDIT) && (
+                            <button
+                                type="button"
+                                className="icon-button h-9 w-9"
+                                title="Editar"
+                                disabled={!entity}
+                                onClick={() => setShowEdit(true)}
+                            >
+                                <i className="fa fa-pen"/>
+                            </button>
+                        )}
 
-                        <div className="relative" ref={menuRef}>
+                        {hasAuthority(AuthorityKey.SPECIALIZATION_STATUS_UPDATE) && <div className="relative" ref={menuRef}>
                             <button
                                 type="button"
                                 className="icon-button h-9 w-9"
@@ -300,7 +305,7 @@ export const SpecializationDetailsPage = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
 
                     <div className="mt-2 text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
@@ -330,7 +335,7 @@ export const SpecializationDetailsPage = () => {
 
                     <RightModal
                         title="Editar area"
-                        isOpen={showEdit}
+                        isOpen={hasAuthority(AuthorityKey.SPECIALIZATION_EDIT) && showEdit}
                         onClose={() => setShowEdit(false)}
                         className="w-[420px] h-full z-[9999]"
                     >

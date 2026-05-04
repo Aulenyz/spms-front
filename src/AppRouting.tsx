@@ -5,6 +5,7 @@ import {Error500} from "./modules/errors/components/Error500.tsx";
 import {ErrorsLayout} from "./modules/errors/ErrorsLayout.tsx";
 import {Error404} from "./modules/errors/components/Error404.tsx";
 import {Error403} from "./modules/errors/components/Error403.tsx";
+import {Error503} from "./modules/errors/components/Error503.tsx";
 import {MainLayout} from "./modules/shared/main/MainLayout.tsx";
 import {StudentRouting} from "./modules/student/StudentRouting.tsx";
 import {EnrollmentRouting} from "./modules/student/enrollment/EnrollmentRouting.tsx";
@@ -25,18 +26,19 @@ import {RoleDetailsPage} from "./modules/user/role/details/RoleDetailsPage.tsx";
 import {CourseRouting} from "./modules/course/CourseRouting.tsx";
 import {GuardianRouting} from "./modules/guardian/GuardianRouting.tsx";
 import {SubjectRouting} from "./modules/subject/SubjectRouting.tsx";
+import {HelpCenterPage} from "./modules/help/HelpCenterPage.tsx";
 
 export const AppRouting = () => {
     return (
         <Routes>
             <Route path="/" element={<MainLayout/>}>
-                <Route path="/*" element={<HomeRouting/>}/>
-                <Route path="/" element={<Navigate to="/home" replace/>}/>
+                <Route path="home/*" element={<HomeRouting/>}/>
                 <Route path="students/*" element={<StudentRouting/>}/>
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
+                <Route path="help" element={<HelpCenterPage/>}/>
                 <Route path="guardians/*" element={<GuardianRouting/>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
                 <Route path="specializations/create" element={<SpecializationForm/>}/>
@@ -65,6 +67,7 @@ export const AppRouting = () => {
                 <Route path="403" element={<Error403/>}/>
                 <Route path="404" element={<Error404/>}/>
                 <Route path="500" element={<Error500/>}/>
+                <Route path="503" element={<Error503/>}/>
             </Route>
 
             <Route path="*" element={<Navigate to="/errors/404" replace/>}/>

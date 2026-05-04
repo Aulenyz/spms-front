@@ -21,7 +21,7 @@ export const MainSidebar = ({
                                 onCloseMobile,
                             }: MainSidebarProps) => {
     const location = useLocation();
-    const {current}: AuthContextValue = useAuthContext();
+    const {current, hasAuthority}: AuthContextValue = useAuthContext();
     const [showCollectionModal, setShowCollectionModal] = useState(false);
     const [query, setQuery] = useState("");
     const [openSections, setOpenSections] = useState<string[]>([
@@ -32,17 +32,29 @@ export const MainSidebar = ({
     const filteredSections = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
 
+        const visibleSections = navigationSections
+            .map((section) => ({
+                ...section,
+                items: section.items.filter((item) => hasAuthority(item.authority)),
+            }))
+            .filter((section) => section.items.length > 0);
+
         if (!normalizedQuery) {
-            return navigationSections;
+            return visibleSections;
         }
 
-        return navigationSections
+        return visibleSections
             .map((section) => ({
                 ...section,
                 items: section.items.filter((item) => item.label.toLowerCase().includes(normalizedQuery)),
             }))
             .filter((section) => section.items.length > 0);
-    }, [query]);
+    }, [hasAuthority, query]);
+
+    const visibleQuickLinks = useMemo(
+        () => secondaryQuickLinks.filter((item) => hasAuthority(item.authority)),
+        [hasAuthority]
+    );
 
     const toggleSection = (title: string) => {
         setOpenSections((currentSections) => (
@@ -194,25 +206,42 @@ export const MainSidebar = ({
                             );
                         })}
 
-                        {!collapsed && (
+                        {!collapsed && visibleQuickLinks.length > 0 && (
                             <section className="sidebar-promo">
                                 <span className="sidebar-section-title">Accesos</span>
                                 <div className="grid gap-1.5">
-                                    {secondaryQuickLinks.map((item) => (
-                                        <button
-                                            key={item.label}
-                                            type="button"
-                                            onClick={() => handleQuickAction()}
-                                            className="sidebar-quick-link"
-                                        >
-                                            <span className="sidebar-nav-icon">
-                                                <i className={`fa ${item.icon}`}/>
-                                            </span>
-                                            <span className="sidebar-nav-label-row">
-                                                <span className="sidebar-nav-label">{item.label}</span>
-                                                {item.badge && <span className="sidebar-badge">{item.badge}</span>}
-                                            </span>
-                                        </button>
+                                            {visibleQuickLinks.map((item) => (
+                                                item.to ? (
+                                                    <NavLink
+                                                        key={item.label}
+                                                        to={item.to}
+                                                        onClick={onCloseMobile}
+                                                        className="sidebar-quick-link"
+                                                    >
+                                                        <span className="sidebar-nav-icon">
+                                                            <i className={`fa ${item.icon}`}/>
+                                                        </span>
+                                                        <span className="sidebar-nav-label-row">
+                                                            <span className="sidebar-nav-label">{item.label}</span>
+                                                            {item.badge && <span className="sidebar-badge">{item.badge}</span>}
+                                                        </span>
+                                                    </NavLink>
+                                                ) : (
+                                                    <button
+                                                        key={item.label}
+                                                        type="button"
+                                                        onClick={() => handleQuickAction()}
+                                                        className="sidebar-quick-link"
+                                                    >
+                                                        <span className="sidebar-nav-icon">
+                                                            <i className={`fa ${item.icon}`}/>
+                                                        </span>
+                                                        <span className="sidebar-nav-label-row">
+                                                            <span className="sidebar-nav-label">{item.label}</span>
+                                                            {item.badge && <span className="sidebar-badge">{item.badge}</span>}
+                                                        </span>
+                                                    </button>
+                                                )
                                     ))}
                                 </div>
                             </section>

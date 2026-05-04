@@ -10,6 +10,7 @@ import {RecoverPassword} from "../../../domain/model/account/RecoverPassword.ts"
 import {AccountRecoverService} from "../../../services/account/RecoveryService.ts";
 import {toast} from "react-toastify";
 import {NavigateFunction, useNavigate} from "react-router-dom";
+import {resolveErrorPath} from "../../errors/resolveErrorPath.ts";
 
 const recoveryService: AccountRecoverService = AccountRecoverService.instance;
 export const RecoverPasswordSchema = () => {
@@ -31,7 +32,12 @@ export const RecoverPasswordSchema = () => {
             .then(() => {
                 toast.success("Contrasena actualizada.");
                 navigate('/auth/login', {replace: true});
-            }, () => {
+            }, (error) => {
+                const errorPath = resolveErrorPath(error as {status?: number});
+                if (errorPath) {
+                    navigate(errorPath, {replace: true});
+                    return;
+                }
                 toast.error("No se pudo actualizar la contrasena.");
             })
 

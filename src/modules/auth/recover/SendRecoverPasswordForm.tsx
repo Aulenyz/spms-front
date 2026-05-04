@@ -8,11 +8,13 @@ import {AccountRecoverService} from "../../../services/account/RecoveryService.t
 import {toast} from "react-toastify";
 import {Form} from "../../../components/io/Form.tsx";
 import {useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import {resolveErrorPath} from "../../errors/resolveErrorPath.ts";
 
 const recoveryService: AccountRecoverService = AccountRecoverService.instance;
 
 export const SendRecoverSchema = () => {
+    const navigate = useNavigate();
     const {register, handleSubmit, formState: {errors}}: UseForm<SendRecoverRequest> =
         useForm<SendRecoverRequest>({
             resolver: yupResolver(SendRecoverPasswordSchema),
@@ -27,7 +29,12 @@ export const SendRecoverSchema = () => {
             .then(() => {
                 toast.success("Correo de recuperación enviado correctamente.");
                 setSuccess(true);
-            }, () => {
+            }, (error) => {
+                const errorPath = resolveErrorPath(error as {status?: number});
+                if (errorPath) {
+                    navigate(errorPath, {replace: true});
+                    return;
+                }
                 toast.error("Error enviando correo. Verificar los datos.");
             });
     };

@@ -6,11 +6,11 @@ import logo from "../../../assets/images/logo.png";
 import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 import {APPVersion} from "../../../components/io/output/shared/APPVersion.tsx";
 import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
-import {StorageItem} from "../../../domain/types/StorageItem.ts";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
 import {environment} from "../../../environment/environment.ts";
 import {joinURLParts} from "../../../utils/URIs.ts";
+import {resolveErrorPath} from "../../errors/resolveErrorPath.ts";
 
 const SPACE_GRADIENTS = [
     "linear-gradient(135deg, #0f62fe, #2563eb)",
@@ -37,7 +37,7 @@ export const SelectOrganizationPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const navigate = useNavigate();
-    const {logout}: AuthContextValue = useAuthContext();
+    const {logout, switchOrganization}: AuthContextValue = useAuthContext();
     const railRef = useRef<HTMLDivElement | null>(null);
     const dragState = useRef<{dragging: boolean; startX: number; startScrollLeft: number} | null>(null);
 
@@ -79,8 +79,17 @@ export const SelectOrganizationPage = () => {
 
                 if (Array.isArray(response) && response.length > 0) {
                     if (response.length === 1 && response[0].organization) {
-                        localStorage.setItem(StorageItem.CompanyRNC, response[0].organization.document);
-                        navigate("/", {replace: true});
+                        try {
+                            await switchOrganization(String(response[0].organization.id));
+                            navigate("/", {replace: true});
+                        } catch (error) {
+                            const errorPath = resolveErrorPath(error as {status?: number});
+                            if (errorPath) {
+                                navigate(errorPath, {replace: true});
+                                return;
+                            }
+                            toast.error("No se pudo actualizar la sesion del espacio.");
+                        }
                         return;
                     }
 
@@ -90,30 +99,53 @@ export const SelectOrganizationPage = () => {
 
                 const single = !Array.isArray(response) ? response : null;
                 if (single?.organization) {
-                    localStorage.setItem(StorageItem.CompanyRNC, single.organization.document);
-                    navigate("/", {replace: true});
+                    try {
+                        await switchOrganization(String(single.organization.id));
+                        navigate("/", {replace: true});
+                    } catch (error) {
+                        const errorPath = resolveErrorPath(error as {status?: number});
+                        if (errorPath) {
+                            navigate(errorPath, {replace: true});
+                            return;
+                        }
+                        toast.error("No se pudo actualizar la sesion del espacio.");
+                    }
                     return;
                 }
 
                 toast.warning("No se encontro ningun espacio disponible.");
-            } catch {
+            } catch (error) {
+                const errorPath = resolveErrorPath(error as {status?: number});
+                if (errorPath) {
+                    navigate(errorPath, {replace: true});
+                    return;
+                }
                 toast.error("No se pudieron cargar los espacios.");
             } finally {
                 setIsLoading(false);
             }
         };
 
-        loadOrganizations();
-    }, [navigate]);
+        void loadOrganizations();
+    }, [navigate, switchOrganization]);
 
-    const handleSelect = (org: UserOrganizationDTO) => {
+    const handleSelect = async (org: UserOrganizationDTO) => {
         if (!org?.organization) {
             return;
         }
 
         setSelectedId(org.id);
-        localStorage.setItem(StorageItem.CompanyRNC, org.organization.document);
-        navigate("/", {replace: true});
+        try {
+            await switchOrganization(String(org.organization.id));
+            navigate("/", {replace: true});
+        } catch (error) {
+            const errorPath = resolveErrorPath(error as {status?: number});
+            if (errorPath) {
+                navigate(errorPath, {replace: true});
+                return;
+            }
+            toast.error("No se pudo actualizar la sesion del espacio.");
+        }
     };
 
     if (isLoading) {

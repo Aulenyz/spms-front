@@ -1,13 +1,15 @@
-import {Navigate, useSearchParams} from "react-router-dom";
+import {Navigate, useNavigate, useSearchParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 
 import {AuthShell} from "../../components/ui/layout/AuthShell.tsx";
 import {PublicUserService} from "../../services/public/PublicUserService.ts";
 import {RegisterInvitationForm} from "./RegisterInvitationForm.tsx";
+import {resolveErrorPath} from "../errors/resolveErrorPath.ts";
 
 const publicUserService = PublicUserService.instance;
 
 export const RegisterInvitationPage = () => {
+    const navigate = useNavigate();
     const [params] = useSearchParams();
     const token = params.get("token")?.trim() ?? "";
     const [validating, setValidating] = useState(true);
@@ -22,9 +24,16 @@ export const RegisterInvitationPage = () => {
 
         publicUserService.tokenIsValid(token)
             .then((valid) => setIsValid(Boolean(valid)))
-            .catch(() => setIsValid(false))
+            .catch((error) => {
+                const errorPath = resolveErrorPath(error as {status?: number});
+                if (errorPath) {
+                    navigate(errorPath, {replace: true});
+                    return;
+                }
+                setIsValid(false);
+            })
             .finally(() => setValidating(false));
-    }, [token]);
+    }, [navigate, token]);
 
     if (!token) return <Navigate to="/auth/login" replace/>;
     if (validating) {

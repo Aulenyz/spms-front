@@ -1,21 +1,17 @@
-import {Link} from 'react-router-dom'
+import {ErrorScreen} from "./ErrorScreen.tsx";
 
 export const Error500 = () => {
     return (
-        <>
-            <h1 className='fw-bolder fs-2qx text-gray-900 mb-4'>System Error</h1>
-            <div className='fw-semibold fs-6 text-gray-500 mb-7'>
-                Something went wrong! Please try again later.
-            </div>
-            <div className='mb-11'>
-                <img src={''} className='mw-100 mh-300px theme-light-show' alt='Missing'/>
-                <img src={'e'} className='mw-100 mh-300px theme-dark-show' alt='Missing'/>
-            </div>
-            <div className='mb-0'>
-                <Link to='/dashboard' className='btn btn-sm btn-primary'>
-                    Return Home
-                </Link>
-            </div>
-        </>
-    )
-}
+        <ErrorScreen
+            code="500"
+            title="Problema interno del sistema"
+            icon="fa-triangle-exclamation"
+            message="Ocurrió un error mientras intentábamos procesar la solicitud."
+            hint="Intenta nuevamente en unos minutos. Si el problema continúa, contacta a un administrador para revisar el servicio."
+            actions={[
+                {label: "Reintentar", onClick: () => window.location.reload()},
+                {label: "Ir al inicio", to: "/home", variant: "light"},
+            ]}
+        />
+    );
+};

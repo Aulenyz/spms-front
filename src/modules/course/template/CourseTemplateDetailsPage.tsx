@@ -8,6 +8,8 @@ import {CourseTemplateService} from "../../../services/course/CourseTemplateServ
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {RightModal} from "../../../components/shared/RightModal.tsx";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
 
 const courseTemplateService = CourseTemplateService.instance;
@@ -40,6 +42,7 @@ const getInitials = (value: string) =>
         .toUpperCase();
 
 export const CourseTemplateDetailsPage = () => {
+    const {hasAuthority} = useAuthContext();
     const {id} = useParams<{id: string}>();
 
     const [loading, setLoading] = useState(false);
@@ -257,15 +260,17 @@ export const CourseTemplateDetailsPage = () => {
                             <h2 className="max-w-[min(92vw,720px)] truncate text-xl font-semibold" style={{color: "var(--text-primary)"}}>
                                 {templateTitle}
                             </h2>
-                            <button
-                                type="button"
-                                className="icon-button h-9 w-9"
-                                title="Editar"
-                                disabled={!template}
-                                onClick={() => setShowEdit(true)}
-                            >
-                                <i className="fa fa-pen"/>
-                            </button>
+                            {hasAuthority(AuthorityKey.COURSE_TEMPLATE_EDIT) && (
+                                <button
+                                    type="button"
+                                    className="icon-button h-9 w-9"
+                                    title="Editar"
+                                    disabled={!template}
+                                    onClick={() => setShowEdit(true)}
+                                >
+                                    <i className="fa fa-pen"/>
+                                </button>
+                            )}
                         </div>
 
                         <div
@@ -294,7 +299,7 @@ export const CourseTemplateDetailsPage = () => {
 
                         <RightModal
                             title="Editar plantilla"
-                            isOpen={showEdit}
+                            isOpen={hasAuthority(AuthorityKey.COURSE_TEMPLATE_EDIT) && showEdit}
                             onClose={() => setShowEdit(false)}
                             className="w-[420px] h-full z-[9999]"
                         >
