@@ -18,6 +18,10 @@ const resolvePageMeta = (pathname: string) => {
         return {title: "Estudiantes", subtitle: "Registro academico"};
     }
 
+    if (pathname.startsWith("/subjects")) {
+        return {title: "Materias", subtitle: "Gestion academica"};
+    }
+
     if (pathname.startsWith("/courses")) {
         return /^\/courses\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Cursos"}
@@ -40,6 +44,12 @@ const resolvePageMeta = (pathname: string) => {
         return /^\/specializations\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Areas especializadas"}
             : {title: "Areas especializadas", subtitle: "Estructura academica"};
+    }
+
+    if (pathname.startsWith("/guardians")) {
+        return /^\/guardians\/\d+/.test(pathname)
+            ? {title: "Detalles", subtitle: "Padres / Tutores"}
+            : {title: "Padres / Tutores", subtitle: "Administracion"};
     }
 
     if (pathname.startsWith("/courses/templates")) {
@@ -88,6 +98,13 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         ];
     }
 
+    if (/^\/guardians\/\d+/.test(pathname)) {
+        return [
+            {label: "Padres / Tutores", to: "/guardians/list"},
+            {label: "Detalles", to: pathname},
+        ];
+    }
+
     if (pathname.startsWith("/courses/templates")) {
         if (pathname === "/courses/templates") return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: "/courses/templates"}];
         if (pathname.startsWith("/courses/templates/prices")) return [{label: "Plantillas", to: "/courses/templates"}, {label: "Precios", to: pathname}];
@@ -100,9 +117,15 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         return [{label: "Cursos", to: "/courses/list"}, {label: "Detalles", to: pathname}];
     }
 
+    if (pathname.startsWith("/subjects")) return [{label: "Materias", to: pathname}];
+
     if (pathname.startsWith("/payments")) return [{label: "Pagos", to: pathname}];
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
     if (pathname.startsWith("/students")) return [{label: "Estudiantes", to: pathname}];
+    if (pathname.startsWith("/guardians")) {
+        if (pathname === "/guardians/list") return [{label: "Padres / Tutores", to: "/guardians/list"}];
+        return [{label: "Padres / Tutores", to: "/guardians/list"}, {label: "Detalles", to: pathname}];
+    }
     if (pathname.startsWith("/users")) {
         if (pathname === "/users") return [{label: "Gestion de usuarios", to: "/users"}, {label: "Usuarios", to: "/users"}];
         if (pathname.startsWith("/users/roles")) return [{label: "Gestion de usuarios", to: "/users"}, {label: "Roles", to: pathname}];

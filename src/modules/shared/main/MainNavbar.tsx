@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {isNil} from "lodash";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
@@ -6,6 +6,12 @@ import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {ChangePasswordForm} from "../../changePassword/changePasswordForm.tsx";
 import {useQueryParams} from "../../../hooks/useQueryParams.tsx";
 import {PeriodConfig, PeriodConfigService} from "../../../services/period/PeriodConfigService.ts";
+import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
+import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
+import {useCompany} from "../../../contexts/CompanyContext.tsx";
+import {environment} from "../../../environment/environment.ts";
+import {joinURLParts} from "../../../utils/URIs.ts";
+import {OrganizationService} from "../../../services/organization/OrganizationService.ts";
 
 type MainNavbarProps = {
     subtitle: string;
@@ -19,16 +25,54 @@ type MainNavbarProps = {
 export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavbarProps) => {
     const {notification} = useQueryParams();
     const {current, logout}: AuthContextValue = useAuthContext();
+    const {rnc, setRnc} = useCompany();
     const [periodConfig, setPeriodConfig] = useState<PeriodConfig | null>(null);
+    const [organizations, setOrganizations] = useState<UserOrganizationDTO[]>([]);
+    const [orgLoading, setOrgLoading] = useState(false);
+    const [currentOrganization, setCurrentOrganization] = useState<{
+        name?: string;
+        logo?: string;
+        document?: string
+    } | null>(null);
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showOrgMenu, setShowOrgMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const orgMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         PeriodConfigService.instance.after()
             .then((config) => setPeriodConfig(config))
             .catch(() => setPeriodConfig(null));
+    }, []);
+
+    useEffect(() => {
+        // Uses OrganizationContext (X-Auth-Company) on backend to return the currently logged organization.
+        OrganizationService.instance
+            .current()
+            .then((org) => setCurrentOrganization(org ?? null))
+            .catch(() => setCurrentOrganization(null));
+    }, [rnc]);
+
+    useEffect(() => {
+        const loadOrganizations = async () => {
+            setOrgLoading(true);
+            try {
+                const res = await UserOrganizationService.instance.current();
+                const list = Array.isArray(res) ? res : (res?.organization ? [res] : []);
+                setOrganizations(list);
+                if (!rnc && list.length === 1 && list[0]?.organization?.document) {
+                    setRnc(list[0].organization.document);
+                }
+            } catch {
+                setOrganizations([]);
+            } finally {
+                setOrgLoading(false);
+            }
+        };
+        void loadOrganizations();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -42,12 +86,16 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowProfileMenu(false);
             }
+            if (orgMenuRef.current && !orgMenuRef.current.contains(event.target as Node)) {
+                setShowOrgMenu(false);
+            }
         };
 
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 setShowProfileMenu(false);
                 setShowNotifications(false);
+                setShowOrgMenu(false);
             }
         };
 
@@ -67,9 +115,29 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
         return new Intl.DateTimeFormat("es", {day: "2-digit", month: "short", year: "numeric"}).format(date);
     };
 
+    const resolveLogo = (value?: string | null) => {
+        const raw = (value ?? "").toString().trim();
+        if (!raw) return null;
+        if (/^data:/i.test(raw)) return raw;
+        if (/^https?:\/\//i.test(raw)) return raw;
+        // Backend may return relative paths; normalize against api URL.
+        return joinURLParts(environment.apiURL, raw.startsWith("/") ? raw : `/${raw}`);
+    };
+
     const startLabel = formatShortDate(periodConfig?.start);
-    const endLabel = formatShortDate(periodConfig?.end);
     const enabled = Boolean(periodConfig?.enabled);
+    const currentOrg = currentOrganization ?? organizations.find((o) => o.organization.document === rnc)?.organization ?? null;
+
+    const orgInitials = useMemo(() => {
+        const name = (currentOrg?.name ?? "").trim();
+        if (!name) return "";
+        return name
+            .split(" ")
+            .map((word) => word.charAt(0))
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+    }, [currentOrg?.name]);
 
     return (
         <>
@@ -94,7 +162,8 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                                     {breadcrumbs.map((crumb, index) => {
                                         const clickable = typeof crumb.onClick === "function";
                                         return (
-                                            <span key={`${crumb.label}-${index}`} className="inline-flex min-w-0 items-center gap-1.5">
+                                            <span key={`${crumb.label}-${index}`}
+                                                  className="inline-flex min-w-0 items-center gap-1.5">
                                                 {index > 0 && <span className="text-[var(--text-tertiary)]">/</span>}
                                                 {clickable ? (
                                                     <button
@@ -106,7 +175,9 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                                                         {crumb.label}
                                                     </button>
                                                 ) : (
-                                                    <span className="max-w-[220px] truncate text-[var(--text-secondary)]" title={crumb.label}>
+                                                    <span
+                                                        className="max-w-[220px] truncate text-[var(--text-secondary)]"
+                                                        title={crumb.label}>
                                                         {crumb.label}
                                                     </span>
                                                 )}
@@ -120,21 +191,134 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
 
                     <div className="flex items-center gap-2 sm:gap-3">
                         <div className="hidden lg:flex items-center gap-2">
+                            {organizations.length > 0 && (
+                                <div className="relative" ref={orgMenuRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (organizations.length <= 1) return;
+                                            setShowOrgMenu((value) => !value);
+                                        }}
+                                        className="inline-flex items-center gap-2 rounded-[18px] border px-2.5 py-1.5 text-left transition"
+                                        style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}
+                                        title={currentOrg?.name ?? "Espacio de trabajo"}
+                                    >
+                                        <div
+                                            className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-xl border"
+                                            style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}
+                                        >
+                                            {resolveLogo(currentOrg?.logo) ? (
+                                                <img src={resolveLogo(currentOrg?.logo) as string} alt="Logo"
+                                                     className="h-full w-full object-cover"/>
+                                            ) : (
+                                                <span className="text-[11px] font-extrabold"
+                                                      style={{color: "var(--text-secondary)"}}>
+                                                    {orgInitials || "—"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {organizations.length > 1 && (
+                                            <i className="fa fa-chevron-down text-[10px] text-[var(--text-tertiary)]"/>
+                                        )}
+                                    </button>
+
+                                    {organizations.length > 1 && showOrgMenu && (
+                                        <div className="floating-panel left-0 mt-3 w-[340px]">
+                                            <div className="floating-panel-header">
+                                                {orgLoading ? "Cargando..." : "Espacios de trabajo"}
+                                            </div>
+                                            <div className="p-3">
+                                                <div className="grid gap-2 max-h-[320px] overflow-auto pr-1">
+                                                    {organizations.map((item) => {
+                                                        const org = item.organization;
+                                                        const selected = org.document === rnc;
+                                                        return (
+                                                            <button
+                                                                key={org.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (selected) return;
+                                                                    setRnc(org.document);
+                                                                    window.location.reload();
+                                                                }}
+                                                                className="rounded-[22px] border p-3 text-left transition"
+                                                                style={{
+                                                                    borderColor: selected ? "var(--accent)" : "var(--border-soft)",
+                                                                    background: selected ? "color-mix(in srgb, var(--accent-soft) 65%, var(--surface))" : "var(--surface)",
+                                                                    boxShadow: "var(--shadow-soft)",
+                                                                }}
+                                                                title={org.name}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div className="flex items-center gap-3 min-w-0">
+                                                                        <div
+                                                                            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[16px] border"
+                                                                            style={{
+                                                                                borderColor: "var(--border-soft)",
+                                                                                background: "var(--surface-muted)"
+                                                                            }}
+                                                                        >
+                                                                            {resolveLogo(org.logo) ? (
+                                                                                <img
+                                                                                    src={resolveLogo(org.logo) as string}
+                                                                                    alt="Logo"
+                                                                                    className="h-full w-full object-cover"/>
+                                                                            ) : (
+                                                                                <span className="text-xs font-extrabold"
+                                                                                      style={{color: "var(--text-secondary)"}}>
+                                                                                    {org.name
+                                                                                        ?.split(" ")
+                                                                                        .map((w) => w.charAt(0))
+                                                                                        .slice(0, 2)
+                                                                                        .join("")
+                                                                                        .toUpperCase() || "—"}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <div
+                                                                                className="truncate text-sm font-extrabold"
+                                                                                style={{color: "var(--text-primary)"}}>
+                                                                                {org.name}
+                                                                            </div>
+                                                                            <div
+                                                                                className="mt-1 truncate text-xs font-semibold"
+                                                                                style={{color: "var(--text-tertiary)"}}>
+                                                                                {org.document}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span
+                                                                        className="rounded-full px-3 py-1 text-[11px] font-semibold"
+                                                                        style={{
+                                                                            background: selected ? "var(--accent-soft)" : "var(--surface-muted)",
+                                                                            color: selected ? "var(--accent)" : "var(--text-secondary)",
+                                                                        }}
+                                                                    >
+                                                                        {selected ? "Actual" : "Cambiar"}
+                                                                    </span>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div
                                 className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                                 title="Calendario escolar"
                             >
-                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
-                                    Proximo ano escolar
+                                <span
+                                    className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+                                    Proximo año escolar
                                 </span>
                                 <span className="ml-2">
-                                    {startLabel && endLabel
-                                        ? `Inicia ${startLabel} - Termina ${endLabel}`
-                                        : startLabel
-                                            ? `Inicia ${startLabel}`
-                                            : endLabel
-                                                ? `Termina ${endLabel}`
-                                                : "Sin configurar"}
+                                    {startLabel ? `Inicia ${startLabel}` : "Sin configurar"}
+
                                 </span>
                             </div>
 
@@ -194,14 +378,6 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                                         className="h-9 w-9 rounded-xl object-cover"
                                     />
                                 </LoadingContent>
-                                <div className="hidden text-left sm:block">
-                                    <p className="max-w-[160px] truncate text-sm font-semibold text-[var(--text-primary)]">
-                                        {current?.info.firstname} {current?.info.lastname}
-                                    </p>
-                                    <p className="max-w-[160px] truncate text-xs text-[var(--text-secondary)]">
-                                        {current?.email ?? current?.username}
-                                    </p>
-                                </div>
                                 <i className="fa fa-chevron-down text-[10px] text-[var(--text-tertiary)]"/>
                             </button>
 

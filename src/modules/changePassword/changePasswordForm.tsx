@@ -5,14 +5,15 @@ import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {toast} from "react-toastify";
 import {NavigateFunction, useNavigate} from "react-router-dom";
-import {Form} from "../../components/io/Form.tsx";
 import {PasswordInput} from "../../components/io/PasswordInput.tsx";
 import {changePasswordSchema} from "../../contexts/changePassword/changePasswordSchema.ts";
+import {useState} from "react";
 
 const changePasswordService: ChangePasswordService = ChangePasswordService.instance;
 export const ChangePasswordForm = ({onSubmit}: { onSubmit?: () => void }) => {
 
     const navigate: NavigateFunction = useNavigate();
+    const [saving, setSaving] = useState(false);
 
     const {register, handleSubmit, formState: {errors}}: UseForm<ChangePassword> = useForm<ChangePassword>({
         resolver: yupResolver(changePasswordSchema),
@@ -21,31 +22,58 @@ export const ChangePasswordForm = ({onSubmit}: { onSubmit?: () => void }) => {
     });
 
     const doChangePassword = (params: ChangePassword) => {
-        changePasswordService.create('', params)
+        if (saving) return;
+        setSaving(true);
+        changePasswordService
+            .create('', params)
             .then(() => {
-                toast.success('Contraseña cambiada con exito');
+                toast.success('Contrasena cambiada con exito');
                 onSubmit?.();
                 navigate('/home');
             }, () => {
-                toast.error('Error cambiando la Contraseña');
+                toast.error('Error cambiando la contrasena');
             })
+            .finally(() => setSaving(false));
     }
 
     return (
-        <Form className={'py-2'} name="Login Form" submit={handleSubmit(doChangePassword)}>
+        <form className="space-y-5 p-4" name="ChangePasswordForm" onSubmit={handleSubmit(doChangePassword)}>
+            <div className="rounded-[22px] border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)", boxShadow: "var(--shadow-soft)"}}>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{color: "var(--text-tertiary)"}}>
+                    Seguridad
+                </div>
+                <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
+                    Actualiza tu contrasena para mantener tu cuenta protegida.
+                </div>
+            </div>
 
-            <PasswordInput className={'mb-5'} label={'Contraseña Actual'}
-                           type="password"{...register('currentPassword')} error={errors.currentPassword?.message}/>
-            <PasswordInput className={'mb-5'} label={'Nueva Contraseña'} type="password"{...register('newPassword')}
-                           error={errors.newPassword?.message}/>
-            <PasswordInput className={'mb-5'} label={'Confirmar Contraseña'}
-                           type="password"{...register('confirmPassword')} error={errors.confirmPassword?.message}/>
+            <div className="grid gap-4">
+                <PasswordInput
+                    label={'Contrasena actual'}
+                    type="password"
+                    {...register('currentPassword')}
+                    error={errors.currentPassword?.message}
+                />
+                <PasswordInput
+                    label={'Nueva contrasena'}
+                    type="password"
+                    {...register('newPassword')}
+                    error={errors.newPassword?.message}
+                />
+                <PasswordInput
+                    label={'Confirmar contrasena'}
+                    type="password"
+                    {...register('confirmPassword')}
+                    error={errors.confirmPassword?.message}
+                />
+            </div>
 
-            <div className="flex justify-end absolute bottom-5 right-5">
-                <button className="px-4 py-2 h-10 bg-blue-600 btn-sm text-white rounded hover:bg-blue-700">
-                    Restablecer Contraseña <i className="fa fa-key ms-2"/>
+            <div className="flex items-center justify-end gap-2 pt-2">
+                <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>
+                    {saving ? "Guardando..." : "Cambiar contrasena"}
+                    <i className="fa fa-key ms-2"/>
                 </button>
             </div>
-        </Form>
+        </form>
     )
 }

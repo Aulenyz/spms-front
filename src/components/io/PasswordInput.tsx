@@ -30,7 +30,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputParams>(
                         {...props}
                         type={show ? "text" : "password"}
                         autoComplete="new-password"
-                        className={clsx("input bg-transparent pr-10", {
+                        className={clsx("input input-sm bg-transparent pr-10", {
                             "border-red-500": Boolean(error),
                         })}
                     />
@@ -44,7 +44,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputParams>(
                     </button>
                 </div>
                 {error && (
-                    <p className="text-red-500 text-xs absolute right-0 mt-1">
+                    <p className="mt-1 text-xs font-semibold text-red-500">
                         <i className="fa fa-warning mr-1"/>
                         {error}
                     </p>

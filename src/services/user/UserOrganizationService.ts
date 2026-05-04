@@ -12,7 +12,7 @@ export class UserOrganizationService extends BaseService<UserOrganizationDTO> {
         super("/users/organizations");
     }
 
-    async current(): Promise<UserOrganizationDTO> {
-        return super.get<UserOrganizationDTO>("/current");
+    async current(): Promise<UserOrganizationDTO[] | UserOrganizationDTO> {
+        return super.get<UserOrganizationDTO[] | UserOrganizationDTO>("/current");
     }
 }

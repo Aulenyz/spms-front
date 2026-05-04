@@ -42,7 +42,6 @@ export const Dashboard = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Operacion diaria"
                 title="Panel general"
                 description="Resumen corto del estado academico y financiero del dia."
             />

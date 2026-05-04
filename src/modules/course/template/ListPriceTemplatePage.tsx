@@ -1,5 +1,6 @@
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {TemplateInfoCard} from "./TemplateInfoCard.tsx";
+import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 
 const PRICE_TEMPLATES = [
     {
@@ -42,23 +43,31 @@ const PRICE_TEMPLATES = [
 
 export const ListPriceTemplatePage = () => {
     return (
-        <DataTableCard
-            title="Plantillas de precios"
-            description="Agrupa las estructuras de cobro reutilizables para mensualidades, reinscripciones y servicios adicionales."
-            status={<span className="page-header-eyebrow">Registros: {PRICE_TEMPLATES.length}</span>}
-        >
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {PRICE_TEMPLATES.map((template) => (
-                    <TemplateInfoCard
-                        key={template.id}
-                        title={template.title}
-                        subtitle={template.subtitle}
-                        badge={template.badge}
-                        accent={template.accent}
-                        details={template.details}
-                    />
-                ))}
-            </div>
-        </DataTableCard>
+        <div className="space-y-6">
+            <PageHeader
+                eyebrow="Configuracion"
+                title="Plantillas de precios"
+                description="Agrupa estructuras de cobro reutilizables para mensualidades, reinscripciones y servicios adicionales."
+            />
+
+            <DataTableCard
+                title="Plantillas"
+                description="Administra plantillas de cobro por categoria y aplica configuraciones base."
+                status={<span className="page-header-eyebrow">Registros: {PRICE_TEMPLATES.length}</span>}
+            >
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {PRICE_TEMPLATES.map((template) => (
+                        <TemplateInfoCard
+                            key={template.id}
+                            title={template.title}
+                            subtitle={template.subtitle}
+                            badge={template.badge}
+                            accent={template.accent}
+                            details={template.details}
+                        />
+                    ))}
+                </div>
+            </DataTableCard>
+        </div>
     );
 };

@@ -80,7 +80,6 @@ export const ListEnrollmentPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Matricula"
                 title="Listado de inscripciones"
                 description="Revisa altas por periodo, curso y estado desde una tabla unificada."
             />

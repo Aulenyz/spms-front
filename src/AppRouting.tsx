@@ -18,12 +18,13 @@ import {ListCourseTemplatePage} from "./modules/course/template/ListCourseTempla
 import {ListPriceTemplatePage} from "./modules/course/template/ListPriceTemplatePage.tsx";
 import {ListMaterialTemplatePage} from "./modules/course/template/ListMaterialTemplatePage.tsx";
 import {CourseTemplateDetailsPage} from "./modules/course/template/CourseTemplateDetailsPage.tsx";
-import {OrganizationOptionsPage} from "./modules/organization/OrganizationOptionsPage.tsx";
 import {SpecializationForm} from "./modules/specialization/create/SpecializationForm.tsx";
 import {UserInvitationListPage} from "./modules/user/invitation/UserInvitationListPage.tsx";
 import {UserDetailsPage} from "./modules/user/details/UserDetailsPage.tsx";
 import {RoleDetailsPage} from "./modules/user/role/details/RoleDetailsPage.tsx";
 import {CourseRouting} from "./modules/course/CourseRouting.tsx";
+import {GuardianRouting} from "./modules/guardian/GuardianRouting.tsx";
+import {SubjectRouting} from "./modules/subject/SubjectRouting.tsx";
 
 export const AppRouting = () => {
     return (
@@ -35,6 +36,8 @@ export const AppRouting = () => {
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
+                <Route path="subjects/*" element={<SubjectRouting/>}/>
+                <Route path="guardians/*" element={<GuardianRouting/>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
                 <Route path="specializations/create" element={<SpecializationForm/>}/>
                 <Route path="/users" element={<UserOptionsPage/>}>
@@ -49,11 +52,10 @@ export const AppRouting = () => {
                 {/* Full details screen (outside templates tabs) */}
                 <Route path="/courses/templates/:id" element={<CourseTemplateDetailsPage/>}/>
 
-                <Route path="/courses/templates" element={<OrganizationOptionsPage/>}>
-                    <Route index element={<ListCourseTemplatePage/>}/>
-                    <Route path="prices" element={<ListPriceTemplatePage/>}/>
-                    <Route path="materials" element={<ListMaterialTemplatePage/>}/>
-                </Route>
+                {/* Templates as separate screens (no tabs). */}
+                <Route path="/courses/templates" element={<ListCourseTemplatePage/>}/>
+                <Route path="/courses/templates/prices" element={<ListPriceTemplatePage/>}/>
+                <Route path="/courses/templates/materials" element={<ListMaterialTemplatePage/>}/>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

@@ -1,6 +1,9 @@
 import {BaseModel} from "../BaseModel.ts";
 
 export interface Course extends BaseModel {
+    name: string;
+    active: boolean;
+    type: GradeType;
     division: string;
     specialization: Specialization | null;
 }

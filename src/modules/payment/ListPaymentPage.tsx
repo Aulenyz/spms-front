@@ -77,7 +77,6 @@ export const ListPaymentPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Cobros"
                 title="Pagos"
                 description="Consulta ventas, metodo de pago y estado de cada transaccion desde una vista ordenada."
             />

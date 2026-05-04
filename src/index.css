@@ -532,7 +532,7 @@
     }
 
     .profile-button {
-        @apply inline-flex items-center gap-2 rounded-[18px] border px-2 py-1 transition;
+        @apply inline-flex items-center gap-2 rounded-[18px] border p-1.5 transition;
         border-color: var(--border-soft);
         background: var(--surface-muted);
     }

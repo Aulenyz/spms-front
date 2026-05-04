@@ -11,6 +11,9 @@ import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {CourseFilter} from "../../domain/filters/course/CourseFilter.tsx";
+import {CourseActivePill} from "../../components/io/output/pill/CourseActivePill.tsx";
+import {GradeType} from "../../domain/model/course/Course.ts";
+import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 
 const courseService = CourseService.instance;
 const periodService = PeriodService.instance;
@@ -60,7 +63,6 @@ export const ListCoursePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Gestión académica"
                 title="Cursos"
                 description="Consulta cursos creados por periodo, estado y área especializada desde una sola vista."
             />
@@ -75,15 +77,18 @@ export const ListCoursePage = () => {
                 <table className="table-shell">
                     <thead>
                     <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Tipo</th>
                         <th scope="col">División</th>
                         <th scope="col">Área especializada</th>
+                        <th scope="col">Estado</th>
                         <th scope="col"></th>
                     </tr>
                     </thead>
                     <tbody>
                     {courses.content.length === 0 && (
                         <tr>
-                            <td colSpan={3}>
+                            <td colSpan={6}>
                                 <EmptyState
                                     title="No hay cursos para mostrar"
                                     description="Cambia el periodo o los filtros para ver otros registros."
@@ -95,8 +100,11 @@ export const ListCoursePage = () => {
 
                     {courses.content.map((course, index) => (
                         <tr key={index}>
+                            <td><strong>{course.name ?? "-"}</strong></td>
+                            <td><GradeTypePill type={course.type as GradeType}/></td>
                             <td><strong>{course.division}</strong></td>
                             <td>{course.specialization?.name ?? "-"}</td>
+                            <td><CourseActivePill active={Boolean(course.active)}/></td>
                             <td className="text-right">
                                 <Link to={`/courses/${course.id}`} state={{course}} className="table-link whitespace-nowrap">
                                     Detalles
@@ -111,4 +119,3 @@ export const ListCoursePage = () => {
         </div>
     );
 };
-

@@ -115,6 +115,31 @@ export const CourseTemplateForm = ({
                 void submit();
             }}
         >
+            <div
+                className="rounded-[20px] border px-4 py-3"
+                style={{
+                    borderColor: "var(--border-soft)",
+                    background: "var(--surface-muted)",
+                }}
+            >
+                <div className="flex items-start gap-3">
+                    <span
+                        className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+                        style={{background: "var(--accent-soft)", color: "var(--accent)"}}
+                    >
+                        <i className="fa fa-calendar"/>
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{color: "var(--text-tertiary)"}}>
+                            Nota
+                        </p>
+                        <p className="mt-1 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
+                            Estos cambios se reflejaran en el sistema para el proximo ano escolar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div className="space-y-1">
                 <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
                     Nombre*

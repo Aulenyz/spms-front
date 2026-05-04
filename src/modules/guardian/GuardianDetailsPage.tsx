@@ -3,21 +3,18 @@ import {Link, useLocation, useParams} from "react-router-dom";
 import clsx from "clsx";
 import {toast} from "react-toastify";
 
-import {Course} from "../../domain/model/course/Course.ts";
-import {CourseService} from "../../services/course/CourseService.ts";
-import {CourseActivePill} from "../../components/io/output/pill/CourseActivePill.tsx";
-import {GradeType} from "../../domain/model/course/Course.ts";
-import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
+import {Guardian} from "../../domain/student/Guardian.ts";
+import {GuardianService} from "../../services/student/guardian/GuardianService.ts";
 
-type TabKey = "students" | "subjects" | "teachers";
+type TabKey = "students" | "contact" | "activity";
 
 const TABS: Array<{key: TabKey; label: string; icon: string; hint: string}> = [
-    {key: "students", label: "Estudiantes", icon: "fa-user-graduate", hint: "Listado"},
-    {key: "subjects", label: "Materias", icon: "fa-book-open", hint: "Plan"},
-    {key: "teachers", label: "Profesores", icon: "fa-chalkboard-user", hint: "Asignados"},
+    {key: "students", label: "Estudiantes", icon: "fa-user-graduate", hint: "Relacionados"},
+    {key: "contact", label: "Contacto", icon: "fa-address-card", hint: "Datos"},
+    {key: "activity", label: "Actividad", icon: "fa-clock-rotate-left", hint: "Eventos"},
 ];
 
-const courseService = CourseService.instance;
+const guardianService = GuardianService.instance;
 
 const getApiErrorMessage = (error: unknown) => {
     if (!error) return null;
@@ -29,39 +26,100 @@ const getApiErrorMessage = (error: unknown) => {
     return null;
 };
 
-export const CourseDetailsPage = () => {
+const getInitials = (value: string) =>
+    value
+        .split(" ")
+        .map((word) => word.charAt(0))
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+export const GuardianDetailsPage = () => {
     const {id} = useParams<{id: string}>();
     const location = useLocation();
-    const stateCourse = (location.state as {course?: Course} | null)?.course;
+    const stateGuardian = (location.state as {guardian?: Guardian} | null)?.guardian;
 
     const [loading, setLoading] = useState(false);
-    const [course, setCourse] = useState<Course | null>(stateCourse ?? null);
+    const [guardian, setGuardian] = useState<Guardian | null>(stateGuardian ?? null);
     const [tab, setTab] = useState<TabKey>("students");
 
     useEffect(() => {
         if (!id) return;
         setLoading(true);
-        courseService
+        guardianService
             .getOne(id)
-            .then((res) => setCourse(res ?? null))
+            .then((res) => setGuardian(res ?? null))
             .catch((error) => {
-                toast.error(getApiErrorMessage(error) ?? "No se pudo cargar el detalle del curso.");
-                setCourse(null);
+                toast.error(getApiErrorMessage(error) ?? "No se pudo cargar el detalle del representante.");
+                setGuardian(null);
             })
             .finally(() => setLoading(false));
     }, [id]);
 
-    const title = useMemo(() => course?.name ?? course?.division ?? "Curso", [course?.name, course?.division]);
-    const division = useMemo(() => course?.division ?? "-", [course?.division]);
-    const specialization = useMemo(() => course?.specialization?.name ?? "Sin área especializada", [course?.specialization?.name]);
+    const name = useMemo(() => {
+        const first = (guardian?.firstname ?? "").toString().trim();
+        const last = (guardian?.lastname ?? "").toString().trim();
+        return `${first} ${last}`.trim() || "Representante";
+    }, [guardian?.firstname, guardian?.lastname]);
+
+    const initials = useMemo(() => getInitials(name), [name]);
 
     const renderBody = () => {
         if (loading) {
             return <div className="p-6 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>Cargando...</div>;
         }
 
-        if (!course) {
-            return <div className="p-6 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>No se encontro el curso.</div>;
+        if (!guardian) {
+            return <div className="p-6 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>No se encontro el representante.</div>;
+        }
+
+        if (tab === "contact") {
+            return (
+                <div className="grid gap-4 p-5 lg:grid-cols-2">
+                    <div className="space-y-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
+                            Datos principales
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="rounded-2xl border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
+                                    Documento
+                                </div>
+                                <div className="mt-1 truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>
+                                    {guardian.document ?? "-"}
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
+                                    Telefono
+                                </div>
+                                <div className="mt-1 truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>
+                                    {guardian.phone ?? "-"}
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border px-4 py-3 sm:col-span-2" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
+                                    Correo
+                                </div>
+                                <div className="mt-1 truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>
+                                    {guardian.email ?? "-"}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
+                            Direccion
+                        </div>
+                        <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                            <div className="text-sm leading-6" style={{color: "var(--text-secondary)"}}>
+                                {guardian.address ?? "Sin direccion registrada."}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
         }
 
         const rows = tab === "students"
@@ -69,14 +127,9 @@ export const CourseDetailsPage = () => {
                 {name: "Estudiante demo", note: "Pendiente endpoint"},
                 {name: "Otro estudiante demo", note: "Pendiente endpoint"},
             ]
-            : tab === "subjects"
-                ? [
-                    {name: "Materia demo", note: "Pendiente endpoint"},
-                    {name: "Materia demo 2", note: "Pendiente endpoint"},
-                ]
-                : [
-                    {name: "Profesor demo", note: "Pendiente endpoint"},
-                ];
+            : [
+                {name: "Registro demo", note: "Pendiente endpoint"},
+            ];
 
         return (
             <table className="table-shell">
@@ -114,36 +167,32 @@ export const CourseDetailsPage = () => {
                         className="mb-3 flex h-20 w-20 items-center justify-center rounded-full border text-lg font-extrabold"
                         style={{borderColor: "var(--border-soft)", background: "var(--surface)", boxShadow: "var(--shadow-card)", color: "var(--text-primary)"}}
                     >
-                        <i className="fa fa-book"/>
+                        {initials}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-2">
                         <h1 className="text-2xl font-extrabold tracking-tight" style={{color: "var(--text-primary)"}}>
-                            {title}
+                            {name}
                         </h1>
                         <Link
-                            to="/courses/list"
+                            to="/guardians/list"
                             className="inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-semibold"
                             style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}
                         >
-                            Cursos
+                            Padres / Tutores
                         </Link>
-                    </div>
-
-                    <div className="mt-2 max-w-[820px] text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                        {specialization}
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                         <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                            <GradeTypePill type={(course?.type as GradeType) ?? null}/>
+                            Documento: <span style={{color: "var(--text-primary)"}}>{guardian?.document ?? "-"}</span>
                         </div>
                         <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                            Division: <span style={{color: "var(--text-primary)"}}>{division}</span>
+                            Telefono: <span style={{color: "var(--text-primary)"}}>{guardian?.phone ?? "-"}</span>
                         </div>
-                        {course?.active !== undefined && (
+                        {guardian?.email && (
                             <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                <CourseActivePill active={Boolean(course.active)}/>
+                                {guardian.email}
                             </div>
                         )}
                     </div>
@@ -192,3 +241,4 @@ export const CourseDetailsPage = () => {
         </div>
     );
 };
+

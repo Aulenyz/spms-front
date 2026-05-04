@@ -1,5 +1,6 @@
 import {Link} from "react-router-dom";
-import {GradeTypeLabel, Specialization} from "../../domain/model/course/Course.ts";
+import {Specialization} from "../../domain/model/course/Course.ts";
+import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 
 interface Props {
     specialization: Specialization;
@@ -58,12 +59,7 @@ export const SpecializationCard = ({specialization}: Props) => {
                                     <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={statusStyle}>
                                         {statusLabel}
                                     </span>
-                                    <span
-                                        className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                                        style={{background: "var(--muted)", color: "var(--text-secondary)"}}
-                                    >
-                                        {GradeTypeLabel[specialization.type]}
-                                    </span>
+                                    <GradeTypePill type={specialization.type}/>
                                 </div>
                             </div>
                         </div>

@@ -42,7 +42,6 @@ export const ListStudentPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Estudiantes"
                 title="Listado de estudiantes"
                 description="Consulta registro, genero y estado academico desde una sola vista."
             />

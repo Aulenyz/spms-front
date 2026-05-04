@@ -36,16 +36,6 @@ export const navigationSections: NavigationSection[] = [
                 to: "/courses/list",
             },
             {
-                label: "Materias",
-                icon: "fa-book-open",
-                to: "/subjects/list",
-            },
-            {
-                label: "Profesores",
-                icon: "fa-chalkboard-user",
-                to: "/teachers/list",
-            },
-            {
                 label: "Calificaciones",
                 icon: "fa-clipboard-check",
                 to: "/grades/list",
@@ -116,20 +106,35 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-people-roof",
                 to: "/guardians/list",
             },
+            {
+                label: "Profesores",
+                icon: "fa-chalkboard-user",
+                to: "/teachers/list",
+            },
         ],
     },
     {
-        title: "Configuración",
+        title: "Configuración académica",
         items: [
             {
-                label: "Configuración plantillas",
+                label: "Cursos",
                 icon: "fa-layer-group",
                 to: "/courses/templates",
             },
             {
-                label: "Configuración general",
-                icon: "fa-gear",
-                to: "/settings",
+                label: "Materias",
+                icon: "fa-book-open",
+                to: "/subjects/list",
+            },
+            {
+                label: "Precios",
+                icon: "fa-tags",
+                to: "/courses/templates/prices",
+            },
+            {
+                label: "Materiales",
+                icon: "fa-boxes-stacked",
+                to: "/courses/templates/materials",
             },
         ],
     },
