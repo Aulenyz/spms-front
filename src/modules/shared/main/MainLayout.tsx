@@ -166,7 +166,7 @@ export const MainLayout = () => {
                 onToggleCollapse={() => setCollapsed((current) => !current)}
             />
 
-            <div className={`app-shell-main ${collapsed ? "lg:pl-[104px]" : "lg:pl-[302px]"}`}>
+            <div className={`app-shell-main ${collapsed ? "lg:pl-[104px]" : "lg:pl-[324px]"}`}>
                 <MainNavbar
                     subtitle={pageMeta.subtitle}
                     onOpenSidebar={() => setMobileOpen(true)}

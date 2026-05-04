@@ -575,7 +575,7 @@
     }
 
     .app-sidebar {
-        @apply fixed inset-y-0 left-0 z-50 w-[290px] -translate-x-full transition-transform duration-300 lg:translate-x-0;
+        @apply fixed inset-y-0 left-0 z-50 w-[325px] -translate-x-full transition-transform duration-300 lg:translate-x-0;
     }
 
     .app-sidebar-open {
@@ -618,6 +618,10 @@
 
     .app-brand {
         @apply flex min-w-0 flex-1 items-center gap-3;
+    }
+
+    .app-brand-copy {
+        @apply flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden;
     }
 
     .app-brand-mark {
