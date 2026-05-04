@@ -163,6 +163,23 @@
         color: var(--text-secondary);
     }
 
+    @media (max-width: 767px) {
+        .table-shell {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+        }
+
+        .table-shell thead,
+        .table-shell tbody {
+            display: table;
+            width: 100%;
+            min-width: 680px;
+            table-layout: auto;
+        }
+    }
+
     .table-shell thead tr {
         background: color-mix(in srgb, var(--surface-muted) 90%, transparent);
     }
