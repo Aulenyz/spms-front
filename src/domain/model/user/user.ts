@@ -3,7 +3,13 @@ import {BaseModel} from "../BaseModel.ts";
 
 export enum Gender {
     MALE = 'MALE',
-    FEMALE = 'FEMALE'
+    FEMALE = 'FEMALE',
+    OTHER = 'OTHER'
+}
+
+export enum DocumentType {
+    ID_CARD = 'ID_CARD',
+    PASSPORT = 'PASSPORT'
 }
 
 export enum UserStatus {
@@ -39,6 +45,12 @@ export const UserStatusLabel: Record<keyof typeof UserStatus, string> = {
 export const Genders: Record<keyof typeof Gender, string> = {
     MALE: 'Masculino',
     FEMALE: 'Femenino',
+    OTHER: 'Otro',
+}
+
+export const DocumentTypeLabel: Record<keyof typeof DocumentType, string> = {
+    ID_CARD: 'Cedula',
+    PASSPORT: 'Pasaporte',
 }
 
 export const GenderOptions: Array<SelectOption> = Object.keys(Gender).map(key => {
@@ -47,6 +59,11 @@ export const GenderOptions: Array<SelectOption> = Object.keys(Gender).map(key =>
         description: Genders[key as keyof typeof Gender]
     }
 });
+
+export const DocumentTypeOptions: Array<SelectOption> = Object.keys(DocumentType).map(key => ({
+    value: key,
+    description: DocumentTypeLabel[key as keyof typeof DocumentType],
+}));
 
 export interface User extends BaseModel {
     username: string;
@@ -140,6 +157,17 @@ export interface AuthorityFormValues {
     description: string;
 }
 
+export interface PublicRegisterUserFormValues {
+    image: string;
+    gender: Gender;
+    token: string;
+    username: string;
+    password: string;
+    firstname: string;
+    lastname: string;
+    type: DocumentType;
+    document: string;
+}
+
 export const UserOptionMapper = ({id, info}: User): SelectOption => ({value: id, description: info.name});
 export const RoleOptionMapper = ({id: value, description}: UserRole) => ({value, description});
-

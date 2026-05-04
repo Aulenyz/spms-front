@@ -3,6 +3,7 @@ import {LoginPage} from "./LoginPage.tsx";
 import {RecoverPage} from "./recover/RecoverPage.tsx";
 import {SendRecoverPasswordPage} from "./recover/SendRecoverPasswordPage.tsx";
 import {SelectOrganizationPage} from "./select-company/SelectOrganizationPage.tsx";
+import {RegisterInvitationPage} from "./RegisterInvitationPage.tsx";
 
 export const AuthPage = () => {
     return (
@@ -13,6 +14,7 @@ export const AuthPage = () => {
             <Route path='recover' element={<RecoverPage/>}/>
             <Route path='send-recover' element={<SendRecoverPasswordPage/>}/>
             <Route path="select-organization" element={<SelectOrganizationPage />} />
+            <Route path="register" element={<RegisterInvitationPage />} />
         </Routes>
     )
 }
