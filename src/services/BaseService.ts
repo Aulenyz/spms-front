@@ -1,7 +1,7 @@
 import {environment} from "../environment/environment";
 import {getURI, joinURLParts} from "../utils/URIs";
 import {isNil} from "lodash";
-import {KeyValue, KeyValueOf, nonNil, Nullable, PlainValue} from "../domain/types/steoreotype.ts";
+import {KeyValue, KeyValueOf, nonEmpty, Nullable, PlainValue} from "../domain/types/steoreotype.ts";
 import {StorageItem} from "../domain/types/StorageItem.ts";
 import {TokenInfo} from "../domain/model/auth/Token.ts";
 import {Page, Pagination} from "../domain/filters/Page.ts";
@@ -75,7 +75,7 @@ export abstract class BaseService<R = unknown> {
         const headers: KeyValueOf<string> = (options?.headers as KeyValueOf<string>) ?? {}
         const companyRNC: string = localStorage.getItem(StorageItem.CompanyRNC) ?? '';
         isJson && (options.headers = {'Content-Type': 'application/json', ...options.headers});
-        isNil(headers.authorization) && nonNil(token?.token) && (options.headers = {'authorization': 'Bearer ' + token?.token, ...options.headers});
+        isNil(headers.authorization) && nonEmpty(token?.token) && (options.headers = {'authorization': 'Bearer ' + token?.token, ...options.headers});
         Boolean(companyRNC) && (options.headers = {'X-Auth-Company': companyRNC, ...options.headers});
         // Executes HTTP Call
         return new Promise<T>((resolve, reject): void => {

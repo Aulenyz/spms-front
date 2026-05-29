@@ -57,6 +57,14 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
             return;
         }
 
+        const storedToken = authService.getTokenInfo().token?.trim();
+        if (!storedToken) {
+            setCurrent(undefined);
+            setValidating(false);
+            navigate(LOGIN_PATH, {replace: true});
+            return;
+        }
+
         authService.currentUser().then(async (user): Promise<void> => {
             setCurrent(user);
             const companyRNC = localStorage.getItem(StorageItem.CompanyRNC);
