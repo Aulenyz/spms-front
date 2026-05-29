@@ -10,7 +10,6 @@ export const Error404 = () => {
             hint="Verifica la dirección o vuelve a una sección principal del sistema para continuar."
             actions={[
                 {label: "Ir al inicio", to: "/home"},
-                {label: "Ir a estudiantes", to: "/students/list", variant: "light"},
             ]}
         />
     );

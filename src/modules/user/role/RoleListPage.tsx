@@ -46,7 +46,6 @@ export const RoleListPage = () => {
             <DataTableCard
                 title="Roles"
                 description="Administra perfiles, descripcion y cantidad de permisos asignados."
-                status={<span className="page-header-eyebrow">Registros: {roles.content.length}</span>}
                 filters={<RoleFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={roles}/>}
             >

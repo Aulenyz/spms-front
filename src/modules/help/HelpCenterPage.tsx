@@ -12,15 +12,6 @@ import {
     helpTypeOptions,
 } from "../../domain/model/help/helpCenter.ts";
 
-const countByType = (type: HelpType) => helpArticles.filter((article) => article.type === type).length;
-
-const statCards: Array<{label: string; value: string; icon: string; tone: string}> = [
-    {label: "Preguntas frecuentes", value: String(helpArticles.length), icon: "fa-circle-question", tone: "var(--accent)"},
-    {label: "Temas de acceso", value: String(countByType("Acceso")), icon: "fa-key", tone: "#0f766e"},
-    {label: "Procesos académicos", value: String(countByType("Académico")), icon: "fa-user-graduate", tone: "#2563eb"},
-    {label: "Errores comunes", value: String(countByType("Errores")), icon: "fa-triangle-exclamation", tone: "#d97706"},
-];
-
 export const HelpCenterPage = () => {
     const [term, setTerm] = useState("");
     const [type, setType] = useState<"" | HelpType>("");
@@ -54,45 +45,9 @@ export const HelpCenterPage = () => {
                 description="Consulta soluciones rápidas para accesos, cobros, estudiantes, cursos, roles y errores comunes del sistema."
             />
 
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {statCards.map((item) => (
-                    <article
-                        key={item.label}
-                        className="rounded-[24px] border p-5"
-                        style={{
-                            borderColor: "var(--border-soft)",
-                            background: "var(--surface)",
-                            boxShadow: "var(--shadow-card)",
-                        }}
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold uppercase tracking-[0.12em]"
-                                   style={{color: "var(--text-tertiary)"}}>
-                                    {item.label}
-                                </p>
-                                <p className="text-2xl font-semibold" style={{color: "var(--text-primary)"}}>
-                                    {item.value}
-                                </p>
-                            </div>
-                            <span
-                                className="flex h-11 w-11 items-center justify-center rounded-2xl"
-                                style={{
-                                    background: `color-mix(in srgb, ${item.tone} 14%, white)`,
-                                    color: item.tone,
-                                }}
-                            >
-                                <i className={`fa ${item.icon}`}/>
-                            </span>
-                        </div>
-                    </article>
-                ))}
-            </section>
-
             <DataTableCard
                 title="Base local de ayuda"
                 description="Filtra por tipo, área o palabra clave para encontrar la respuesta más rápido."
-                status={<span className="page-header-eyebrow">Resultados: {filteredArticles.length}</span>}
                 filters={
                     <div className="flex flex-wrap items-end gap-2.5">
                         <div className="w-full sm:w-[190px]">

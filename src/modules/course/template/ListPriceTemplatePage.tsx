@@ -53,7 +53,6 @@ export const ListPriceTemplatePage = () => {
             <DataTableCard
                 title="Plantillas"
                 description="Administra plantillas de cobro por categoria y aplica configuraciones base."
-                status={<span className="page-header-eyebrow">Registros: {PRICE_TEMPLATES.length}</span>}
             >
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {PRICE_TEMPLATES.map((template) => (

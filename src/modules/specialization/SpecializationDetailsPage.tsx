@@ -471,8 +471,7 @@ export const SpecializationDetailsPage = () => {
                         {renderTable()}
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
-                        <span>Mostrando 1 - 1 de 1</span>
+                    <div className="mt-3 flex items-center justify-end text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
                         <span className="inline-flex items-center gap-2">
                             <button className="icon-button h-8 w-8" type="button" disabled title="Anterior"><i className="fa fa-chevron-left text-[10px]"/></button>
                             <button className="icon-button h-8 w-8" type="button" disabled title="Siguiente"><i className="fa fa-chevron-right text-[10px]"/></button>

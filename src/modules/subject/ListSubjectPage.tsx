@@ -91,7 +91,6 @@ export const ListSubjectPage = () => {
             <DataTableCard
                 title="Listado"
                 description="Filtra y revisa las materias registradas en el espacio de trabajo."
-                status={<span className="page-header-eyebrow">Registros: {subjects.content.length}</span>}
                 filters={<SubjectFilter onFilter={handleFilters}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} pageSizeOptions={[3, 6, 9]} page={pagerPage}/>}
             >

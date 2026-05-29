@@ -43,7 +43,6 @@ export const AuthorityListPage = () => {
             <DataTableCard
                 title="Permisos"
                 description="Gestiona las llaves de acceso disponibles para reglas y acciones del sistema."
-                status={<span className="page-header-eyebrow">Registros: {authorities.content.length}</span>}
                 filters={<RoleFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={authorities}/>}
             >

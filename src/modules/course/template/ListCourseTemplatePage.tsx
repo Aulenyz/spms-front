@@ -56,7 +56,6 @@ export const ListCourseTemplatePage = () => {
             <DataTableCard
                 title="Listado"
                 description="Filtra por nombre o tipo para localizar rapidamente una plantilla."
-                status={<span className="page-header-eyebrow">Registros: {courseTemplates.content.length}</span>}
                 filters={<CourseTemplateFilter onFilter={handleFilters}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={courseTemplates}/>}
             >

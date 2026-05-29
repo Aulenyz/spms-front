@@ -111,7 +111,7 @@ export const ErrorScreen = ({
                     {children}
 
                     {actions.length > 0 && (
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className={actions.length === 1 ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"}>
                             {actions.map((action) => {
                                 const className = `btn btn-sm ${action.variant === "light" ? "btn-light" : "btn-primary"} justify-center`;
                                 if (action.to) {

@@ -45,7 +45,6 @@ export const ListGuardianPage = () => {
             <DataTableCard
                 title="Listado de padres / tutores"
                 description="Filtra por documento, nombre o apellido para localizar rapidamente un representante."
-                status={<span className="page-header-eyebrow">Registros: {guardians.content.length}</span>}
                 filters={<GuardianFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={guardians}/>}
             >
@@ -95,4 +94,3 @@ export const ListGuardianPage = () => {
         </div>
     );
 };
-

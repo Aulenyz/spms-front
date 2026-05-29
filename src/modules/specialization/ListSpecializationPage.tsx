@@ -49,47 +49,29 @@ export const ListSpecializationPage = () => {
                 description="Administra las areas especializadas disponibles."
             />
 
-            <div
-                className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
-                style={{
-                    borderColor: "var(--border-soft)",
-                    background: "color-mix(in srgb, var(--surface) 95%, transparent)",
-                    boxShadow: "var(--shadow-soft)",
-                }}
-            >
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                        Mostrando {specializations.content.length} areas en esta pagina
-                    </span>
-                </div>
-
-                {hasAuthority(AuthorityKey.SPECIALIZATION_CREATE) && (
-                    <div className="flex items-center gap-2">
-                        <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => setShowModal(true)}
-                        >
-                            <i className="fa fa-plus me-1"/>
-                            <span>Nueva area</span>
-                        </button>
-                    </div>
-                )}
-            </div>
-
             <DataTableCard
                 title="Areas especializadas"
                 description="Consulta las areas academica disponible."
                 actions={
                     <>
                         {hasAuthority(AuthorityKey.SPECIALIZATION_CREATE) && (
-                            <LeftModal
-                                title="Agregar area"
-                                isOpen={showModal}
-                                onClose={() => setShowModal(false)}
-                                className="w-[400px] h-full z-[9999]"
-                            >
-                                <SpecializationForm onSubmit={() => setShowModal(false)}/>
-                            </LeftModal>
+                            <>
+                                <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowModal(true)}
+                                >
+                                    <i className="fa fa-plus me-1"/>
+                                    <span>Nueva area</span>
+                                </button>
+                                <LeftModal
+                                    title="Agregar area"
+                                    isOpen={showModal}
+                                    onClose={() => setShowModal(false)}
+                                    className="w-[400px] h-full z-[9999]"
+                                >
+                                    <SpecializationForm onSubmit={() => setShowModal(false)}/>
+                                </LeftModal>
+                            </>
                         )}
                     </>
                 }
