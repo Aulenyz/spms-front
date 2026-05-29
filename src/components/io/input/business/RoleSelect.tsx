@@ -3,11 +3,11 @@ import {Optional, PlainValue, SelectOption, State} from "../../../../domain/type
 import {Control, ControllerRenderProps} from "react-hook-form";
 import clsx from "clsx";
 import {Page, Pagination} from "../../../../domain/filters/Page.ts";
-import {Period, PeriodOptionMapper} from "../../../../domain/model/organization/Organization.tsx";
 import {BusinessSelector} from "./BusinessSelector.tsx";
 import {SearchSelect} from "../SearchSelect.tsx";
 import {forwardRef, useEffect, useState} from "react";
 import {RoleService} from "../../../../services/user/RoleService.ts";
+import {UserRole} from "../../../../domain/model/user/user.ts";
 
 const roleService: RoleService = RoleService.instance;
 
@@ -33,8 +33,8 @@ export const RoleSelect = forwardRef<HTMLDivElement, RoleSelectParams>(
 
         const handleLoadRoles = (term: string = '') => {
             const filters: Record<string, Optional<PlainValue>> = {term};
-            roleService.search(filters, Pagination.unsorted()).then((periodPage: Page<Period>) => {
-                setOptions(periodPage.content.map(PeriodOptionMapper));
+            roleService.search(filters, Pagination.unsorted()).then((rolePage: Page<UserRole>) => {
+                setOptions(rolePage.content.map(({id: value, name}: UserRole) => ({value, description: name ?? ""})));
             }, () => toast.error('Problemas cargando los roles.'));
         };
 

@@ -3,15 +3,19 @@ import {useEffect, useState} from "react";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 import {PeriodSelect} from "../../../components/io/input/business/PeriodSelect.tsx";
 import {SpecializationService} from "../../../services/specialization/SpecializationService.ts";
-import {Page, Pagination} from "../../filters/Page.ts";
+import {Page, Pagination} from "../Page.ts";
 import {Specialization} from "../../model/course/Course.ts";
-import {SelectOption} from "../../types/steoreotype.ts";
+import {Optional, PlainValue, SelectOption} from "../../types/steoreotype.ts";
+import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
 
 const specializationService = SpecializationService.instance;
 
 const toOption = (s: Specialization): SelectOption => ({value: s.id, description: s.name});
 
-export const CourseFilter = ({onFilter, selectedPeriodId}: { onFilter: (filters: Record<string, any>) => void; selectedPeriodId: string | number | null; }) => {
+export const CourseFilter = ({onFilter, selectedPeriodId}: {
+    onFilter: (filters: Record<string, any>) => void;
+    selectedPeriodId: string | number | null;
+}) => {
     const {control, setValue, watch} = useForm({
         defaultValues: {
             periodId: selectedPeriodId || "",
@@ -22,11 +26,18 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: { onFilter: (filters:
 
     const [specializations, setSpecializations] = useState<SelectOption[]>([{value: "", description: "Todas"}]);
 
-    useEffect(() => {
+    const loadSpecializations = (term: string = "") => {
         specializationService
-            .getAll({active: true} as any, Pagination.of(0, 200))
-            .then((page: Page<Specialization>) => setSpecializations([{value: "", description: "Todas"}, ...page.content.map(toOption)]))
+            .search(term, Pagination.of(0, 20))
+            .then((page: Page<Specialization>) => setSpecializations([{
+                value: "",
+                description: "Todas"
+            }, ...page.content.map(toOption)]))
             .catch(() => setSpecializations([{value: "", description: "Todas"}]));
+    };
+
+    useEffect(() => {
+        loadSpecializations();
     }, []);
 
     useEffect(() => {
@@ -78,11 +89,12 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: { onFilter: (filters:
             </div>
 
             <div className="w-full sm:w-64">
-                <DropdownSelect
+                <SearchSelect
                     text="Área especializada"
                     hasError={false}
                     value={watch("specializationId")}
-                    onSelect={(value) => setValue("specializationId", String(value ?? ""))}
+                    onSearch={loadSpecializations}
+                    onSelect={(value: Optional<PlainValue>) => setValue("specializationId", String(value ?? ""))}
                     className="w-full"
                     options={specializations}
                 />
@@ -90,4 +102,3 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: { onFilter: (filters:
         </div>
     );
 };
-
