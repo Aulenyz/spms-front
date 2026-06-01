@@ -5,12 +5,14 @@ import {State} from "../../domain/types/steoreotype.ts";
 import {statusColors, StudentStatus, StudentStatusLabel} from "../../domain/student/Student.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
+import { BulkUploadStudentModal } from "../student/enrollment/modal/BulkUploadStudentModal.tsx";  
 
 const studentService: StudentService = StudentService.instance;
 
 export const StudentBreadcrumb = () => {
     const {hasAuthority} = useAuthContext();
     const [status, setStatus]: State<Record<StudentStatus, number>> = useState<Record<StudentStatus, number>>({} as Record<StudentStatus, number>);
+    const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);  // ← nuevo
 
     useEffect(() => {
         studentService.getTotalByStatus().then(setStatus);
@@ -43,16 +45,24 @@ export const StudentBreadcrumb = () => {
 
             {hasAuthority(AuthorityKey.STUDENT_CREATE) && (
                 <div className="flex items-center gap-2">
-                    <Link className="btn btn-sm btn-light" to="#">
+                    <button                                         
+                        className="btn btn-sm btn-light"
+                        onClick={() => setIsBulkUploadOpen(true)}
+                    >
                         <i className="fa fa-upload me-1"/>
                         Carga masiva
-                    </Link>
+                    </button>
                     <a className="btn btn-sm btn-primary" href="#">
                         <i className="fa fa-user-plus me-1"/>
                         Registrar
                     </a>
                 </div>
             )}
+
+            <BulkUploadStudentModal                                  
+                isOpen={isBulkUploadOpen}
+                onClose={() => setIsBulkUploadOpen(false)}
+            />
         </div>
     );
 };
