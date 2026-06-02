@@ -6,12 +6,13 @@ import {statusColors, StudentStatus, StudentStatusLabel} from "../../domain/stud
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
+
 const studentService: StudentService = StudentService.instance;
 
 export const StudentBreadcrumb = () => {
     const {hasAuthority} = useAuthContext();
     const [status, setStatus]: State<Record<StudentStatus, number>> = useState<Record<StudentStatus, number>>({} as Record<StudentStatus, number>);
-
+    
     useEffect(() => {
         studentService.getTotalByStatus().then(setStatus);
     }, []);
@@ -43,7 +44,7 @@ export const StudentBreadcrumb = () => {
 
             {hasAuthority(AuthorityKey.STUDENT_CREATE) && (
                 <div className="flex items-center gap-2">
-                    <Link className="btn btn-sm btn-light" to="#">
+                    <Link className="btn btn-sm btn-light" to="/students/bulk-upload">
                         <i className="fa fa-upload me-1"/>
                         Carga masiva
                     </Link>

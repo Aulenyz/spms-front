@@ -21,4 +21,14 @@ export class StudentService extends BaseService<Student> {
     async getTotalByStatus(): Promise<Record<StudentStatus, number>> {
         return super.get<Record<StudentStatus, number>>('/grouped');
     }
+
+    async downloadTemplate(): Promise<void> {
+        const blob = await this.get<Blob>('/template/download');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'plantilla_estudiantes.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 }
