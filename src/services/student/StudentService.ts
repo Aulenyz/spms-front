@@ -1,6 +1,9 @@
+
+
 import {BaseService} from "../BaseService.ts";
 import {Student, StudentStatus} from "../../domain/student/Student.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
+import {BulkValidationResponse} from "../../domain/student/BulkValidation.ts";
 
 export class StudentService extends BaseService<Student> {
 
@@ -30,5 +33,9 @@ export class StudentService extends BaseService<Student> {
         a.download = 'plantilla_estudiantes.xlsx';
         a.click();
         URL.revokeObjectURL(url);
+    }
+
+    validateBulk(file: File): Promise<BulkValidationResponse> {
+        return this.form<BulkValidationResponse>('/bulk/validate', { file });
     }
 }
