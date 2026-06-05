@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
+import { toast } from 'react-toastify';
 import { PageHeader } from '../../../components/ui/layout/PageHeader';
 import { StudentService } from '../../../services/student/StudentService';
 import { BulkLoadBreadcrumb } from '../../breadcrumb/BulkLoadBreadcrumb';
@@ -37,7 +38,6 @@ export const BulkUploadStudentPage = () => {
     const [validationResult, setValidationResult] = useState<BulkValidationResult | null>(null);
     const [validatedAt, setValidatedAt]           = useState<Date | null>(null);
 
-    // Derived: bloquea el flujo si hay errores en la validación del backend
     const hasBlockingErrors = (validationResult?.summary.errors ?? 0) > 0;
 
     const handleDownloadTemplate = async () => {
@@ -62,7 +62,6 @@ export const BulkUploadStudentPage = () => {
         maxSize: 10 * 1024 * 1024,
         multiple: false,
         onDrop: async (acceptedFiles, fileRejections) => {
-            // 1. Validación de frontend (tipo/tamaño)
             if (fileRejections.length > 0) {
                 setStatus('error');
                 setFileInfo(null);
@@ -75,22 +74,30 @@ export const BulkUploadStudentPage = () => {
 
             const file = acceptedFiles[0];
 
-            // 2. Mostrar archivo aceptado mientras se valida
             setFileInfo({ name: file.name, sizeKb: Math.round(file.size / 1024) });
             setStatus('success');
             setValidationResult(null);
-
-            // 3. Llamada al endpoint de validación
             setValidating(true);
+
             try {
                 const response = await studentService.validateBulk(file);
-                setValidationResult(response.result);
+                const result = response.result;
+
+                setValidationResult(result);
                 setValidatedAt(new Date());
+
+                // Toast según resultado de validación del backend
+                if (result.summary.errors > 0) {
+                    toast.error('El archivo contiene errores. Corrígelos y vuelve a cargar el archivo.');
+                } else {
+                    toast.success('El archivo fue validado correctamente.');
+                }
             } catch {
                 setStatus('error');
                 setFileInfo(null);
                 setErrorMessage('No se pudo conectar con el servidor para validar el archivo.');
                 setValidationResult(null);
+                toast.error('No se pudo conectar con el servidor para validar el archivo.');
             } finally {
                 setValidating(false);
             }
@@ -142,7 +149,7 @@ export const BulkUploadStudentPage = () => {
                     </div>
                 )}
 
-                {/* SUCCESS — archivo aceptado */}
+                {/* SUCCESS */}
                 {status === 'success' && fileInfo && (
                     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow transition-all duration-200">
                         <div className="flex items-center gap-4">
@@ -179,7 +186,7 @@ export const BulkUploadStudentPage = () => {
                     </div>
                 )}
 
-                {/* ERROR — archivo rechazado por frontend o fallo de red */}
+                {/* ERROR */}
                 {status === 'error' && (
                     <div
                         {...getRootProps()}
@@ -201,21 +208,14 @@ export const BulkUploadStudentPage = () => {
                 )}
             </div>
 
-            {/* CONSOLA DE VALIDACIÓN — solo cuando el backend respondió */}
+            {/* CONSOLA DE VALIDACIÓN */}
             {validationResult && validatedAt && (
                 <ValidationConsole result={validationResult} validatedAt={validatedAt} />
             )}
 
-            {/* FOOTER — botón continuar bloqueado si hay errores */}
+            {/* FOOTER */}
             {validationResult && (
-                <div className="flex items-center justify-between">
-                    <p className={`text-sm font-medium ${hasBlockingErrors ? 'text-red-500' : 'text-green-600'}`}>
-                        {hasBlockingErrors
-                            ? 'El archivo contiene errores. Corrígelos y vuelve a cargar el archivo.'
-                            : validationResult.summary.warnings > 0
-                                ? 'El archivo contiene advertencias. Revisa los datos antes de continuar.'
-                                : 'El archivo fue validado correctamente.'}
-                    </p>
+                <div className="flex items-center justify-end">
                     <button
                         disabled={hasBlockingErrors}
                         className="btn btn-sm btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
