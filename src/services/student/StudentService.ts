@@ -21,4 +21,13 @@ export class StudentService extends BaseService<Student> {
     async getTotalByStatus(): Promise<Record<StudentStatus, number>> {
         return super.get<Record<StudentStatus, number>>('/grouped');
     }
+
+    save(student: {
+        firstname: string;
+        lastname: string;
+        gender: string;
+        birthDate: string | null
+    }): Promise<Student> {
+        return this.create("", student);
+    }
 }

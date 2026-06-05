@@ -13,7 +13,7 @@ export interface StudentFormValues {
     firstname: string;
     lastname: string;
     gender: Gender;
-    birthDate: string;
+    birthDate?: string | null;
 }
 
 export enum StudentStatus {
