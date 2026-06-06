@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { StudentService } from "../../services/student/StudentService";
-import { State } from "../../domain/types/steoreotype.ts";
-import {
-    statusColors,
-    StudentStatus,
-    StudentStatusLabel
-} from "../../domain/student/Student.ts";
-import { useAuthContext } from "../../contexts/AuthContext.tsx";
-import { AuthorityKey } from "../../domain/model/user/authorities.ts";
+import {useEffect, useState} from "react";
+import {Link} from "react-router-dom";
+import {StudentService} from "../../services/student/StudentService";
+import {State} from "../../domain/types/steoreotype.ts";
+import {statusColors, StudentStatus, StudentStatusLabel} from "../../domain/student/Student.ts";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 interface Props {
     onRegisterClick: () => void;
@@ -33,8 +29,7 @@ export const StudentBreadcrumb = ({ onRegisterClick }: Props) => {
             className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
             style={{
                 borderColor: "var(--border-soft)",
-                background:
-                    "color-mix(in srgb, var(--surface) 95%, transparent)",
+                background: "color-mix(in srgb, var(--surface) 95%, transparent)",
                 boxShadow: "var(--shadow-soft)",
             }}
         >
@@ -64,12 +59,8 @@ export const StudentBreadcrumb = ({ onRegisterClick }: Props) => {
 
             {hasAuthority(AuthorityKey.STUDENT_CREATE) && (
                 <div className="flex items-center gap-2">
-
-                    <Link
-                        className="btn btn-sm btn-light"
-                        to="#"
-                    >
-                        <i className="fa fa-upload me-1" />
+                    <Link className="btn btn-sm btn-light" to="/students/bulk-upload">
+                        <i className="fa fa-upload me-1"/>
                         Carga masiva
                     </Link>
 
