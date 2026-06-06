@@ -27,6 +27,7 @@ import {CourseRouting} from "./modules/course/CourseRouting.tsx";
 import {GuardianRouting} from "./modules/guardian/GuardianRouting.tsx";
 import {SubjectRouting} from "./modules/subject/SubjectRouting.tsx";
 import {HelpCenterPage} from "./modules/help/HelpCenterPage.tsx";
+import {CatalogRouting} from "./modules/catalog/CatalogRouting.tsx";
 
 export const AppRouting = () => {
     return (
@@ -39,6 +40,7 @@ export const AppRouting = () => {
                 <Route path="courses/*" element={<CourseRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
                 <Route path="help" element={<HelpCenterPage/>}/>
+                <Route path="catalog/*" element={<CatalogRouting/>}/>
                 <Route path="guardians/*" element={<GuardianRouting/>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
                 <Route path="specializations/create" element={<SpecializationForm/>}/>

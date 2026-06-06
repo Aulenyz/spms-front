@@ -8,7 +8,7 @@ export type TooltipParams = {
     placement?: 'top' | 'right' | 'bottom' | 'left';
 }
 
-const default_classes: string = 'absolute hidden w-max px-3 py-1 text-sm text-white bg-black rounded-lg group-hover:block';
+const default_classes: string = 'absolute z-[100] hidden w-max max-w-[280px] px-3 py-1.5 text-sm leading-5 text-white bg-black rounded-lg shadow-lg group-hover:block';
 
 export const Tooltip = ({children, message, placement, className}: TooltipParams) => {
     return (

@@ -28,6 +28,12 @@ const resolvePageMeta = (pathname: string) => {
         return {title: "Ayuda", subtitle: "Soporte y preguntas frecuentes"};
     }
 
+    if (pathname.startsWith("/catalog")) {
+        if (pathname.startsWith("/catalog/categories")) return {title: "Categorías", subtitle: "Recursos educativos"};
+        if (pathname.startsWith("/catalog/collections")) return {title: "Kits y colecciones", subtitle: "Recursos educativos"};
+        return {title: "Productos", subtitle: "Recursos educativos"};
+    }
+
     if (pathname.startsWith("/courses")) {
         return /^\/courses\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Cursos"}
@@ -125,6 +131,12 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
 
     if (pathname.startsWith("/subjects")) return [{label: "Materias", to: pathname}];
     if (pathname.startsWith("/help")) return [{label: "Ayuda", to: "/help"}];
+    if (pathname.startsWith("/catalog")) {
+        const section = {label: "Recursos educativos", to: "/catalog/products"};
+        if (pathname.startsWith("/catalog/categories")) return [section, {label: "Categorías", to: pathname}];
+        if (pathname.startsWith("/catalog/collections")) return [section, {label: "Kits y colecciones", to: pathname}];
+        return [section, {label: "Productos", to: pathname}];
+    }
 
     if (pathname.startsWith("/payments")) return [{label: "Pagos", to: pathname}];
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];

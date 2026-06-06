@@ -160,6 +160,26 @@ export const navigationSections: NavigationSection[] = [
             },
         ],
     },
+    {
+        title: "Recursos educativos",
+        items: [
+            {
+                label: "Productos",
+                icon: "fa-box-open",
+                to: "/catalog/products",
+            },
+            {
+                label: "Categorías",
+                icon: "fa-folder-tree",
+                to: "/catalog/categories",
+            },
+            {
+                label: "Kits y colecciones",
+                icon: "fa-boxes-stacked",
+                to: "/catalog/collections",
+            },
+        ],
+    },
 ];
 
 export const secondaryQuickLinks: NavigationItem[] = [
