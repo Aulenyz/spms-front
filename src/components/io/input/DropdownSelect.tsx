@@ -22,7 +22,7 @@ export const DropdownSelect = forwardRef<HTMLInputElement, DropdownSelectProps>(
         const listRef: RefObject<HTMLUListElement> = useRef(null);
         const localInputRef = useRef<HTMLInputElement | null>(null);
         const [highlightedIndex, setHighlightedIndex]: State<number> = useState(-1);
-        const [portalRect, setPortalRect] = useState<{left: number; top: number; width: number} | null>(null);
+        const [portalRect, setPortalRect] = useState<{left: number; top: number; width: number; opensUp: boolean} | null>(null);
 
         const selectedLabel = useMemo(() => {
             if (value === undefined || value === null) return "";
@@ -59,7 +59,14 @@ export const DropdownSelect = forwardRef<HTMLInputElement, DropdownSelectProps>(
             const element = localInputRef.current;
             if (!element) return;
             const rect = element.getBoundingClientRect();
-            setPortalRect({left: rect.left, top: rect.bottom + 8, width: rect.width});
+            const estimatedHeight = Math.min(320, Math.max(96, options.length * 44 + 12));
+            const opensUp = window.innerHeight - rect.bottom < estimatedHeight + 16 && rect.top > estimatedHeight;
+            setPortalRect({
+                left: rect.left,
+                top: opensUp ? rect.top - estimatedHeight - 8 : rect.bottom + 8,
+                width: rect.width,
+                opensUp,
+            });
         };
 
         useEffect(() => {
