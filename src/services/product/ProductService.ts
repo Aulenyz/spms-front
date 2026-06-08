@@ -1,5 +1,12 @@
 import {Page, Pagination} from "../../domain/filters/Page.ts";
-import {Product, ProductStatus, ProductType, RecurrenceType} from "../../domain/model/product/Product.ts";
+import {
+    ChangePriceRequest,
+    Product,
+    ProductDetails,
+    ProductStatus,
+    ProductType,
+    RecurrenceType,
+} from "../../domain/model/product/Product.ts";
 import {KeyValue} from "../../domain/types/steoreotype.ts";
 import {BaseService} from "../BaseService.ts";
 
@@ -40,6 +47,14 @@ export class ProductService extends BaseService<Product> {
         return this.get<Record<string, number>>("/grouped");
     }
 
+    getProduct(id: number | string): Promise<ProductDetails> {
+        return this.get<ProductDetails>(`/${id}`);
+    }
+
+    updatePrice(id: number | string, payload: ChangePriceRequest): Promise<Product> {
+        return this.put<Product>(`/${id}/price`, payload);
+    }
+
     async export(filters: ProductSearchFilters = {}): Promise<void> {
         const params: KeyValue = {term: filters.term?.trim() ?? ""};
         if (filters.status) params.status = filters.status;
@@ -51,7 +66,7 @@ export class ProductService extends BaseService<Product> {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "productos.xlsx";
+        link.download = "recursos.xlsx";
         link.click();
         URL.revokeObjectURL(url);
     }

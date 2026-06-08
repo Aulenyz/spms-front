@@ -18,7 +18,7 @@ export const CatalogCollectionsPage = () => (
     <div className="space-y-6">
         <PageHeader
             title="Kits y colecciones"
-            description="Agrupa productos por nivel, asignatura o actividad para reutilizar selecciones frecuentes."
+            description="Agrupa recursos por nivel, asignatura o actividad para reutilizar selecciones frecuentes."
             actions={<CatalogAction label="Nueva colección" icon="fa-plus"/>}
         />
         <DataTableCard title="Colecciones preparadas" description="Conjuntos de recursos listos para asignar o consultar.">
@@ -34,7 +34,7 @@ export const CatalogCollectionsPage = () => (
                             <h3 className="mt-5 text-base font-semibold" style={{color: "var(--text-primary)"}}>{item.name}</h3>
                             <p className="mt-2 min-h-[72px] text-sm leading-6" style={{color: "var(--text-secondary)"}}>{item.description}</p>
                             <div className="mt-5 flex items-center justify-between border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
-                                <span className="text-xs font-semibold" style={{color: "var(--text-secondary)"}}>{item.items} productos</span>
+                                <span className="text-xs font-semibold" style={{color: "var(--text-secondary)"}}>{item.items} recursos</span>
                                 <button type="button" className="table-link">Gestionar <i className="fa fa-chevron-right text-2xs"/></button>
                             </div>
                         </div>

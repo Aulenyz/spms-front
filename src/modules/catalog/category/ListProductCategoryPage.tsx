@@ -52,7 +52,7 @@ export const ListProductCategoryPage = () => {
             .catch((error) => {
                 if (!activeRequest) return;
                 setCategories(Pagination.empty<ProductCategory>());
-                toast.error(getApiErrorMessage(error) ?? "No se pudieron cargar las categorías de productos.");
+                toast.error(getApiErrorMessage(error) ?? "No se pudieron cargar las categorías de recursos.");
             })
             .finally(() => {
                 if (activeRequest) setLoading(false);
@@ -87,14 +87,14 @@ export const ListProductCategoryPage = () => {
         <div className="space-y-6">
             <PageHeader
                 title="Categorías"
-                description="Clasifica los productos escolares y distingue las categorías protegidas definidas por el sistema."
+                description="Clasifica los recursos escolares y distingue las categorías protegidas definidas por el sistema."
             />
 
             <ProductCategoryActions counts={statusCounts} onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
                 title="Categorías del catálogo"
-                description="Consulta y organiza las agrupaciones disponibles para los productos de la institución."
+                description="Consulta y organiza las agrupaciones disponibles para los recursos de la institución."
                 filters={<ProductCategoryFilter onFilter={handleFilters}/>}
                 footer={!loading ? (
                     <Pager
@@ -109,7 +109,7 @@ export const ListProductCategoryPage = () => {
                     {categories.content.length === 0 ? (
                         <EmptyState
                             title="No hay categorías para mostrar"
-                            description="Ajusta los filtros para encontrar otras categorías de productos."
+                            description="Ajusta los filtros para encontrar otras categorías de recursos."
                             icon="fa-folder-open"
                         />
                     ) : (

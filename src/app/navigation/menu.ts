@@ -164,7 +164,7 @@ export const navigationSections: NavigationSection[] = [
         title: "Recursos educativos",
         items: [
             {
-                label: "Productos",
+                label: "Recursos",
                 icon: "fa-box-open",
                 to: "/catalog/products",
             },

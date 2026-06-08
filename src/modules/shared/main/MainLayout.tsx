@@ -29,9 +29,10 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/catalog")) {
+        if (/^\/catalog\/products\/\d+/.test(pathname)) return {title: "Detalles", subtitle: "Recursos"};
         if (pathname.startsWith("/catalog/categories")) return {title: "Categorías", subtitle: "Recursos educativos"};
         if (pathname.startsWith("/catalog/collections")) return {title: "Kits y colecciones", subtitle: "Recursos educativos"};
-        return {title: "Productos", subtitle: "Recursos educativos"};
+        return {title: "Recursos", subtitle: "Recursos educativos"};
     }
 
     if (pathname.startsWith("/courses")) {
@@ -133,9 +134,10 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (pathname.startsWith("/help")) return [{label: "Ayuda", to: "/help"}];
     if (pathname.startsWith("/catalog")) {
         const section = {label: "Recursos educativos", to: "/catalog/products"};
+        if (/^\/catalog\/products\/\d+/.test(pathname)) return [section, {label: "Recursos", to: "/catalog/products"}, {label: "Detalles", to: pathname}];
         if (pathname.startsWith("/catalog/categories")) return [section, {label: "Categorías", to: pathname}];
         if (pathname.startsWith("/catalog/collections")) return [section, {label: "Kits y colecciones", to: pathname}];
-        return [section, {label: "Productos", to: pathname}];
+        return [section, {label: "Recursos", to: pathname}];
     }
 
     if (pathname.startsWith("/payments")) return [{label: "Pagos", to: pathname}];

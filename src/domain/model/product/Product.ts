@@ -48,6 +48,32 @@ export interface Product {
     category?: BaseProductCategory;
 }
 
+export interface ProductPriceHistory {
+    id: number;
+    createdAt?: string;
+    updatedAt?: string;
+    user?: {
+        id: number;
+        name?: string;
+        email?: string;
+        username?: string;
+        image?: string;
+        status?: string;
+    };
+    oldPrice?: number;
+    newPrice?: number;
+    changeReason?: string;
+}
+
+export interface ProductDetails extends Product {
+    prices?: ProductPriceHistory[];
+}
+
+export interface ChangePriceRequest {
+    price: number;
+    reason?: string;
+}
+
 export const ProductTypeLabel: Record<ProductType, string> = {
     [ProductType.PRODUCT]: "Producto",
     [ProductType.SERVICE]: "Servicio",

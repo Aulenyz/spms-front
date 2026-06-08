@@ -39,7 +39,7 @@ export const ListProductPage = () => {
             .catch((error) => {
                 if (!activeRequest) return;
                 setProducts(Pagination.empty<Product>());
-                toast.error((error as {message?: string})?.message || "No se pudieron cargar los productos.");
+                toast.error((error as {message?: string})?.message || "No se pudieron cargar los recursos.");
             })
             .finally(() => {
                 if (activeRequest) setLoading(false);
@@ -64,15 +64,15 @@ export const ListProductPage = () => {
         try {
             await productService.export(filters);
         } catch (error) {
-            toast.error((error as {message?: string})?.message || "No se pudo exportar el listado de productos.");
+            toast.error((error as {message?: string})?.message || "No se pudo exportar el listado de recursos.");
         }
     };
 
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Listado de productos"
-                description="Consulta productos registrados, revisa precios, impuestos y modalidades de cobro sin perder contexto."
+                title="Listado de recursos"
+                description="Consulta recursos registrados, revisa precios, impuestos y modalidades de cobro sin perder contexto."
             />
 
             <ProductActions counts={statusCounts} onExport={exportProducts}/>
@@ -89,7 +89,7 @@ export const ListProductPage = () => {
             </section>
 
             <DataTableCard
-                title="Productos registrados"
+                title="Recursos registrados"
                 description="Consulta la información principal y expande cada fila para revisar datos adicionales."
                 footer={!loading ? (
                     <Pager
@@ -103,8 +103,8 @@ export const ListProductPage = () => {
                 <LoadingContent loading={loading} className="min-h-[280px]">
                     {products.content.length === 0 ? (
                         <EmptyState
-                            title="No hay productos para mostrar"
-                            description="Ajusta los filtros para consultar otros productos."
+                            title="No hay recursos para mostrar"
+                            description="Ajusta los filtros para consultar otros recursos."
                             icon="fa-box-open"
                         />
                     ) : (

@@ -1,4 +1,5 @@
 import {Fragment, useState} from "react";
+import {Link} from "react-router-dom";
 import {Product, ProductTypeLabel, RecurrenceTypeLabel} from "../../../domain/model/product/Product.ts";
 import {ProductStatusPill} from "./ProductStatusPill.tsx";
 
@@ -20,7 +21,7 @@ export const ProductTable = ({products}: {products: Product[]}) => {
                 <tr>
                     <th className="w-12"/>
                     <th>Código</th>
-                    <th>Producto</th>
+                    <th>Recurso</th>
                     <th>Tipo</th>
                     <th>Categoría</th>
                     <th className="text-right">Precio</th>
@@ -58,10 +59,10 @@ export const ProductTable = ({products}: {products: Product[]}) => {
                                 <td className="text-right font-semibold text-[var(--text-primary)]">{currency.format(product.price ?? 0)}</td>
                                 <td><ProductStatusPill status={product.status}/></td>
                                 <td className="text-right">
-                                    <button type="button" className="table-link whitespace-nowrap" disabled title="La pantalla de detalles se agregará posteriormente">
+                                    <Link to={`/catalog/products/${product.id}`} className="table-link whitespace-nowrap">
                                         Ver detalle
                                         <i className="fa fa-chevron-right text-2xs"/>
-                                    </button>
+                                    </Link>
                                 </td>
                             </tr>
 
@@ -74,7 +75,7 @@ export const ProductTable = ({products}: {products: Product[]}) => {
                                         >
                                             <Info label="Descripción" value={product.description || "Sin descripción registrada"} className="md:col-span-2"/>
                                             <Info label="Categoría" value={product.category ? `${product.category.code} · ${product.category.name}` : "Sin categoría"}/>
-                                            <Info label="Origen" value={product.isSystem ? "Producto protegido del sistema" : "Producto administrable"}/>
+                                            <Info label="Origen" value={product.isSystem ? "Recurso protegido del sistema" : "Recurso administrable"}/>
                                             <Info label="Tipo" value={ProductTypeLabel[product.type] ?? product.type}/>
                                             <Info label="Modalidad de cobro" value={RecurrenceTypeLabel[product.chargeMode] ?? product.chargeMode}/>
                                             <Info

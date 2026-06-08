@@ -178,7 +178,7 @@ export const ProductCategoryForm = ({
                     <div>
                         <p className="text-sm font-semibold" style={{color: "var(--text-primary)"}}>Categoría activa</p>
                         <p className="mt-1 text-xs" style={{color: "var(--text-secondary)"}}>
-                            Define si estará disponible para organizar productos.
+                            Define si estará disponible para organizar recursos.
                         </p>
                     </div>
                     <SimpleCheckbox
