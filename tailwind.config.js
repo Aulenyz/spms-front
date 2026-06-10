@@ -617,6 +617,7 @@ export default {
             }
         })
     },
+
     plugins: [
         require('./src/assets/plugins/plugin'),
         require('./src/assets/plugins/components/theme'),
@@ -653,4 +654,5 @@ export default {
         require('./src/assets/plugins/components/apexcharts'),
         require('./src/assets/plugins/components/leaflet')
     ]
+
 };

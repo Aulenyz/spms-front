@@ -6,12 +6,12 @@ import { Gender } from "../domain/model/user/user.ts";
 export const StudentSchema: ObjectSchema<StudentFormValues> = object({
     firstname: string()
         .required(Messages.RequiredField)
-        .min(3, "El nombre debe tener al menos 3 caracteres")
-        .max(50, "El nombre no puede superar los 50 caracteres"),
+        .min(2, "El nombre debe tener al menos 2 caracteres")
+        .max(64, "El nombre no puede superar los 64 caracteres"),
 
     lastname: string()
         .required(Messages.RequiredField)
-        .min(3, "El apellido debe tener al menos 3 caracteres")
+        .min(2, "El apellido debe tener al menos 2 caracteres")
         .max(50, "El apellido no puede superar los 50 caracteres"),
 
     gender: mixed<Gender>()

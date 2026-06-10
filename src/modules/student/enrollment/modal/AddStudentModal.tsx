@@ -1,4 +1,7 @@
+import { useState } from "react";
+import DatePicker, { DateObject } from "react-multi-date-picker";
 import { RightModal } from "../../../../components/shared/RightModal";
+import "../../utils/styles/datepicker.css";
 
 interface Props {
     isOpen: boolean;
@@ -6,23 +9,33 @@ interface Props {
 }
 
 export const AddStudentModal = ({ isOpen, onClose }: Props) => {
+    const [firstname, setFirstname] = useState("");
+    const [lastname, setLastname] = useState("");
+    const [gender, setGender] = useState("");
+
+    const [birthDate, setBirthDate] = useState<DateObject[] | null>(null);
+
     return (
-        <RightModal title="Agregar Estudiante" isOpen={isOpen} onClose={onClose} className="w-[420px] h-full z-[9999]">
+        <RightModal
+            title="Agregar Estudiante"
+            isOpen={isOpen}
+            onClose={onClose}
+            className="w-[420px] h-full z-[9999]"
+        >
             <div className="flex flex-col h-full">
-
                 <div className="flex-1 overflow-y-auto space-y-4">
-
                     <div>
                         <label className="text-sm font-medium text-slate-700">
                             Nombre(s)
                         </label>
                         <input
                             type="text"
+                            value={firstname}
+                            onChange={(e) => setFirstname(e.target.value)}
                             className="input w-full"
                             placeholder="Ej: Sofía"
                         />
                     </div>
-
 
                     <div>
                         <label className="text-sm font-medium text-slate-700">
@@ -30,6 +43,8 @@ export const AddStudentModal = ({ isOpen, onClose }: Props) => {
                         </label>
                         <input
                             type="text"
+                            value={lastname}
+                            onChange={(e) => setLastname(e.target.value)}
                             className="input w-full"
                             placeholder="Ej: Martínez"
                         />
@@ -39,7 +54,11 @@ export const AddStudentModal = ({ isOpen, onClose }: Props) => {
                         <label className="text-sm font-medium text-slate-700">
                             Género
                         </label>
-                        <select className="input w-full">
+                        <select
+                            value={gender}
+                            onChange={(e) => setGender(e.target.value)}
+                            className="input w-full"
+                        >
                             <option value="">Seleccione</option>
                             <option value="MALE">Masculino</option>
                             <option value="FEMALE">Femenino</option>
@@ -49,24 +68,57 @@ export const AddStudentModal = ({ isOpen, onClose }: Props) => {
 
                     <div>
                         <label className="text-sm font-medium text-slate-700">
-                            Fecha de nacimiento
+                            Fecha de nacimiento (rango)
                         </label>
-                        <input
-                            type="date"
-                            className="input w-full"
+                        <DatePicker
+                            format="DD/MM/YYYY"
+                            range
+                            value={birthDate ?? []}
+                            onChange={(dates) => {
+                                if (!dates) {
+                                    setBirthDate(null);
+                                    return;
+                                }
+                                setBirthDate(dates as DateObject[]);
+                            }}
+                            inputClass="input w-full"
+                            calendarPosition="bottom-left"
+                            className="my-calendar"
+                            locale={{
+                                name: "gregorian_es",
+                                months: [
+                                    ["Enero", "Ene"], ["Febrero", "Feb"], ["Marzo", "Mar"],
+                                    ["Abril", "Abr"], ["Mayo", "May"], ["Junio", "Jun"],
+                                    ["Julio", "Jul"], ["Agosto", "Ago"], ["Septiembre", "Sep"],
+                                    ["Octubre", "Oct"], ["Noviembre", "Nov"], ["Diciembre", "Dic"],
+                                ],
+                                weekDays: [
+                                    ["Domingo", "Dom"], ["Lunes", "Lun"], ["Martes", "Mar"],
+                                    ["Miércoles", "Mié"], ["Jueves", "Jue"], ["Viernes", "Vie"], ["Sábado", "Sáb"],
+                                ],
+                                digits: ["0","1","2","3","4","5","6","7","8","9"],
+                                meridiems: [["AM", "am"], ["PM", "pm"]],
+                            }}
                         />
+
+                        {birthDate && (
+                            <p className="text-sm text-slate-600 mt-2">
+
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 <div className="pt-4 flex justify-end gap-2 border-t">
                     <button
+                        type="button"
                         onClick={onClose}
                         className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100"
                     >
                         Cancelar
                     </button>
-
                     <button
+                        type="button"
                         className="px-5 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 font-medium"
                     >
                         Guardar Estudiante

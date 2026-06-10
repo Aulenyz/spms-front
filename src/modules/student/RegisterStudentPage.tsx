@@ -3,6 +3,9 @@ import { useState } from "react";
 import { StudentService } from "../../services/student/StudentService";
 import { ValidationError } from "yup";
 import { StudentSchema } from "../../schemas/StudentSchema";
+import DatePicker, { DateObject } from "react-multi-date-picker";
+import "../../utils/styles/datepicker.css";
+import "../../App.css";
 
 interface Props {
     isOpen: boolean;
@@ -13,26 +16,23 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
     const [firstname, setFirstname] = useState("");
     const [lastname, setLastname] = useState("");
     const [gender, setGender] = useState("");
-    const [birthDate, setBirthDate] = useState("");
 
+    const [birthDate, setBirthDate] = useState<DateObject[] | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const studentService = StudentService.instance;
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
             setErrors({});
 
+            const formattedRange = birthDate
+                ? `${birthDate[0]?.format("YYYY-MM-DD")} - ${birthDate[1]?.format("YYYY-MM-DD")}`
+                : null;
 
             await StudentSchema.validate(
-                {
-                    firstname,
-                    lastname,
-                    gender,
-                    birthDate: birthDate || null,
-                },
+                { firstname, lastname, gender, birthDate: formattedRange },
                 { abortEarly: false }
             );
 
@@ -40,29 +40,23 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                 firstname,
                 lastname,
                 gender,
-                birthDate: birthDate || null,
+                birthDate: formattedRange,
             });
 
             setFirstname("");
             setLastname("");
             setGender("");
-            setBirthDate("");
-
+            setBirthDate(null);
             onClose();
         } catch (error) {
             if (error instanceof ValidationError) {
                 const validationErrors: Record<string, string> = {};
-
                 error.inner.forEach((err) => {
-                    if (err.path) {
-                        validationErrors[err.path] = err.message;
-                    }
+                    if (err.path) validationErrors[err.path] = err.message;
                 });
-
                 setErrors(validationErrors);
                 return;
             }
-
             console.error(error);
         }
     };
@@ -72,17 +66,13 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
     return ReactDOM.createPortal(
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex justify-end">
             <section className="h-full w-full max-w-4xl bg-white shadow-2xl overflow-y-auto">
-
                 <div className="border-b px-6 py-5 flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            Registrar Estudiante
-                        </h2>
+                        <h2 className="text-2xl font-bold text-gray-900">Registrar Estudiante</h2>
                         <p className="text-sm text-gray-500 mt-1">
                             Complete la información para registrar un nuevo estudiante.
                         </p>
                     </div>
-
                     <button
                         type="button"
                         onClick={onClose}
@@ -93,18 +83,12 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                 </div>
 
                 <form onSubmit={handleSave} className="p-6">
-
                     <div className="bg-white border rounded-xl p-6">
-                        <h3 className="text-lg font-semibold mb-6">
-                            Información del estudiante
-                        </h3>
+                        <h3 className="text-lg font-semibold mb-6">Información del estudiante</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
                             <div>
-                                <label className="block mb-2 font-medium">
-                                    Nombre(s)*
-                                </label>
+                                <label className="block mb-2 font-medium">Nombre(s)*</label>
                                 <input
                                     type="text"
                                     value={firstname}
@@ -112,16 +96,12 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                                     className="w-full border rounded-lg px-3 py-2"
                                 />
                                 {errors.firstname && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.firstname}
-                                    </p>
+                                    <p className="text-red-500 text-sm mt-1">{errors.firstname}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block mb-2 font-medium">
-                                    Apellido(s)*
-                                </label>
+                                <label className="block mb-2 font-medium">Apellido(s)*</label>
                                 <input
                                     type="text"
                                     value={lastname}
@@ -129,15 +109,12 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                                     className="w-full border rounded-lg px-3 py-2"
                                 />
                                 {errors.lastname && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.lastname}
-                                    </p>
+                                    <p className="text-red-500 text-sm mt-1">{errors.lastname}</p>
                                 )}
                             </div>
+
                             <div>
-                                <label className="block mb-2 font-medium">
-                                    Género*
-                                </label>
+                                <label className="block mb-2 font-medium">Género*</label>
                                 <select
                                     value={gender}
                                     onChange={(e) => setGender(e.target.value)}
@@ -149,29 +126,51 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                                     <option value="OTHER">Otro</option>
                                 </select>
                                 {errors.gender && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.gender}
-                                    </p>
+                                    <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block mb-2 font-medium">
-                                    Fecha de nacimiento
-                                </label>
-                                <input
-                                    type="date"
-                                    value={birthDate}
-                                    onChange={(e) => setBirthDate(e.target.value)}
-                                    className="w-full border rounded-lg px-3 py-2"
+                                <label className="block mb-2 font-medium">Fecha de nacimiento*</label>
+                                <DatePicker
+                                    format="DD/MM/YYYY"
+                                    range
+                                    value={birthDate ?? []}
+                                    onChange={(dates) => {
+                                        if (!dates) {
+                                            setBirthDate(null);
+                                            return;
+                                        }
+                                        setBirthDate(dates as DateObject[]);
+                                    }}
+                                    inputClass="w-full border rounded-lg px-3 py-2"
+                                    calendarPosition="bottom-left"
+                                    className="my-calendar"
+                                    locale={{
+                                        name: "gregorian_es",
+                                        months: [
+                                            ["Enero", "Ene"], ["Febrero", "Feb"], ["Marzo", "Mar"],
+                                            ["Abril", "Abr"], ["Mayo", "May"], ["Junio", "Jun"],
+                                            ["Julio", "Jul"], ["Agosto", "Ago"], ["Septiembre", "Sep"],
+                                            ["Octubre", "Oct"], ["Noviembre", "Nov"], ["Diciembre", "Dic"],
+                                        ],
+                                        weekDays: [
+                                            ["Domingo", "Dom"], ["Lunes", "Lun"], ["Martes", "Mar"],
+                                            ["Miércoles", "Mié"], ["Jueves", "Jue"], ["Viernes", "Vie"], ["Sábado", "Sáb"],
+                                        ],
+                                        digits: ["0","1","2","3","4","5","6","7","8","9"],
+                                        meridiems: [["AM", "am"], ["PM", "pm"]],
+                                    }}
                                 />
                                 {errors.birthDate && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.birthDate}
+                                    <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>
+                                )}
+                                {birthDate && (
+                                    <p className="text-sm text-slate-600 mt-2">
+
                                     </p>
                                 )}
                             </div>
-
                         </div>
                     </div>
 
@@ -183,7 +182,6 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                         >
                             Cancelar
                         </button>
-
                         <button
                             type="submit"
                             className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -191,7 +189,6 @@ export const StudentModal = ({ isOpen, onClose }: Props) => {
                             Guardar
                         </button>
                     </div>
-
                 </form>
             </section>
         </div>,
