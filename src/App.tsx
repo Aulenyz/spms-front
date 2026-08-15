@@ -19,7 +19,11 @@ const App = () => {
                     </AuthProvider>
                 </CompanyProvider>
             </ThemeProvider>
-            <ToastContainer/>
+            <ToastContainer
+                position="top-right"
+                toastClassName="app-toast"
+                style={{zIndex: 20000}}
+            />
         </BrowserRouter>
     );
 };

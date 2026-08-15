@@ -6,13 +6,21 @@ import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.ts
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {ChangePasswordForm} from "../../changePassword/changePasswordForm.tsx";
 import {useQueryParams} from "../../../hooks/useQueryParams.tsx";
-import {PeriodConfig, PeriodConfigService} from "../../../services/period/PeriodConfigService.ts";
 import {UserOrganizationService} from "../../../services/user/UserOrganizationService.ts";
 import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
 import {useCompany} from "../../../contexts/CompanyContext.tsx";
 import {environment} from "../../../environment/environment.ts";
 import {joinURLParts} from "../../../utils/URIs.ts";
 import {OrganizationService} from "../../../services/organization/OrganizationService.ts";
+import {
+    OrganizationConfiguration,
+    OrganizationConfigurationService
+} from "../../../services/configuration/OrganizationConfigurationService.ts";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
+import {CenterModal} from "../../../components/shared/CenterModal.tsx";
+import {PeriodService} from "../../../services/period/PeriodService.ts";
+import {Period} from "../../../domain/model/organization/Organization.tsx";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 
 type MainNavbarProps = {
     subtitle: string;
@@ -25,9 +33,8 @@ type MainNavbarProps = {
 
 export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavbarProps) => {
     const {notification} = useQueryParams();
-    const {current, logout, switchOrganization}: AuthContextValue = useAuthContext();
+    const {current, logout, switchOrganization, hasAuthority}: AuthContextValue = useAuthContext();
     const {rnc, setRnc} = useCompany();
-    const [periodConfig, setPeriodConfig] = useState<PeriodConfig | null>(null);
     const [organizations, setOrganizations] = useState<UserOrganizationDTO[]>([]);
     const [orgLoading, setOrgLoading] = useState(false);
     const [currentOrganization, setCurrentOrganization] = useState<{
@@ -39,14 +46,30 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showOrgMenu, setShowOrgMenu] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [settings, setSettings] = useState<OrganizationConfiguration[]>([]);
+    const [settingsLoading, setSettingsLoading] = useState(false);
+    const [settingsSearch, setSettingsSearch] = useState("");
+    const [settingsCategory, setSettingsCategory] = useState<"schoolYear" | "courses">("schoolYear");
+    const [generatingSchoolYear, setGeneratingSchoolYear] = useState(false);
+    const [currentPeriod, setCurrentPeriod] = useState<Period | null>(null);
+    const [showSchoolYearForm, setShowSchoolYearForm] = useState(false);
+    const [schoolYearForm, setSchoolYearForm] = useState({start: "", end: ""});
+    const [schoolCalendarReady, setSchoolCalendarReady] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const orgMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        PeriodConfigService.instance.after()
-            .then((config) => setPeriodConfig(config))
-            .catch(() => setPeriodConfig(null));
-    }, []);
+        setSchoolCalendarReady(false);
+        if (!rnc || !hasAuthority(AuthorityKey.CONFIGURATION)) return;
+        Promise.all([
+            OrganizationConfigurationService.instance.list(),
+            PeriodService.instance.current().catch(() => null),
+        ]).then(([configurationList, period]) => {
+            setSettings(configurationList);
+            setCurrentPeriod(period);
+        }).catch(() => setSettings([])).finally(() => setSchoolCalendarReady(true));
+    }, [rnc, hasAuthority]);
 
     useEffect(() => {
         // Uses OrganizationContext (X-Auth-Company) on backend to return the currently logged organization.
@@ -125,13 +148,15 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
         return joinURLParts(environment.apiURL, raw.startsWith("/") ? raw : `/${raw}`);
     };
 
-    const resolveOrganizationHeaderValue = (organization?: {id?: string | number} | null) => {
+    const resolveOrganizationHeaderValue = (organization?: { id?: string | number } | null) => {
         if (organization?.id === undefined || organization?.id === null) return "";
         return String(organization.id);
     };
 
-    const startLabel = formatShortDate(periodConfig?.start);
-    const enabled = Boolean(periodConfig?.enabled);
+    const schoolYearStart = settings.find((configuration) => configuration.name === "SCHOOL_YEAR_START_DATE")?.value;
+    const schoolYearEnd = settings.find((configuration) => configuration.name === "SCHOOL_YEAR_END_DATE")?.value;
+    const startLabel = formatShortDate(schoolYearStart);
+    const endLabel = formatShortDate(currentPeriod?.end);
     const currentOrg = currentOrganization ?? organizations.find((o) => resolveOrganizationHeaderValue(o.organization) === rnc)?.organization ?? null;
 
     const orgInitials = useMemo(() => {
@@ -144,6 +169,163 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
             .join("")
             .toUpperCase();
     }, [currentOrg?.name]);
+
+    const openSettings = async () => {
+        setShowSettings(true);
+        setSettingsLoading(true);
+        try {
+            setSettings(await OrganizationConfigurationService.instance.list());
+        } catch (error) {
+            toast.error((error as { message?: string })?.message ?? "No se pudo cargar la configuración.");
+        } finally {
+            setSettingsLoading(false);
+        }
+    };
+
+    const updateBooleanSetting = async (configuration: OrganizationConfiguration, checked: boolean) => {
+        setSettingsLoading(true);
+        try {
+            const saved = await OrganizationConfigurationService.instance.save(configuration.name, String(checked));
+            setSettings((currentSettings) => currentSettings.map((item) => item.name === saved.name ? saved : item));
+            toast.success("Configuración actualizada.");
+        } catch (error) {
+            toast.error((error as { message?: string })?.message ?? "No se pudo guardar la configuración.");
+        } finally {
+            setSettingsLoading(false);
+        }
+    };
+
+    const updateDateSetting = async (configuration: OrganizationConfiguration, value: string) => {
+        if (!value || value === configuration.value) return;
+        setSettingsLoading(true);
+        try {
+            const saved = await OrganizationConfigurationService.instance.save(configuration.name, value);
+            setSettings((currentSettings) => currentSettings.map((item) => item.name === saved.name ? saved : item));
+            toast.success("Fecha del año escolar actualizada.");
+        } catch (error) {
+            toast.error((error as { message?: string })?.message ?? "No se pudo guardar la fecha.");
+        } finally {
+            setSettingsLoading(false);
+        }
+    };
+
+    const automaticSchoolYear = settings.find((configuration) => configuration.name === "AUTO_CREATE_SCHOOL_YEAR")?.value === "true";
+    const todayValue = new Date().toLocaleDateString("en-CA");
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowValue = tomorrow.toLocaleDateString("en-CA");
+    const dayAfter = (value?: string) => {
+        if (!value) return tomorrowValue;
+        const date = new Date(`${value}T12:00:00`);
+        date.setDate(date.getDate() + 1);
+        return date.toLocaleDateString("en-CA");
+    };
+    const addThreeMonths = (value?: string) => {
+        if (!value) return tomorrowValue;
+        const date = new Date(`${value}T12:00:00`);
+        date.setMonth(date.getMonth() + 3);
+        const result = date.toLocaleDateString("en-CA");
+        return result > tomorrowValue ? result : tomorrowValue;
+    };
+    const hasActiveSchoolYear = Boolean(currentPeriod?.isActive);
+    const nextAvailableSchoolYearStart = currentPeriod?.end ? dayAfter(currentPeriod.end) : tomorrowValue;
+
+    const settingPresentation = (configuration: OrganizationConfiguration) => {
+        if (configuration.name === "AUTO_CREATE_SCHOOL_YEAR") {
+            return {label: "Generar automáticamente", icon: "fa-rotate", help: "Al llegar la fecha final, crea el siguiente año académico y conserva el mismo rango desplazado un año."};
+        }
+        if (configuration.name === "SCHOOL_YEAR_START_DATE") {
+            return {label: "Inicio del próximo año escolar", icon: "fa-calendar-day", help: "Puedes ajustar esta fecha sin modificar el período que está activo."};
+        }
+        if (configuration.name === "SCHOOL_YEAR_END_DATE") {
+            return {label: "Fin del año escolar", icon: "fa-calendar-check", help: "Marca el cierre del próximo período académico."};
+        }
+        return {label: "Crear cursos automáticamente", icon: "fa-wand-magic-sparkles", help: "Genera únicamente las secciones faltantes y conserva los cursos existentes."};
+    };
+
+    const visibleSettings = settings.filter((configuration) => {
+        const belongsToCategory = settingsCategory === "schoolYear"
+            ? configuration.dataType === "DATE" || configuration.name === "AUTO_CREATE_SCHOOL_YEAR"
+            : configuration.name === "AUTO_CREATE_COURSES";
+        const query = settingsSearch.trim().toLowerCase();
+        return belongsToCategory && (!query || `${settingPresentation(configuration).label} ${configuration.name} ${configuration.description ?? ""}`.toLowerCase().includes(query));
+    }).sort((left, right) => {
+        const order = ["AUTO_CREATE_SCHOOL_YEAR", "SCHOOL_YEAR_START_DATE", "SCHOOL_YEAR_END_DATE", "AUTO_CREATE_COURSES"];
+        return order.indexOf(left.name) - order.indexOf(right.name);
+    });
+    const schoolYearSettings = visibleSettings.filter((configuration) =>
+        configuration.name === "AUTO_CREATE_SCHOOL_YEAR" || (automaticSchoolYear && configuration.dataType === "DATE"));
+    const courseSettings = visibleSettings.filter((configuration) => configuration.name === "AUTO_CREATE_COURSES");
+
+    const openSchoolYearForm = () => {
+        setSchoolYearForm({
+            start: todayValue,
+            end: schoolYearEnd && schoolYearEnd >= addThreeMonths(todayValue)
+                ? schoolYearEnd : addThreeMonths(todayValue),
+        });
+        setShowSchoolYearForm(true);
+    };
+
+    const generateSchoolYear = async () => {
+        if (!schoolYearForm.start || !schoolYearForm.end) {
+            toast.error("Selecciona las fechas de inicio y finalización.");
+            return;
+        }
+        setGeneratingSchoolYear(true);
+        try {
+            await OrganizationConfigurationService.instance.generateSchoolYear(schoolYearForm.end);
+            const [configurationList, period] = await Promise.all([
+                OrganizationConfigurationService.instance.list(),
+                PeriodService.instance.current(),
+            ]);
+            setSettings(configurationList);
+            setCurrentPeriod(period);
+            setShowSchoolYearForm(false);
+            toast.success("El año académico fue iniciado correctamente.");
+        } catch (error) {
+            toast.error((error as { message?: string })?.message ?? "No se pudo generar el año académico.");
+        } finally {
+            setGeneratingSchoolYear(false);
+        }
+    };
+
+    const renderSettingRows = (configurations: OrganizationConfiguration[]) => configurations.map((configuration, index) => (
+        <div
+            key={configuration.name}
+            className="flex items-center justify-between gap-6 p-5"
+            style={{borderTop: index > 0 ? "1px solid var(--border-soft)" : undefined}}
+        >
+            <div className="flex min-w-0 items-start gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px]"
+                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                    <i className={`fa ${settingPresentation(configuration).icon}`}/>
+                </span>
+                <div>
+                    <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{settingPresentation(configuration).label}</strong>
+                    <p className="mt-1 max-w-xl text-sm leading-5" style={{color: "var(--text-secondary)"}}>{configuration.description}</p>
+                    <p className="mt-2 text-xs" style={{color: "var(--text-tertiary)"}}>{settingPresentation(configuration).help}</p>
+                </div>
+            </div>
+            {configuration.dataType === "BOOLEAN" && (
+                <input type="checkbox" className="toggle toggle-primary shrink-0"
+                       checked={configuration.value === "true"}
+                       disabled={settingsLoading || !hasAuthority(AuthorityKey.CONFIGURATION)}
+                       onChange={(event) => void updateBooleanSetting(configuration, event.target.checked)}
+                       aria-label={settingPresentation(configuration).label}/>
+            )}
+            {configuration.dataType === "DATE" && (
+                <DatePicker
+                    compact
+                    value={configuration.value ?? ""}
+                    min={configuration.name === "SCHOOL_YEAR_END_DATE" ? addThreeMonths(schoolYearStart) : nextAvailableSchoolYearStart}
+                    icon={configuration.name === "SCHOOL_YEAR_END_DATE" ? "fa-calendar-check" : "fa-calendar-day"}
+                    disabled={settingsLoading || !hasAuthority(AuthorityKey.CONFIGURATION)
+                    }
+                    onChange={(value) => void updateDateSetting(configuration, value)}
+                />
+            )}
+        </div>
+    ));
 
     return (
         <>
@@ -319,28 +501,29 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                                 </div>
                             )}
 
-                            <div
+                            {schoolCalendarReady && (hasActiveSchoolYear || automaticSchoolYear) && <div
                                 className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                                 title="Calendario escolar"
                             >
-                                <span
-                                    className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
-                                    Proximo año escolar
+                                <span>
+                                    {hasActiveSchoolYear
+                                        ? (endLabel ? `Finaliza ${endLabel}` : "Año académico activo")
+                                        : startLabel ? `Inicia ${startLabel}` : "Inicio automático configurado"}
                                 </span>
-                                <span className="ml-2">
-                                    {startLabel ? `Inicia ${startLabel}` : "Sin configurar"}
+                            </div>}
 
-                                </span>
-                            </div>
+                            {schoolCalendarReady && !hasActiveSchoolYear && !automaticSchoolYear && hasAuthority(AuthorityKey.CONFIGURATION) && (
+                                <button type="button" className="btn btn-sm btn-primary" onClick={openSchoolYearForm}>
+                                    <i className="fa fa-calendar-plus me-1"/>Iniciar año escolar
+                                </button>
+                            )}
 
-                            {enabled && (
+                            {hasAuthority(AuthorityKey.CONFIGURATION) && (
                                 <button
                                     type="button"
                                     className="icon-button"
-                                    title="Configurar ano escolar"
-                                    onClick={() => {
-                                        // TODO: abrir modal de configuracion
-                                    }}
+                                    title="Configurar año académico"
+                                    onClick={() => void openSettings()}
                                 >
                                     <i className="fa fa-gear"/>
                                 </button>
@@ -422,6 +605,173 @@ export const MainNavbar = ({subtitle, onOpenSidebar, breadcrumbs = []}: MainNavb
                     </div>
                 </div>
             </header>
+
+            <CenterModal
+                title="Iniciar año escolar"
+                description="Define el rango del nuevo período académico. Debe durar al menos tres meses."
+                isOpen={showSchoolYearForm}
+                onClose={() => setShowSchoolYearForm(false)}
+                className="max-w-lg"
+            >
+                <form className="space-y-5" onSubmit={(event) => {
+                    event.preventDefault();
+                    void generateSchoolYear();
+                }}>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <span className="mb-2 block text-sm font-bold" style={{color: "var(--text-primary)"}}>Fecha de inicio</span>
+                            <div className="flex h-12 items-center gap-3 rounded-[15px] border px-3"
+                                 style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                <span className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+                                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                    <i className="fa fa-calendar-day"/>
+                                </span>
+                                <strong className="text-sm" style={{color: "var(--text-primary)"}}>{formatShortDate(todayValue)}</strong>
+                            </div>
+                            <small className="mt-1.5 block px-1 text-xs" style={{color: "var(--text-tertiary)"}}>El período comienza hoy.</small>
+                        </div>
+                        <DatePicker
+                            label="Fecha de finalización"
+                            value={schoolYearForm.end}
+                            min={addThreeMonths(todayValue)}
+                            required
+                            icon="fa-calendar-check"
+                            helper="Mínimo tres meses después de hoy."
+                            onChange={(value) => setSchoolYearForm((currentValue) => ({...currentValue, end: value}))}
+                        />
+                    </div>
+                    <div className="rounded-2xl border p-4 text-sm leading-6" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                        <i className="fa fa-circle-info me-2" style={{color: "var(--accent)"}}/>
+                        Al iniciar, este período quedará activo y el anterior será cerrado.
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" className="btn btn-sm" onClick={() => setShowSchoolYearForm(false)}>Cancelar</button>
+                        <button type="submit" className="btn btn-sm btn-primary" disabled={generatingSchoolYear}>
+                            <i className={generatingSchoolYear ? "fa fa-spinner fa-spin me-1" : "fa fa-calendar-check me-1"}/>
+                            {generatingSchoolYear ? "Iniciando..." : "Iniciar año escolar"}
+                        </button>
+                    </div>
+                </form>
+            </CenterModal>
+
+            <CenterModal
+                title="Configuración"
+                description="Administra el comportamiento del sistema."
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+                className="max-w-5xl"
+                contentClassName="p-0"
+            >
+                <div
+                    className="grid min-h-[520px] grid-cols-1 md:grid-cols-[245px_1fr]">
+                    <aside className="border-b px-3 py-4 md:border-b-0 md:border-r"
+                           style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                        <label className="flex h-9 w-full items-center gap-2 rounded-[10px] border px-3"
+                               style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                            <i className="fa fa-search text-[11px]" style={{color: "var(--text-tertiary)"}}/>
+                            <input
+                                className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
+                                value={settingsSearch}
+                                onChange={(event) => setSettingsSearch(event.target.value)}
+                                placeholder="Buscar ajustes"
+                                aria-label="Buscar configuración"
+                            />
+                        </label>
+
+                        <div className="mt-5">
+                            <button type="button" onClick={() => setSettingsCategory("schoolYear")}
+                                    className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left"
+                                    style={{background: settingsCategory === "schoolYear" ? "var(--accent)" : "transparent", color: settingsCategory === "schoolYear" ? "white" : "var(--text-primary)"}}>
+                                <span className="flex h-7 w-7 items-center justify-center rounded-[9px] text-xs"
+                                      style={{background: settingsCategory === "schoolYear" ? "rgba(255,255,255,.2)" : "var(--accent-soft)", color: settingsCategory === "schoolYear" ? "white" : "var(--accent)"}}><i
+                                    className="fa fa-calendar-days"/></span>
+                                <span>
+                                    <strong className="block text-sm">Año académico</strong>
+                                </span>
+                            </button>
+                            <button type="button" onClick={() => setSettingsCategory("courses")}
+                                    className="mt-1 flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left"
+                                    style={{background: settingsCategory === "courses" ? "var(--accent)" : "transparent", color: settingsCategory === "courses" ? "white" : "var(--text-primary)"}}>
+                                <span className="flex h-7 w-7 items-center justify-center rounded-[9px] text-xs"
+                                      style={{background: settingsCategory === "courses" ? "rgba(255,255,255,.2)" : "var(--accent-soft)", color: settingsCategory === "courses" ? "white" : "var(--accent)"}}>
+                                    <i className="fa fa-book"/>
+                                </span>
+                                <strong className="block text-sm">Cursos</strong>
+                            </button>
+                        </div>
+
+                        <div className="mt-5 border-t px-2 pt-4"
+                             style={{borderColor: "var(--border-soft)"}}>
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+                                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                    <i className="fa fa-building"/>
+                                </span>
+                                <div className="min-w-0">
+                                    <strong className="block truncate text-xs"
+                                            style={{color: "var(--text-primary)"}}>{currentOrg?.name ?? "Organización actual"}</strong>
+                                    <span className="block truncate text-[11px]"
+                                          style={{color: "var(--text-tertiary)"}}>Configuración independiente</span>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main className="p-5 sm:p-7" style={{background: "var(--surface)"}}>
+                        <div className="mb-6 flex items-center gap-4">
+                            <span
+                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] text-xl text-white shadow-lg"
+                                style={{background: "linear-gradient(145deg, #38bdf8, #2563eb)"}}>
+                                <i className={settingsCategory === "schoolYear" ? "fa fa-calendar-days" : "fa fa-book"}/>
+                            </span>
+                            <div>
+                                <h3 className="text-xl font-extrabold"
+                                    style={{color: "var(--text-primary)"}}>{settingsCategory === "schoolYear" ? "Año académico" : "Cursos"}</h3>
+                                <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>
+                                    {settingsCategory === "schoolYear"
+                                        ? "Define el inicio y la finalización del próximo período académico."
+                                        : "Configura cómo se crean los cursos de cada período."}
+                                </p>
+                            </div>
+                        </div>
+
+                        {settingsLoading && settings.length === 0 ? (
+                            <div className="p-8 text-center text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
+                                <i className="fa fa-spinner fa-spin me-2"/>Cargando configuración...
+                            </div>
+                        ) : visibleSettings.length === 0 ? (
+                            <div className="p-8 text-center text-sm" style={{color: "var(--text-secondary)"}}>No encontramos configuraciones con esa búsqueda.</div>
+                        ) : <div className="space-y-7">
+                        {schoolYearSettings.length > 0 && <section aria-labelledby="school-year-settings-title">
+                            <h4 id="school-year-settings-title"
+                                className="mb-2 px-1 text-xs font-bold uppercase tracking-[0.1em]"
+                                style={{color: "var(--text-tertiary)"}}>Año escolar</h4>
+                            <div className="overflow-hidden rounded-2xl border"
+                                 style={{borderColor: "var(--border-soft)"}}>
+                                {renderSettingRows(schoolYearSettings)}
+                            </div>
+                            {automaticSchoolYear && (
+                                <p className="mt-3 px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>
+                                    El inicio y el fin deben tener al menos tres meses de diferencia.
+                                </p>
+                            )}
+                        </section>}
+
+                        {courseSettings.length > 0 && <section aria-labelledby="course-settings-title">
+                            <h4 id="course-settings-title" className="mb-2 px-1 text-xs font-bold uppercase tracking-[0.1em]"
+                                style={{color: "var(--text-tertiary)"}}>Cursos</h4>
+                            <div className="overflow-hidden rounded-2xl border" style={{borderColor: "var(--border-soft)"}}>
+                                {renderSettingRows(courseSettings)}
+                            </div>
+                            <p className="mt-3 px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>
+                                Si esta opción está desactivada, puedes usar “Agregar cursos” desde los detalles de cada
+                                plantilla.
+                            </p>
+                        </section>}
+                        </div>}
+                    </main>
+                </div>
+            </CenterModal>
 
             <LeftModal
                 title="Cambiar contrasena"

@@ -52,14 +52,20 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
 
     useEffect((): void => {
         const isRouteValid: boolean = !pathname.startsWith('/auth/') && !pathname.startsWith('/errors/');
+        if (pathname === LOGIN_PATH) {
+            authService.clearSession();
+            setCurrent(undefined);
+            setTokenInfo(authService.getTokenInfo());
+        }
         if (!isRouteValid) {
             setValidating(false);
             return;
         }
 
-        const storedToken = authService.getTokenInfo().token?.trim();
-        if (!storedToken) {
+        if (!authService.hasUsableToken()) {
+            authService.clearSession();
             setCurrent(undefined);
+            setTokenInfo(authService.getTokenInfo());
             setValidating(false);
             navigate(LOGIN_PATH, {replace: true});
             return;
@@ -104,17 +110,7 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
         LocalStorage.remove(StorageItem.RecentSearches);
         authService.authenticate(username, password).then((): void => {
             setTokenInfo(authService.getTokenInfo());
-            authService.currentUser().then((employee: User): void => {
-                setCurrent(employee);
-                navigate(SELECT_ORGANIZATION_PATH, {replace: true});
-            }, (error): void => {
-                const errorPath = resolveErrorPath(error as {status?: number});
-                if (errorPath) {
-                    navigate(errorPath, {replace: true});
-                    return;
-                }
-                setMessage('No se pudo cargar la sesión.');
-            });
+            navigate(SELECT_ORGANIZATION_PATH, {replace: true});
         }, (error): void => {
             const errorPath = resolveErrorPath(error as {status?: number});
             if (errorPath) {

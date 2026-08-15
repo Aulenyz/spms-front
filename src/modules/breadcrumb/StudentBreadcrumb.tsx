@@ -9,13 +9,19 @@ import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const studentService: StudentService = StudentService.instance;
 
-export const StudentBreadcrumb = () => {
+export const StudentBreadcrumb = ({
+                                      onCreate,
+                                      refreshKey = 0,
+                                  }: {
+    onCreate?: () => void;
+    refreshKey?: number;
+}) => {
     const {hasAuthority} = useAuthContext();
     const [status, setStatus]: State<Record<StudentStatus, number>> = useState<Record<StudentStatus, number>>({} as Record<StudentStatus, number>);
     
     useEffect(() => {
         studentService.getTotalByStatus().then(setStatus);
-    }, []);
+    }, [refreshKey]);
 
     return (
         <div
@@ -48,10 +54,10 @@ export const StudentBreadcrumb = () => {
                         <i className="fa fa-upload me-1"/>
                         Carga masiva
                     </Link>
-                    <a className="btn btn-sm btn-primary" href="#">
+                    <button className="btn btn-sm btn-primary" type="button" onClick={onCreate}>
                         <i className="fa fa-user-plus me-1"/>
                         Registrar
-                    </a>
+                    </button>
                 </div>
             )}
         </div>

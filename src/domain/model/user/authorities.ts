@@ -1,4 +1,5 @@
 export enum AuthorityKey {
+    CONFIGURATION = "CONFIGURATION",
     DASHBOARD_VIEW = "DASHBOARD_VIEW",
     STUDENTS_VIEW = "STUDENTS_VIEW",
     STUDENT_CREATE = "STUDENT_CREATE",
@@ -38,11 +39,13 @@ export enum AuthorityKey {
     GUARDIAN_DETAILS_VIEW = "GUARDIAN_DETAILS_VIEW",
 
     TEACHERS_VIEW = "TEACHERS_VIEW",
+    TEACHER = "TEACHER",
 
     COURSE_TEMPLATES_VIEW = "COURSE_TEMPLATES_VIEW",
     COURSE_TEMPLATE_CREATE = "COURSE_TEMPLATE_CREATE",
     COURSE_TEMPLATE_EDIT = "COURSE_TEMPLATE_EDIT",
     COURSE_TEMPLATE_DETAILS_VIEW = "COURSE_TEMPLATE_DETAILS_VIEW",
+    COURSE_GENERATE = "COURSE_GENERATE",
 
     PRICE_TEMPLATES_VIEW = "PRICE_TEMPLATES_VIEW",
     MATERIAL_TEMPLATES_VIEW = "MATERIAL_TEMPLATES_VIEW",
@@ -57,6 +60,7 @@ export enum AuthorityKey {
 }
 
 export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
+    [AuthorityKey.CONFIGURATION]: "Permite consultar, modificar y ejecutar las configuraciones de la organización.",
     [AuthorityKey.DASHBOARD_VIEW]: "Permite ver el dashboard principal del sistema.",
 
     [AuthorityKey.STUDENTS_VIEW]: "Permite ver el listado de estudiantes.",
@@ -106,11 +110,13 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un padre o tutor.",
 
     [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al modulo de profesores.",
+    [AuthorityKey.TEACHER]: "Identifica usuarios elegibles para impartir clases.",
 
     [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de plantillas de cursos.",
     [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevas plantillas de cursos.",
     [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar plantillas de cursos existentes.",
     [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de una plantilla de curso.",
+    [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de una plantilla para el período académico actual.",
 
     [AuthorityKey.PRICE_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de precios.",
     [AuthorityKey.MATERIAL_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de materiales.",

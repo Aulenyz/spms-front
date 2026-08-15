@@ -1,7 +1,9 @@
 export type EnvironmentProperty = {
     apiURL: string;
+    production: boolean;
 }
 
 export const environment: EnvironmentProperty = {
-    apiURL: 'https://loyal-kimberlee-spms-066ccfb1.koyeb.app/api/v1',
+    apiURL: import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "/api/v1" : "http://localhost:8031/api/v1"),
+    production: import.meta.env.PROD,
 }

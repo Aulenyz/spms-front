@@ -29,7 +29,7 @@ const variantTheme: Record<AuthVariant, {
         accent: "#0f62fe",
         secondary: "#14b8a6",
         badge: "Campus conectado",
-        copy: "Administra matricula, cobros escolares y accesos institucionales desde un mismo entorno.",
+        copy: "",
         chips: ["Matricula", "Tesoreria", "Accesos"],
         stats: [
             {label: "Cobertura", value: "Campus"},

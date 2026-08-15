@@ -12,6 +12,8 @@ import {StudentFilter} from "../../domain/filters/student/StudentFilter.tsx";
 import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
+import {LeftModal} from "../../components/shared/LeftModal.tsx";
+import {StudentForm} from "./StudentForm.tsx";
 
 const studentService: StudentService = StudentService.instance;
 
@@ -21,10 +23,12 @@ export const ListStudentPage = () => {
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
+    const [showCreate, setShowCreate] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         studentService.getAll(filters, pagination).then(setStudents);
-    }, [pagination, filters]);
+    }, [pagination, filters, refreshKey]);
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -46,7 +50,7 @@ export const ListStudentPage = () => {
                 description="Consulta registro, genero y estado academico desde una sola vista."
             />
 
-            <StudentBreadcrumb/>
+            <StudentBreadcrumb onCreate={() => setShowCreate(true)} refreshKey={refreshKey}/>
 
             <DataTableCard
                 title="Estudiantes"
@@ -97,6 +101,18 @@ export const ListStudentPage = () => {
                     </tbody>
                 </table>
             </DataTableCard>
+
+            <LeftModal
+                title="Registrar estudiante"
+                isOpen={showCreate}
+                onClose={() => setShowCreate(false)}
+                className="w-[420px] h-full z-[9999]"
+            >
+                <StudentForm
+                    onDone={() => setShowCreate(false)}
+                    onSaved={() => setRefreshKey((current) => current + 1)}
+                />
+            </LeftModal>
         </div>
     );
 };

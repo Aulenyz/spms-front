@@ -1,7 +1,7 @@
 
 
 import {BaseService} from "../BaseService.ts";
-import {Student, StudentStatus} from "../../domain/student/Student.ts";
+import {Student, StudentFormValues, StudentStatus} from "../../domain/student/Student.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {BulkValidationResponse} from "../../domain/student/BulkValidation.ts";
 
@@ -23,6 +23,10 @@ export class StudentService extends BaseService<Student> {
 
     async getTotalByStatus(): Promise<Record<StudentStatus, number>> {
         return super.get<Record<StudentStatus, number>>('/grouped');
+    }
+
+    createStudent(payload: StudentFormValues): Promise<Student> {
+        return this.create("", payload) as Promise<Student>;
     }
 
     async downloadTemplate(): Promise<void> {

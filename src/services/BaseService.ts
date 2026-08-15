@@ -48,10 +48,14 @@ export abstract class BaseService<R = unknown> {
     }
 
     protected form<T>(endpoint: string = '', data: any = {}, headers: Record<string, string> = {}): Promise<T> {
-        const formData: FormData = new FormData();
+        const formData = new URLSearchParams();
         Object.keys(data).forEach((key: string) => formData.append(key, data[key]));
         const url: string = getURI(joinURLParts(environment.apiURL, this.baseURL, endpoint));
-        const options: RequestInit = {method: 'POST', headers, body: formData};
+        const options: RequestInit = {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', ...headers},
+            body: formData,
+        };
         return this.execRequest<T>(url, options, false);
     }
 

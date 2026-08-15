@@ -40,14 +40,28 @@ export class AuthService extends BaseService {
     }
 
     getTokenInfo(): TokenInfo {
-        return LocalStorage.getObject<TokenInfo>(StorageItem.TokenInfo, {
+        const fallback: TokenInfo = {
             token: "",
             info: {
                 id: "",
                 expiresAt: 0,
                 authorities: [],
             } as AuthToken,
-        });
+        };
+
+        const stored = LocalStorage.getObject<unknown>(StorageItem.TokenInfo, fallback);
+        if (!this.isTokenInfo(stored)) return fallback;
+        return stored;
+    }
+
+    hasUsableToken(): boolean {
+        const {token, info} = this.getTokenInfo();
+        if (!token?.trim() || token.split(".").length !== 3) return false;
+        return Number(info?.expiresAt ?? 0) > Date.now();
+    }
+
+    clearSession(): void {
+        LocalStorage.remove(StorageItem.TokenInfo);
     }
 
     logout(): void {
@@ -87,5 +101,15 @@ export class AuthService extends BaseService {
             expiresAt: payload.exp * 1000,
             authorities: Array.isArray(payload.authorities) ? payload.authorities : []
         };
+    }
+
+    private isTokenInfo(value: unknown): value is TokenInfo {
+        if (typeof value !== "object" || value === null) return false;
+        const tokenInfo = value as Partial<TokenInfo>;
+        return typeof tokenInfo.token === "string"
+            && typeof tokenInfo.info === "object"
+            && tokenInfo.info !== null
+            && typeof tokenInfo.info.expiresAt === "number"
+            && Array.isArray(tokenInfo.info.authorities);
     }
 }
