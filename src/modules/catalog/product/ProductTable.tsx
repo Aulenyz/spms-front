@@ -1,5 +1,5 @@
 import {Fragment, useState} from "react";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
 import {Product, ProductTypeLabel, RecurrenceTypeLabel} from "../../../domain/model/product/Product.ts";
 import {ProductStatusPill} from "./ProductStatusPill.tsx";
 
@@ -59,10 +59,7 @@ export const ProductTable = ({products}: {products: Product[]}) => {
                                 <td className="text-right font-semibold text-[var(--text-primary)]">{currency.format(product.price ?? 0)}</td>
                                 <td><ProductStatusPill status={product.status}/></td>
                                 <td className="text-right">
-                                    <Link to={`/catalog/products/${product.id}`} className="table-link whitespace-nowrap">
-                                        Ver detalle
-                                        <i className="fa fa-chevron-right text-2xs"/>
-                                    </Link>
+                                    <TableDetailAction to={`/catalog/products/${product.id}`}/>
                                 </td>
                             </tr>
 

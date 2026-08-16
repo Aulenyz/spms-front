@@ -3,7 +3,7 @@ import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {PaymentService} from "../../services/payment/PaymentService.ts";
 import {Payment, PaymentStatus} from "../../domain/model/payment/Payment.ts";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 import {Pager} from "../../components/io/input/Pager.tsx";
 import {PaymentStatusPill} from "../../components/io/output/pill/PaymentStatusPill.tsx";
 import {PaymentMethodPill} from "../../components/io/output/pill/PaymentMethodPill.tsx";
@@ -124,10 +124,7 @@ export const ListPaymentPage = () => {
                             <td><PaymentStatusPill status={payment.status}/></td>
                             <td>{payment.user.info.name}</td>
                             <td className="text-right">
-                                <Link to="#" className="table-link whitespace-nowrap">
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs"/>
-                                </Link>
+                                <TableDetailAction disabled/>
                             </td>
                         </tr>
                     ))}

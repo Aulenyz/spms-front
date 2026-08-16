@@ -147,7 +147,7 @@ export const CourseTemplateForm = ({
                 <label className="input input-sm w-full">
                     <i className="fa fa-layer-group me-1"/>
                     <input
-                        placeholder="Nombre de la plantilla"
+                        placeholder="Nombre de la Curso"
                         value={values.name}
                         maxLength={40}
                         onChange={(event) => setValues((prev) => ({...prev, name: event.target.value}))}

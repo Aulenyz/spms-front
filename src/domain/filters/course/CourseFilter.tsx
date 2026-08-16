@@ -99,6 +99,7 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
                     options={specializations}
                 />
             </div>
+
         </div>
     );
 };

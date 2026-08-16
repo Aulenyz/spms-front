@@ -1,3 +1,5 @@
+import {useState} from "react";
+import {DatePicker} from "../../../../components/io/DatePicker.tsx";
 import { RightModal } from "../../../../components/shared/RightModal";
 
 interface Props {
@@ -6,6 +8,8 @@ interface Props {
 }
 
 export const AddStudentModal = ({ isOpen, onClose }: Props) => {
+    const [birthDate, setBirthDate] = useState("");
+
     return (
         <RightModal title="Agregar Estudiante" isOpen={isOpen} onClose={onClose} className="w-[420px] h-full z-[9999]">
             <div className="flex flex-col h-full">
@@ -58,16 +62,12 @@ export const AddStudentModal = ({ isOpen, onClose }: Props) => {
                         </select>
                     </div>
 
-                    {/* FECHA NACIMIENTO */}
-                    <div>
-                        <label className="text-sm font-medium text-slate-700">
-                            Fecha de nacimiento
-                        </label>
-                        <input
-                            type="date"
-                            className="input w-full"
-                        />
-                    </div>
+                    <DatePicker
+                        label="Fecha de nacimiento"
+                        value={birthDate}
+                        icon="fa-calendar-days"
+                        onChange={setBirthDate}
+                    />
                 </div>
 
                 {/* FOOTER */}

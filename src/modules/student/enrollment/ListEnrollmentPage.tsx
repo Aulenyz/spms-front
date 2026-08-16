@@ -3,7 +3,7 @@ import {PeriodService} from "../../../services/period/PeriodService.ts";
 import {EnrollmentService} from "../../../services/student/enrollment/EnrollmentService.ts";
 import {toast} from "react-toastify";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
 import {EnrollmentStatusPill} from "../../../components/io/output/pill/EnrollmentStatusPill.tsx";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {EnrollmentBreadcrumb} from "../../breadcrumb/EnrollmentBreadcrumb.tsx";
@@ -137,10 +137,7 @@ export const ListEnrollmentPage = () => {
                                 <td>{enrollment.course.specialization?.name}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
                                 <td><EnrollmentStatusPill status={enrollment.status}/></td>
                                 <td className="text-right">
-                                    <Link to={`/enrollments/${enrollment.id}`} className="table-link whitespace-nowrap">
-                                        Detalles
-                                        <i className="fa fa-chevron-right text-2xs"/>
-                                    </Link>
+                                    <TableDetailAction to={`/enrollments/${enrollment.id}`}/>
                                 </td>
                             </tr>
                         ))}

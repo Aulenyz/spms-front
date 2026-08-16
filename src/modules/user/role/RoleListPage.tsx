@@ -10,7 +10,7 @@ import {RoleForm} from "./create/RoleForm.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {RoleBreadcrumb} from "../../breadcrumb/RoleBreadcrumb.tsx";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
 
 const roleService: RoleService = RoleService.instance;
 
@@ -77,14 +77,7 @@ export const RoleListPage = () => {
                             <td>{role.description}</td>
                             <td>{role.countAuthorities}</td>
                             <td className="text-right">
-                                <Link
-                                    to={`/users/roles/${role.id}`}
-                                    state={{role}}
-                                    className="table-link whitespace-nowrap"
-                                >
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs"/>
-                                </Link>
+                                <TableDetailAction to={`/users/roles/${role.id}`} state={{role}}/>
                             </td>
                         </tr>
                     ))}

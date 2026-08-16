@@ -6,6 +6,7 @@ import {yupResolver} from "@hookform/resolvers/yup";
 
 import {Input} from "../../../components/io/Input.tsx";
 import {SelectInput} from "../../../components/io/SelectInput.tsx";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 import {Student, StudentFormValues} from "../../../domain/student/Student.ts";
 import {StudentSchema} from "../../../schemas/StudentSchema.ts";
 import {StudentService} from "../../../services/student/StudentService.ts";
@@ -51,6 +52,8 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
     const {
         register,
         handleSubmit,
+        setValue,
+        watch,
         formState: {errors, isSubmitting},
         reset,
     } = useForm<StudentFormValues>({
@@ -58,6 +61,7 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
         reValidateMode: "onChange",
         defaultValues: {firstname: "", lastname: "", gender: Gender.MALE, birthDate: ""},
     });
+    const birthDate = watch("birthDate");
 
     useEffect(() => {
         if (mode === "CREATE") {
@@ -342,7 +346,16 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
                                 </option>
                             ))}
                         </SelectInput>
-                        <Input label="Fecha de nacimiento*" type="date" {...register("birthDate")} error={errors.birthDate?.message}/>
+                        <div>
+                            <DatePicker
+                                label="Fecha de nacimiento*"
+                                value={birthDate ?? ""}
+                                icon="fa-calendar-days"
+                                required
+                                onChange={(value) => setValue("birthDate", value, {shouldDirty: true, shouldValidate: true})}
+                            />
+                            {errors.birthDate?.message && <p className="mt-1 text-xs font-semibold text-red-500">{errors.birthDate.message}</p>}
+                        </div>
 
                         <div className="md:col-span-2 flex items-center justify-end gap-2 pt-2">
                             <button

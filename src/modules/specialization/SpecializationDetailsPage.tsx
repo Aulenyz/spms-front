@@ -11,6 +11,7 @@ import {SelectOption} from "../../components/io/output/Select.tsx";
 import {GradeType} from "../../domain/model/course/Course.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
+import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 
 type TabKey = "courses" | "templates" | "teachers" | "settings";
 
@@ -144,9 +145,7 @@ export const SpecializationDetailsPage = () => {
                             <td>{row.division}</td>
                             <td>{row.status}</td>
                             <td className="text-right">
-                                <button className="table-link" type="button" disabled>
-                                    Detalles <i className="fa fa-chevron-right text-[10px]"/>
-                                </button>
+                                <TableDetailAction disabled/>
                             </td>
                         </tr>
                     ))}
@@ -177,9 +176,7 @@ export const SpecializationDetailsPage = () => {
                             <td>{row.type}</td>
                             <td>{row.sections}</td>
                             <td className="text-right">
-                                <button className="table-link" type="button" disabled>
-                                    Detalles <i className="fa fa-chevron-right text-[10px]"/>
-                                </button>
+                                <TableDetailAction disabled/>
                             </td>
                         </tr>
                     ))}
@@ -208,9 +205,7 @@ export const SpecializationDetailsPage = () => {
                             <td><strong>{row.name}</strong></td>
                             <td>{row.status}</td>
                             <td className="text-right">
-                                <button className="table-link" type="button" disabled>
-                                    Detalles <i className="fa fa-chevron-right text-[10px]"/>
-                                </button>
+                                <TableDetailAction disabled/>
                             </td>
                         </tr>
                     ))}

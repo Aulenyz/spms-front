@@ -4,7 +4,7 @@ import {UserService} from "../../services/user/UserService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {User, UserStatus} from "../../domain/model/user/user.ts";
 import {Pager} from "../../components/io/input/Pager.tsx";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 import {StudentGenderPill} from "../../components/io/output/pill/StudentGenderPill.tsx";
 import {UserStatusPill} from "../../components/io/output/pill/UserStatusPill.tsx";
 import {UserFilter} from "../../domain/filters/user/UserFilter.tsx";
@@ -84,10 +84,7 @@ export const UserListPage = () => {
                             <td><StudentGenderPill gender={user.info.gender}/></td>
                             <td><UserStatusPill status={user.status}/></td>
                             <td className="text-right">
-                                <Link to={`/users/${user.id}`} className="table-link whitespace-nowrap">
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs"/>
-                                </Link>
+                                <TableDetailAction to={`/users/${user.id}`}/>
                             </td>
                         </tr>
                     ))}

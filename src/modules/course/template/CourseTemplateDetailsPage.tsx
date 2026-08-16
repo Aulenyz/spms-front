@@ -217,8 +217,11 @@ export const CourseTemplateDetailsPage = () => {
             if (activeTab === "calendar") setAssignments(await service.academicAssignments(id));
             setTeacherToChange(null);
             toast.success("Profesor actualizado correctamente.");
-        } catch (error) { toast.error(message(error, "No se pudo cambiar el profesor.")); }
-        finally { setChangingTeacher(false); }
+        } catch (error) {
+            toast.error(message(error, "No se pudo cambiar el profesor."));
+        } finally {
+            setChangingTeacher(false);
+        }
     };
 
     if (!loading && !template) return <EmptyState title="No se encontró la plantilla"
@@ -229,15 +232,29 @@ export const CourseTemplateDetailsPage = () => {
         <section className="surface-card overflow-visible">
             <div className="relative flex flex-col items-center px-6 py-7 text-center"
                  style={{background: "radial-gradient(circle at top, rgba(15,98,254,.09), transparent 62%)"}}>
-                {(canEdit || hasAuthority(AuthorityKey.COURSE_GENERATE)) && <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-                    <button type="button" className="icon-button h-10 w-10" title="Más acciones" aria-expanded={showActions} onClick={() => setShowActions((current) => !current)}><i className="fa fa-ellipsis-vertical"/></button>
-                    {showActions && <div className="floating-panel right-0 top-full z-50 mt-2 w-60 text-left">
-                        <div className="space-y-1 p-2">
-                            {canEdit && <button type="button" className="profile-menu-item w-full" onClick={() => {setShowActions(false); setShowEdit(true);}}><i className="fa fa-pen text-[var(--accent)]"/><span>Editar plantilla</span></button>}
-                            {hasAuthority(AuthorityKey.COURSE_GENERATE) && <button type="button" className="profile-menu-item w-full" disabled={generating} onClick={() => {setShowActions(false); void generateCourses();}}><i className={generating ? "fa fa-spinner fa-spin text-[var(--accent)]" : "fa fa-layer-group text-[var(--accent)]"}/><span>{generating ? "Agregando cursos..." : "Agregar cursos al período"}</span></button>}
-                        </div>
+                {(canEdit || hasAuthority(AuthorityKey.COURSE_GENERATE)) &&
+                    <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+                        <button type="button" className="icon-button h-10 w-10" title="Más acciones"
+                                aria-expanded={showActions} onClick={() => setShowActions((current) => !current)}><i
+                            className="fa fa-ellipsis-vertical"/></button>
+                        {showActions && <div className="floating-panel right-0 top-full z-50 mt-2 w-60 text-left">
+                            <div className="space-y-1 p-2">
+                                {canEdit && <button type="button" className="profile-menu-item w-full" onClick={() => {
+                                    setShowActions(false);
+                                    setShowEdit(true);
+                                }}><i className="fa fa-pen text-[var(--accent)]"/><span>Editar plantilla</span>
+                                </button>}
+                                {hasAuthority(AuthorityKey.COURSE_GENERATE) &&
+                                    <button type="button" className="profile-menu-item w-full" disabled={generating}
+                                            onClick={() => {
+                                                setShowActions(false);
+                                                void generateCourses();
+                                            }}><i
+                                        className={generating ? "fa fa-spinner fa-spin text-[var(--accent)]" : "fa fa-layer-group text-[var(--accent)]"}/><span>{generating ? "Agregando cursos..." : "Agregar cursos al período escolar"}</span>
+                                    </button>}
+                            </div>
+                        </div>}
                     </div>}
-                </div>}
                 <span
                     className="mb-3 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-extrabold"
                     style={{background: "var(--accent-soft)", color: "var(--accent)"}}>{initials(title)}</span>
@@ -403,7 +420,13 @@ export const CourseTemplateDetailsPage = () => {
                                 </td>
                                 <td>{item.subject.name}</td>
                                 <td>{item.division}</td>
-                                <td className="text-right">{canEdit && <button type="button" className="icon-button h-9 w-9" title="Cambiar profesor" aria-label="Cambiar profesor" onClick={() => {setTeacherToChange(item); setReplacementTeacherId(item.teacher?.id?.toString() ?? ""); searchTeachers();}}><i className="fa fa-arrow-right-arrow-left"/></button>}</td>
+                                <td className="text-right">{canEdit &&
+                                    <button type="button" className="icon-button h-9 w-9" title="Cambiar profesor"
+                                            aria-label="Cambiar profesor" onClick={() => {
+                                        setTeacherToChange(item);
+                                        setReplacementTeacherId(item.teacher?.id?.toString() ?? "");
+                                        searchTeachers();
+                                    }}><i className="fa fa-arrow-right-arrow-left"/></button>}</td>
                             </tr>)}
                             {!teacherAssignments.some((item) => item.teacher) && <tr>
                                 <td colSpan={4} className="py-10 text-center"
@@ -501,11 +524,35 @@ export const CourseTemplateDetailsPage = () => {
             </form>
         </LeftModal>
 
-        <LeftModal title="Cambiar profesor" isOpen={Boolean(teacherToChange)} onClose={() => !changingTeacher && setTeacherToChange(null)} className="h-full w-[420px]">
-            <form className="flex flex-1 flex-col" onSubmit={(event) => {event.preventDefault(); void changeTeacher();}}>
-                <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}><strong className="block text-sm">{teacherToChange?.subject.name}</strong><span className="mt-1 block text-xs" style={{color: "var(--text-secondary)"}}>Sección {teacherToChange?.division} · El horario se conservará sin cambios.</span></div>
-                <label className="mt-5 block"><span className="mb-2 block text-sm font-bold">Nuevo profesor *</span><SearchSelect text="Buscar por nombre, correo o usuario" hasError={false} portal value={replacementTeacherId || undefined} options={teachers.map((teacher) => ({value: teacher.id, description: `${teacher.name} · ${teacher.email}`}))} onSearch={searchTeachers} onSelect={(value) => setReplacementTeacherId(value?.toString() ?? "")} className="w-full"/></label>
-                <div className="mt-auto flex justify-end gap-2 pt-5"><button type="button" className="btn btn-sm" disabled={changingTeacher} onClick={() => setTeacherToChange(null)}>Cancelar</button><button type="submit" className="btn btn-sm btn-primary" disabled={changingTeacher || !replacementTeacherId}><i className={changingTeacher ? "fa fa-spinner fa-spin me-1" : "fa fa-user-check me-1"}/>{changingTeacher ? "Actualizando..." : "Guardar cambio"}</button></div>
+        <LeftModal title="Cambiar profesor" isOpen={Boolean(teacherToChange)}
+                   onClose={() => !changingTeacher && setTeacherToChange(null)} className="h-full w-[420px]">
+            <form className="flex flex-1 flex-col" onSubmit={(event) => {
+                event.preventDefault();
+                void changeTeacher();
+            }}>
+                <div className="rounded-2xl border p-4"
+                     style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}><strong
+                    className="block text-sm">{teacherToChange?.subject.name}</strong><span
+                    className="mt-1 block text-xs"
+                    style={{color: "var(--text-secondary)"}}>Sección {teacherToChange?.division} · El horario se conservará sin cambios.</span>
+                </div>
+                <label className="mt-5 block"><span
+                    className="mb-2 block text-sm font-bold">Nuevo profesor *</span><SearchSelect
+                    text="Buscar por nombre, correo o usuario" hasError={false} portal
+                    value={replacementTeacherId || undefined} options={teachers.map((teacher) => ({
+                    value: teacher.id,
+                    description: `${teacher.name} · ${teacher.email}`
+                }))} onSearch={searchTeachers} onSelect={(value) => setReplacementTeacherId(value?.toString() ?? "")}
+                    className="w-full"/></label>
+                <div className="mt-auto flex justify-end gap-2 pt-5">
+                    <button type="button" className="btn btn-sm" disabled={changingTeacher}
+                            onClick={() => setTeacherToChange(null)}>Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-sm btn-primary"
+                            disabled={changingTeacher || !replacementTeacherId}><i
+                        className={changingTeacher ? "fa fa-spinner fa-spin me-1" : "fa fa-user-check me-1"}/>{changingTeacher ? "Actualizando..." : "Guardar cambio"}
+                    </button>
+                </div>
             </form>
         </LeftModal>
 

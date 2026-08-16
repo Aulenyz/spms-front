@@ -6,6 +6,7 @@ import {Gender, Genders} from "../../domain/model/user/user.ts";
 import {StudentFormValues} from "../../domain/student/Student.ts";
 import {StudentSchema} from "../../schemas/StudentSchema.ts";
 import {StudentService} from "../../services/student/StudentService.ts";
+import {DatePicker} from "../../components/io/DatePicker.tsx";
 
 const studentService = StudentService.instance;
 
@@ -21,6 +22,8 @@ export const StudentForm = ({
         register,
         handleSubmit,
         reset,
+        setValue,
+        watch,
         formState: {errors, isValid},
     } = useForm<StudentFormValues>({
         resolver: yupResolver(StudentSchema),
@@ -32,6 +35,7 @@ export const StudentForm = ({
         },
         mode: "onChange",
     });
+    const birthDate = watch("birthDate");
 
     const submit = async (values: StudentFormValues) => {
         if (submitting) return;
@@ -129,13 +133,13 @@ export const StudentForm = ({
             </div>
 
             <div className="space-y-1">
-                <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Fecha de nacimiento*
-                </label>
-                <label className="input input-sm w-full">
-                    <i className="fa fa-calendar-days me-1"/>
-                    <input type="date" {...register("birthDate")}/>
-                </label>
+                <DatePicker
+                    label="Fecha de nacimiento*"
+                    value={birthDate ?? ""}
+                    icon="fa-calendar-days"
+                    required
+                    onChange={(value) => setValue("birthDate", value, {shouldDirty: true, shouldValidate: true})}
+                />
                 {errors.birthDate?.message && <p className="text-xs font-semibold text-red-500">{errors.birthDate.message}</p>}
             </div>
 

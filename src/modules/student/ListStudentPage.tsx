@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 import {StudentService} from "../../services/student/StudentService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Student, StudentStatus} from "../../domain/student/Student.ts";
@@ -91,10 +91,7 @@ export const ListStudentPage = () => {
                             <td><StudentGenderPill gender={student.gender}/></td>
                             <td><StudentStatusPill status={student.status}/></td>
                             <td className="text-right">
-                                <Link to="#" className="table-link whitespace-nowrap">
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs"/>
-                                </Link>
+                                <TableDetailAction disabled/>
                             </td>
                         </tr>
                     ))}

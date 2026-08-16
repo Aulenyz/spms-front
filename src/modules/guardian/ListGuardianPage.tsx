@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
+import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
@@ -80,11 +80,7 @@ export const ListGuardianPage = () => {
                             <td>{guardian.phone ?? "-"}</td>
                             <td className="truncate max-w-[240px]">{guardian.email ?? "-"}</td>
                             <td className="text-right">
-                                <Link to={`/guardians/${guardian.id}`} state={{guardian}}
-                                      className="table-link whitespace-nowrap">
-                                    Detalles
-                                    <i className="fa fa-chevron-right text-2xs"/>
-                                </Link>
+                                <TableDetailAction to={`/guardians/${guardian.id}`} state={{guardian}}/>
                             </td>
                         </tr>
                     ))}
