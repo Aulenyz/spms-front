@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
-import {Course} from "../../domain/model/course/Course.ts";
+import {Course, GradeType} from "../../domain/model/course/Course.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {CourseService} from "../../services/course/CourseService.ts";
 import {PeriodService} from "../../services/period/PeriodService.ts";
@@ -11,17 +11,18 @@ import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {CourseFilter} from "../../domain/filters/course/CourseFilter.tsx";
-import {GradeType} from "../../domain/model/course/Course.ts";
 import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
+import {QuickCourseModal} from "./CourseQuickForms.tsx";
 
 const courseService = CourseService.instance;
 const periodService = PeriodService.instance;
 
 export const ListCoursePage = () => {
-    const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(24));
+    const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(10));
     const [courses, setCourses]: State<Page<Course>> = useState(Pagination.empty<Course>());
     const [filters, setFilters] = useState<KeyValueOf<string>>({active: "true"});
     const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
+    const [showQuickCourse, setShowQuickCourse] = useState(false);
 
     useEffect(() => {
         periodService.current().then((period) => {
@@ -53,6 +54,7 @@ export const ListCoursePage = () => {
         }
 
         if (!incoming.specializationId) delete nextFilters.specializationId;
+        if (!incoming.name) delete nextFilters.name;
         nextFilters.active = String(incoming.active ?? true);
 
         setFilters(nextFilters);
@@ -64,11 +66,14 @@ export const ListCoursePage = () => {
             <PageHeader
                 title="Cursos"
                 description="Consulta cursos creados por periodo, estado y área especializada desde una sola vista."
+                actions={<button type="button" className="btn btn-sm btn-primary" onClick={() => setShowQuickCourse(true)}>
+                    <i className="fa fa-bolt me-1"/>Curso rápido
+                </button>}
             />
 
             <DataTableCard
                 title="Listado de cursos"
-                description="Filtra por periodo para ver las secciones y su área especializada."
+                description="Listado de cursos, filtra por periodo, estado, area y nombre"
                 filters={<CourseFilter onFilter={handleUpdateFilter} selectedPeriodId={selectedPeriodId}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={courses}/>}
             >
@@ -79,7 +84,7 @@ export const ListCoursePage = () => {
                         icon="fa-book"
                     />
                 ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                         {courses.content.map((course) => (
                             <Link
                                 key={course.id}
@@ -102,7 +107,8 @@ export const ListCoursePage = () => {
 
                                 <div className="mt-4 min-h-0 flex-1">
                                     <h3 className="line-clamp-2 text-sm font-extrabold leading-snug">{course.name ?? "Curso"}</h3>
-                                    <p className="mt-2 line-clamp-2 text-xs leading-5" style={{color: "var(--text-secondary)"}}>
+                                    <p className="mt-2 line-clamp-2 text-xs leading-5"
+                                       style={{color: "var(--text-secondary)"}}>
                                         {course.specialization?.name ?? "Sin área especializada"}
                                     </p>
                                 </div>
@@ -110,8 +116,9 @@ export const ListCoursePage = () => {
                                 <div className="mt-4 border-t pt-3" style={{borderColor: "var(--border-soft)"}}>
                                     <div className="flex items-center justify-between gap-2">
                                         <GradeTypePill type={course.type as GradeType}/>
-                                        <span className="flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:translate-x-0.5"
-                                              style={{background: "var(--surface-muted)", color: "var(--accent)"}}>
+                                        <span
+                                            className="flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:translate-x-0.5"
+                                            style={{background: "var(--surface-muted)", color: "var(--accent)"}}>
                                             <i className="fa fa-chevron-right text-[10px]"/>
                                         </span>
                                     </div>
@@ -121,6 +128,8 @@ export const ListCoursePage = () => {
                     </div>
                 )}
             </DataTableCard>
+            <QuickCourseModal open={showQuickCourse} onClose={() => setShowQuickCourse(false)}
+                              onSaved={() => courseService.getAll(filters as any, pagination).then(setCourses)}/>
         </div>
     );
 };

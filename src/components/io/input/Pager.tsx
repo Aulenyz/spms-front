@@ -17,7 +17,7 @@ export const Pager = ({
                           page,
                           onChange,
                           onPageSizeChange,
-                          pageSizeOptions = [5, 10, 20],
+                          pageSizeOptions = [10, 15, 20],
                           showSummary = true,
                           compact = false,
                           className,

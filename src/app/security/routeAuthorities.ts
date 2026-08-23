@@ -18,6 +18,8 @@ const routeAuthorityRules: RouteAuthorityRule[] = [
     {pattern: /^\/courses\/\d+$/, authority: AuthorityKey.COURSE_DETAILS_VIEW},
     {pattern: /^\/courses(\/list)?$/, authority: AuthorityKey.COURSES_VIEW},
 
+    {pattern: /^\/teacher\/schedule$/, authority: AuthorityKey.TEACHER_SCHEDULE_VIEW},
+
     {pattern: /^\/subjects(\/list)?$/, authority: AuthorityKey.SUBJECTS_VIEW},
 
     {pattern: /^\/specializations\/\d+$/, authority: AuthorityKey.SPECIALIZATION_DETAILS_VIEW},

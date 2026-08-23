@@ -20,6 +20,7 @@ import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
+import {formatTime12, formatTimeRange12, timeInputValue} from "../../../utils/timeFormat.ts";
 
 const service = CourseTemplateService.instance;
 const DAYS: Array<{ key: WeekDay; label: string; short: string }> = [
@@ -34,7 +35,13 @@ const initials = (name: string) => name.split(" ").map((word) => word[0]).slice(
 const message = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as { message?: unknown }).message === "string"
         ? (error as { message: string }).message : fallback;
-const time = (value: string) => value?.slice(0, 5);
+const addMinutes = (value: string, minutes: number) => {
+    const [hours = "0", mins = "0"] = timeInputValue(value).split(":");
+    const total = Number(hours) * 60 + Number(mins) + minutes;
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+};
+const scheduleLabel = (slot: ScheduleSlot) =>
+    `${DAYS.find((day) => day.key === slot.dayOfWeek)?.short ?? slot.dayOfWeek} ${formatTimeRange12(slot.startsAt, slot.endsAt)}`;
 type AcademicTab = "subjects" | "teachers" | "calendar";
 type FormMode = "subject" | "teacher";
 
@@ -60,9 +67,9 @@ export const CourseTemplateDetailsPage = () => {
     const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
     const [removingSubject, setRemovingSubject] = useState(false);
     const [showActions, setShowActions] = useState(false);
-    const [teacherToChange, setTeacherToChange] = useState<TeacherAssignment | null>(null);
-    const [replacementTeacherId, setReplacementTeacherId] = useState("");
-    const [changingTeacher, setChangingTeacher] = useState(false);
+    const [editingAssignment, setEditingAssignment] = useState<TeacherAssignment | null>(null);
+    const [assignmentToRemove, setAssignmentToRemove] = useState<TeacherAssignment | null>(null);
+    const [removingAssignment, setRemovingAssignment] = useState(false);
 
     const canView = hasAuthority(AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW);
     const canEdit = hasAuthority(AuthorityKey.COURSE_TEMPLATE_EDIT);
@@ -72,7 +79,12 @@ export const CourseTemplateDetailsPage = () => {
     const visibleAssignments = useMemo(() => teacherFilter
         ? assignments.filter((item) => item.teacher?.id === Number(teacherFilter)) : assignments, [assignments, teacherFilter]);
     const scheduleRows = useMemo(() => Array.from(new Set(visibleAssignments.flatMap((assignment) =>
-        assignment.schedule.map((slot) => time(slot.startsAt))))).sort(), [visibleAssignments]);
+        assignment.schedule.map((slot) => timeInputValue(slot.startsAt))))).sort(), [visibleAssignments]);
+    const hasValidSchedule = useMemo(() => form.schedule.length > 0 && form.schedule.every((slot) =>
+        Boolean(slot.dayOfWeek && slot.startsAt && slot.endsAt && slot.startsAt < slot.endsAt)), [form.schedule]);
+    const canSaveAssignment = formMode === "subject"
+        ? Boolean(form.subjectId)
+        : Boolean(form.division && form.subjectId && form.teacherId && hasValidSchedule);
     const load = async () => {
         if (!id) return;
         setLoading(true);
@@ -119,6 +131,7 @@ export const CourseTemplateDetailsPage = () => {
 
     const openSubjectForm = () => {
         setFormMode("subject");
+        setEditingAssignment(null);
         setForm({...EMPTY_FORM, division: divisions[0] ?? "A"});
         searchSubjects();
         setShowAssignment(true);
@@ -126,6 +139,7 @@ export const CourseTemplateDetailsPage = () => {
 
     const openTeacherForm = () => {
         setFormMode("teacher");
+        setEditingAssignment(null);
         setForm({
             ...EMPTY_FORM, division: divisions[0] ?? "A",
             schedule: [{dayOfWeek: "MONDAY", startsAt: "08:00", endsAt: "09:00"}]
@@ -135,9 +149,31 @@ export const CourseTemplateDetailsPage = () => {
         setShowAssignment(true);
     };
 
-    const addSlot = () => setForm((current) => ({
-        ...current, schedule: [...current.schedule, {dayOfWeek: "MONDAY", startsAt: "08:00", endsAt: "09:00"}],
-    }));
+    const openEditAssignmentForm = async (assignment: TeacherAssignment) => {
+        const latestAssignments = id ? await service.teacherAssignments(id) : [];
+        const currentAssignment = latestAssignments.find((item) => item.id === assignment.id) ?? assignment;
+        if (id) setTeacherAssignments(latestAssignments);
+        setFormMode("teacher");
+        setEditingAssignment(currentAssignment);
+        setForm({
+            division: currentAssignment.division,
+            subjectId: currentAssignment.templateSubjectId.toString(),
+            teacherId: currentAssignment.teacher?.id?.toString() ?? "",
+            schedule: currentAssignment.schedule?.length ? currentAssignment.schedule.map((slot) => ({...slot})) : []
+        });
+        searchTeachers();
+        setTemplateSubjectTerm("");
+        setShowAssignment(true);
+    };
+
+    const addSlot = () => setForm((current) => {
+        const last = current.schedule[current.schedule.length - 1];
+        const startsAt = last?.endsAt ? timeInputValue(last.endsAt) : "08:00";
+        return {
+            ...current,
+            schedule: [...current.schedule, {dayOfWeek: last?.dayOfWeek ?? "MONDAY", startsAt, endsAt: addMinutes(startsAt, 60)}],
+        };
+    });
     const updateSlot = (index: number, patch: Partial<ScheduleSlot>) => setForm((current) => ({
         ...current, schedule: current.schedule.map((slot, position) => position === index ? {...slot, ...patch} : slot),
     }));
@@ -146,7 +182,7 @@ export const CourseTemplateDetailsPage = () => {
     }));
 
     const saveAssignment = async () => {
-        if (!id || !form.subjectId) return;
+        if (!id || !canSaveAssignment) return;
         if (form.schedule.length && !form.teacherId) {
             toast.error("Selecciona un profesor antes de agregar un horario.");
             return;
@@ -161,15 +197,19 @@ export const CourseTemplateDetailsPage = () => {
                 await service.addTemplateSubject(id, Number(form.subjectId));
                 setTemplateSubjects(await service.templateSubjects(id));
             } else {
-                await service.saveAcademicAssignment(id, {
+                const request = {
                     division: form.division, templateSubjectId: Number(form.subjectId),
                     teacherId: Number(form.teacherId), schedule: form.schedule,
-                });
+                };
+                if (editingAssignment) await service.updateAcademicAssignment(id, editingAssignment.id, request);
+                else await service.saveAcademicAssignment(id, request);
             }
             setTeacherAssignments(await service.teacherAssignments(id));
             if (activeTab === "calendar") setAssignments(await service.academicAssignments(id));
             setShowAssignment(false);
-            toast.success(formMode === "subject" ? "Materia agregada al curso." : "Profesor y horario asignados.");
+            setEditingAssignment(null);
+            toast.success(formMode === "subject" ? "Materia agregada al curso."
+                : editingAssignment ? "Asignación actualizada." : "Profesor y horario asignados.");
         } catch (error) {
             toast.error(message(error, "No se pudo guardar la asignación."));
         } finally {
@@ -194,6 +234,22 @@ export const CourseTemplateDetailsPage = () => {
         }
     };
 
+    const removeAssignment = async (assignmentId: number) => {
+        if (!id) return;
+        setRemovingAssignment(true);
+        try {
+            await service.deleteAcademicAssignment(id, assignmentId);
+            setTeacherAssignments((current) => current.filter((item) => item.id !== assignmentId));
+            setAssignments((current) => current.filter((item) => item.id !== assignmentId));
+            setAssignmentToRemove(null);
+            toast.success("Asignación removida correctamente.");
+        } catch (error) {
+            toast.error(message(error, "No se pudo remover la asignación."));
+        } finally {
+            setRemovingAssignment(false);
+        }
+    };
+
     const generateCourses = async () => {
         if (!id) return;
         setGenerating(true);
@@ -205,22 +261,6 @@ export const CourseTemplateDetailsPage = () => {
             toast.error(message(error, "No se pudieron generar los cursos."));
         } finally {
             setGenerating(false);
-        }
-    };
-
-    const changeTeacher = async () => {
-        if (!id || !teacherToChange || !replacementTeacherId) return;
-        setChangingTeacher(true);
-        try {
-            await service.changeTeacher(id, teacherToChange.id, Number(replacementTeacherId));
-            setTeacherAssignments(await service.teacherAssignments(id));
-            if (activeTab === "calendar") setAssignments(await service.academicAssignments(id));
-            setTeacherToChange(null);
-            toast.success("Profesor actualizado correctamente.");
-        } catch (error) {
-            toast.error(message(error, "No se pudo cambiar el profesor."));
-        } finally {
-            setChangingTeacher(false);
         }
     };
 
@@ -329,10 +369,10 @@ export const CourseTemplateDetailsPage = () => {
                                     borderColor: "var(--border-soft)",
                                     color: "var(--text-secondary)",
                                     background: "var(--surface-muted)"
-                                }}>{rowTime}</div>
+                                }}>{formatTime12(rowTime)}</div>
                                 {DAYS.map((day) => <div key={day.key} className="space-y-2 border-r p-2 last:border-r-0"
                                                         style={{borderColor: "var(--border-soft)"}}>
-                                    {visibleAssignments.flatMap((assignment) => assignment.schedule.filter((slot) => slot.dayOfWeek === day.key && time(slot.startsAt) === rowTime).map((slot) => ({
+                                    {visibleAssignments.flatMap((assignment) => assignment.schedule.filter((slot) => slot.dayOfWeek === day.key && timeInputValue(slot.startsAt) === rowTime).map((slot) => ({
                                         assignment,
                                         slot
                                     }))).map(({assignment, slot}) => <article
@@ -350,7 +390,7 @@ export const CourseTemplateDetailsPage = () => {
                                                 color: "var(--accent)"
                                             }}>{assignment.division}</span></div>
                                         <p className="mt-1 text-[11px] font-bold"
-                                           style={{color: "var(--accent)"}}>{time(slot.startsAt)} — {time(slot.endsAt)}</p>
+                                           style={{color: "var(--accent)"}}>{formatTimeRange12(slot.startsAt, slot.endsAt, " — ")}</p>
                                         <p className="mt-1 truncate text-[11px]"
                                            style={{color: "var(--text-secondary)"}}>{assignment.teacher?.name}</p>
                                     </article>)}
@@ -386,8 +426,11 @@ export const CourseTemplateDetailsPage = () => {
                                 <td><strong>{item.name}</strong></td>
                                 <td style={{color: "var(--text-secondary)"}}>{item.description || "Sin descripción"}</td>
                                 <td className="text-right">{canEdit &&
-                                    <button className="table-link text-[var(--danger)]"
-                                            onClick={() => setSubjectToRemove(item)}>Remover</button>}</td>
+                                    <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
+                                            title="Remover materia" aria-label="Remover materia"
+                                            onClick={() => setSubjectToRemove(item)}>
+                                        <i className="fa fa-trash"/>
+                                    </button>}</td>
                             </tr>)}
                             {!templateSubjects.length && <tr>
                                 <td colSpan={3} className="py-10 text-center"
@@ -410,6 +453,7 @@ export const CourseTemplateDetailsPage = () => {
                                 <th>Profesor</th>
                                 <th>Materia</th>
                                 <th>Sección</th>
+                                <th>Horario</th>
                                 <th/>
                             </tr>
                             </thead>
@@ -420,16 +464,31 @@ export const CourseTemplateDetailsPage = () => {
                                 </td>
                                 <td>{item.subject.name}</td>
                                 <td>{item.division}</td>
+                                <td>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {item.schedule?.length ? item.schedule.map((slot, index) =>
+                                            <span key={`${slot.dayOfWeek}-${slot.startsAt}-${index}`}
+                                                  className="rounded-full border px-2 py-1 text-[11px] font-bold"
+                                                  style={{borderColor: "var(--border-soft)", color: "var(--text-secondary)"}}>
+                                                {scheduleLabel(slot)}
+                                            </span>) : <span className="text-xs" style={{color: "var(--text-tertiary)"}}>Sin horario</span>}
+                                    </div>
+                                </td>
                                 <td className="text-right">{canEdit &&
-                                    <button type="button" className="icon-button h-9 w-9" title="Cambiar profesor"
-                                            aria-label="Cambiar profesor" onClick={() => {
-                                        setTeacherToChange(item);
-                                        setReplacementTeacherId(item.teacher?.id?.toString() ?? "");
-                                        searchTeachers();
-                                    }}><i className="fa fa-arrow-right-arrow-left"/></button>}</td>
+                                    <div className="flex justify-end gap-2">
+                                        <button type="button" className="icon-button h-9 w-9" title="Editar asignación"
+                                                aria-label="Editar asignación" onClick={() => void openEditAssignmentForm(item)}>
+                                            <i className="fa fa-pen"/>
+                                        </button>
+                                        <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
+                                                title="Eliminar asignación" aria-label="Eliminar asignación"
+                                                onClick={() => setAssignmentToRemove(item)}>
+                                            <i className="fa fa-trash"/>
+                                        </button>
+                                    </div>}</td>
                             </tr>)}
                             {!teacherAssignments.some((item) => item.teacher) && <tr>
-                                <td colSpan={4} className="py-10 text-center"
+                                <td colSpan={5} className="py-10 text-center"
                                     style={{color: "var(--text-secondary)"}}>No hay profesores asignados todavía.
                                 </td>
                             </tr>}
@@ -444,113 +503,78 @@ export const CourseTemplateDetailsPage = () => {
             <CourseTemplateForm initial={template} onDone={() => setShowEdit(false)} onSaved={load}/>
         </RightModal>
 
-        <LeftModal title={formMode === "subject" ? "Agregar materia" : "Asignar profesor"} isOpen={showAssignment}
+        <LeftModal title={formMode === "subject" ? "Agregar materia" : editingAssignment ? "Editar asignación" : "Asignar profesor"} isOpen={showAssignment}
                    onClose={() => setShowAssignment(false)} className="h-full w-[min(560px,100vw)]">
-            <form className="flex-1 space-y-5 overflow-y-auto pb-4" onSubmit={(event) => {
+            <form className="flex min-h-0 flex-1 flex-col" onSubmit={(event) => {
                 event.preventDefault();
                 void saveAssignment();
             }}>
-                <p className="rounded-2xl border p-4 text-sm" style={{
-                    borderColor: "var(--border-soft)",
-                    background: "var(--surface-muted)",
-                    color: "var(--text-secondary)"
-                }}>
-                    {formMode === "subject" ? "Selecciona una materia para agregarla al curso." : "Selecciona una materia del curso, la sección, el profesor y su horario."}
-                </p>
-                <div className={`grid gap-4 ${formMode === "teacher" ? "sm:grid-cols-2" : "grid-cols-1"}`}>
-                    {formMode === "teacher" &&
-                        <label><span className="mb-2 block text-sm font-bold">Sección</span><select
-                            className="input select w-full" value={form.division} onChange={(e) => setForm({
-                            ...form,
-                            division: e.target.value,
-                            subjectId: ""
-                        })}>{divisions.map((division) => <option key={division}
-                                                                 value={division}>Sección {division}</option>)}</select></label>}
-                    <label><span className="mb-2 block text-sm font-bold">Materia *</span><SearchSelect
-                        text="Buscar materia por nombre, código o descripción" hasError={false} portal
-                        value={form.subjectId || undefined}
-                        options={(formMode === "subject" ? subjects.map((subject) => ({
-                            value: subject.id,
-                            description: `${subject.name}${subject.code ? ` · ${subject.code}` : ""}`
-                        })) : templateSubjects.filter((subject) => subject.name.toLowerCase().includes(templateSubjectTerm.toLowerCase())).map((subject) => ({
-                            value: subject.id,
-                            description: subject.name
-                        })))}
-                        onSearch={formMode === "subject" ? searchSubjects : setTemplateSubjectTerm}
-                        onSelect={(value) => setForm((current) => ({...current, subjectId: value?.toString() ?? ""}))}
-                        className="w-full"/></label>
-                </div>
-                {formMode === "teacher" && <><label className="block"><span className="mb-2 block text-sm font-bold">Profesor *</span><SearchSelect
-                    text="Buscar por nombre, correo o usuario" hasError={false} portal
-                    value={form.teacherId || undefined} options={teachers.map((teacher) => ({
-                    value: teacher.id,
-                    description: `${teacher.name} · ${teacher.email}`
-                }))} onSearch={searchTeachers}
-                    onSelect={(value) => setForm((current) => ({...current, teacherId: value?.toString() ?? ""}))}
-                    className="w-full"/></label>
-                    <div className="rounded-2xl border p-4"
-                         style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                        <div className="flex items-center justify-between gap-3">
-                            <div><strong className="text-sm">Horario semanal</strong><p className="text-xs"
-                                                                                        style={{color: "var(--text-secondary)"}}>Bloques
-                                de lunes a viernes.</p></div>
-                            <button type="button" className="btn btn-sm" disabled={!form.teacherId} onClick={addSlot}><i
-                                className="fa fa-clock me-1"/>Agregar bloque
-                            </button>
-                        </div>
-                        <div className="mt-3 space-y-2">{form.schedule.map((slot, index) => <div key={index}
-                                                                                                 className="grid grid-cols-[1fr_110px_110px_38px] items-center gap-2 rounded-xl border bg-white p-2"
-                                                                                                 style={{borderColor: "var(--border-soft)"}}>
-                            <select className="input select select-sm" value={slot.dayOfWeek}
-                                    onChange={(e) => updateSlot(index, {dayOfWeek: e.target.value as WeekDay})}>{DAYS.map((day) =>
-                                <option key={day.key} value={day.key}>{day.label}</option>)}</select>
-                            <input type="time" className="input input-sm" value={time(slot.startsAt)}
-                                   onChange={(e) => updateSlot(index, {startsAt: e.target.value})}/>
-                            <input type="time" className="input input-sm" value={time(slot.endsAt)}
-                                   onChange={(e) => updateSlot(index, {endsAt: e.target.value})}/>
-                            <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
-                                    onClick={() => removeSlot(index)} title="Quitar"><i className="fa fa-trash"/>
-                            </button>
-                        </div>)}</div>
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-1">
+                    <p className="rounded-2xl border p-4 text-sm" style={{
+                        borderColor: "var(--border-soft)",
+                        background: "var(--surface-muted)",
+                        color: "var(--text-secondary)"
+                    }}>
+                        {formMode === "subject" ? "Selecciona una materia para agregarla al curso." : "Selecciona una materia del curso, la sección, el profesor y su horario."}
+                    </p>
+                    <div className={`grid gap-4 ${formMode === "teacher" ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+                        {formMode === "teacher" &&
+                            <label><span className="mb-2 block text-sm font-bold">Sección</span><select
+                                className="input select w-full" value={form.division}
+                                onChange={(e) => setForm({...form, division: e.target.value})}>{divisions.map((division) => <option key={division}
+                                                                     value={division}>Sección {division}</option>)}</select></label>}
+                        <label><span className="mb-2 block text-sm font-bold">Materia *</span><SearchSelect
+                            text="Buscar materia por nombre, código o descripción" hasError={false} portal
+                            value={form.subjectId || undefined}
+                            options={(formMode === "subject" ? subjects.map((subject) => ({
+                                value: subject.id,
+                                description: `${subject.name}${subject.code ? ` · ${subject.code}` : ""}`
+                            })) : templateSubjects.filter((subject) => subject.name.toLowerCase().includes(templateSubjectTerm.toLowerCase())).map((subject) => ({
+                                value: subject.id,
+                                description: subject.name
+                            })))}
+                            onSearch={formMode === "subject" ? searchSubjects : setTemplateSubjectTerm}
+                            onSelect={(value) => setForm((current) => ({...current, subjectId: value?.toString() ?? ""}))}
+                            className="w-full"/></label>
                     </div>
-                </>}
-                <div className="flex justify-end gap-2">
-                    <button type="button" className="btn btn-sm" onClick={() => setShowAssignment(false)}>Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !form.subjectId}><i
-                        className={saving ? "fa fa-spinner fa-spin me-1" : "fa fa-check me-1"}/>{saving ? "Guardando..." : "Guardar asignación"}
-                    </button>
+                    {formMode === "teacher" && <><label className="block"><span className="mb-2 block text-sm font-bold">Profesor *</span><SearchSelect
+                        text="Buscar por nombre, correo o usuario" hasError={false} portal
+                        value={form.teacherId || undefined} options={teachers.map((teacher) => ({
+                        value: teacher.id,
+                        description: `${teacher.name} · ${teacher.email}`
+                    }))} onSearch={searchTeachers}
+                        onSelect={(value) => setForm((current) => ({...current, teacherId: value?.toString() ?? ""}))}
+                        className="w-full"/></label>
+                        <div className="rounded-2xl border p-4"
+                             style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div><strong className="text-sm">Horario semanal</strong><p className="text-xs"
+                                                                                            style={{color: "var(--text-secondary)"}}>Bloques
+                                    de lunes a viernes.</p></div>
+                                <button type="button" className="btn btn-sm" disabled={!form.teacherId} onClick={addSlot}><i
+                                    className="fa fa-clock me-1"/>Agregar bloque
+                                </button>
+                            </div>
+                            <div className="mt-3 space-y-2">{form.schedule.map((slot, index) => <div key={index}
+                                                                                                     className="grid grid-cols-[1fr_110px_110px_38px] items-center gap-2 rounded-xl border bg-white p-2"
+                                                                                                     style={{borderColor: "var(--border-soft)"}}>
+                                <select className="input select select-sm" value={slot.dayOfWeek}
+                                        onChange={(e) => updateSlot(index, {dayOfWeek: e.target.value as WeekDay})}>{DAYS.map((day) =>
+                                    <option key={day.key} value={day.key}>{day.label}</option>)}</select>
+                                <input type="time" className="input input-sm" value={timeInputValue(slot.startsAt)}
+                                       onChange={(e) => updateSlot(index, {startsAt: e.target.value})}/>
+                                <input type="time" className="input input-sm" value={timeInputValue(slot.endsAt)}
+                                       onChange={(e) => updateSlot(index, {endsAt: e.target.value})}/>
+                                <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
+                                        onClick={() => removeSlot(index)} title="Quitar"><i className="fa fa-trash"/>
+                                </button>
+                            </div>)}</div>
+                        </div>
+                    </>}
                 </div>
-            </form>
-        </LeftModal>
-
-        <LeftModal title="Cambiar profesor" isOpen={Boolean(teacherToChange)}
-                   onClose={() => !changingTeacher && setTeacherToChange(null)} className="h-full w-[420px]">
-            <form className="flex flex-1 flex-col" onSubmit={(event) => {
-                event.preventDefault();
-                void changeTeacher();
-            }}>
-                <div className="rounded-2xl border p-4"
-                     style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}><strong
-                    className="block text-sm">{teacherToChange?.subject.name}</strong><span
-                    className="mt-1 block text-xs"
-                    style={{color: "var(--text-secondary)"}}>Sección {teacherToChange?.division} · El horario se conservará sin cambios.</span>
-                </div>
-                <label className="mt-5 block"><span
-                    className="mb-2 block text-sm font-bold">Nuevo profesor *</span><SearchSelect
-                    text="Buscar por nombre, correo o usuario" hasError={false} portal
-                    value={replacementTeacherId || undefined} options={teachers.map((teacher) => ({
-                    value: teacher.id,
-                    description: `${teacher.name} · ${teacher.email}`
-                }))} onSearch={searchTeachers} onSelect={(value) => setReplacementTeacherId(value?.toString() ?? "")}
-                    className="w-full"/></label>
-                <div className="mt-auto flex justify-end gap-2 pt-5">
-                    <button type="button" className="btn btn-sm" disabled={changingTeacher}
-                            onClick={() => setTeacherToChange(null)}>Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-sm btn-primary"
-                            disabled={changingTeacher || !replacementTeacherId}><i
-                        className={changingTeacher ? "fa fa-spinner fa-spin me-1" : "fa fa-user-check me-1"}/>{changingTeacher ? "Actualizando..." : "Guardar cambio"}
+                <div className="flex justify-end border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
+                    <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !canSaveAssignment}><i
+                        className={saving ? "fa fa-spinner fa-spin me-1" : "fa fa-check me-1"}/>{saving ? "Guardando..." : "Guardar"}
                     </button>
                 </div>
             </form>
@@ -573,6 +597,32 @@ export const CourseTemplateDetailsPage = () => {
                             disabled={removingSubject || !subjectToRemove}
                             onClick={() => subjectToRemove && void removeSubject(subjectToRemove.id)}>
                         <i className={removingSubject ? "fa fa-spinner fa-spin me-1" : "fa fa-trash me-1"}/>{removingSubject ? "Removiendo..." : "Sí, remover"}
+                    </button>
+                </div>
+            </div>
+        </CenterModal>
+
+        <CenterModal title="Eliminar asignación"
+                     description="Se quitará el profesor y su horario de esta materia y sección."
+                     isOpen={Boolean(assignmentToRemove)}
+                     onClose={() => !removingAssignment && setAssignmentToRemove(null)}
+                     className="max-w-md">
+            <div className="space-y-5">
+                <div className="rounded-2xl border p-4 text-sm"
+                     style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                    <strong className="block">{assignmentToRemove?.subject.name}</strong>
+                    <span className="mt-1 block" style={{color: "var(--text-secondary)"}}>
+                        Sección {assignmentToRemove?.division} · {assignmentToRemove?.teacher?.name}
+                    </span>
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button type="button" className="btn btn-sm" disabled={removingAssignment}
+                            onClick={() => setAssignmentToRemove(null)}>Cancelar
+                    </button>
+                    <button type="button" className="btn btn-sm bg-[var(--danger)] text-white"
+                            disabled={removingAssignment || !assignmentToRemove}
+                            onClick={() => assignmentToRemove && void removeAssignment(assignmentToRemove.id)}>
+                        <i className={removingAssignment ? "fa fa-spinner fa-spin me-1" : "fa fa-trash me-1"}/>{removingAssignment ? "Eliminando..." : "Sí, eliminar"}
                     </button>
                 </div>
             </div>

@@ -41,29 +41,11 @@ export const navigationSections: NavigationSection[] = [
                 to: "/courses/list",
                 authority: AuthorityKey.COURSES_VIEW,
             },
-            {
-                label: "Calificaciones",
-                icon: "fa-clipboard-check",
-                to: "/grades/list",
-                authority: AuthorityKey.GRADES_VIEW,
-            },
-            {
-                label: "Áreas especializadas",
-                icon: "fa-shapes",
-                to: "/specializations/list",
-                authority: AuthorityKey.SPECIALIZATIONS_VIEW,
-            },
         ],
     },
     {
         title: "Gestión docente",
         items: [
-            {
-                label: "Mis clases",
-                icon: "fa-chalkboard",
-                to: "/teacher/classes",
-                authority: AuthorityKey.TEACHER_CLASSES_VIEW,
-            },
             {
                 label: "Mi horario",
                 icon: "fa-calendar-days",
@@ -95,10 +77,14 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.TUITION_VIEW,
             },
             {
-                label: "Descuentos",
-                icon: "fa-tags",
-                to: "/discounts/list",
-                authority: AuthorityKey.DISCOUNTS_VIEW,
+                label: "Recursos",
+                icon: "fa-box-open",
+                to: "/catalog/products",
+            },
+            {
+                label: "Categorías",
+                icon: "fa-folder-tree",
+                to: "/catalog/categories",
             },
         ],
     },
@@ -123,12 +109,6 @@ export const navigationSections: NavigationSection[] = [
                 to: "/guardians/list",
                 authority: AuthorityKey.GUARDIANS_VIEW,
             },
-            {
-                label: "Profesores",
-                icon: "fa-chalkboard-user",
-                to: "/teachers/list",
-                authority: AuthorityKey.TEACHERS_VIEW,
-            },
         ],
     },
     {
@@ -147,6 +127,12 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.SUBJECTS_VIEW,
             },
             {
+                label: "Áreas especializadas",
+                icon: "fa-shapes",
+                to: "/specializations/list",
+                authority: AuthorityKey.SPECIALIZATIONS_VIEW,
+            },
+            {
                 label: "Precios",
                 icon: "fa-tags",
                 to: "/courses/templates/prices",
@@ -157,26 +143,6 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-boxes-stacked",
                 to: "/courses/templates/materials",
                 authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW,
-            },
-        ],
-    },
-    {
-        title: "Recursos educativos",
-        items: [
-            {
-                label: "Recursos",
-                icon: "fa-box-open",
-                to: "/catalog/products",
-            },
-            {
-                label: "Categorías",
-                icon: "fa-folder-tree",
-                to: "/catalog/categories",
-            },
-            {
-                label: "Kits y colecciones",
-                icon: "fa-boxes-stacked",
-                to: "/catalog/collections",
             },
         ],
     },

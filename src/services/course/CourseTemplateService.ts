@@ -4,7 +4,7 @@ import {Subject} from "../../domain/model/course/Subject.ts";
 
 export type TeacherOption = {id: number; name: string; email: string; image?: string};
 export type WeekDay = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
-export type ScheduleSlot = {dayOfWeek: WeekDay; startsAt: string; endsAt: string};
+export type ScheduleSlot = {id?: number; dayOfWeek: WeekDay; startsAt: string; endsAt: string};
 export type AcademicAssignment = {
     id: number;
     division: string;
@@ -20,7 +20,7 @@ export type AcademicAssignmentRequest = {
     schedule: ScheduleSlot[];
 };
 export type TemplateSubject = {id: number; name: string; description?: string};
-export type TeacherAssignment = Omit<AcademicAssignment, "schedule">;
+export type TeacherAssignment = AcademicAssignment;
 
 export class CourseTemplateService extends BaseService<CourseTemplate> {
 
@@ -72,6 +72,10 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
 
     saveAcademicAssignment(id: string | number, request: AcademicAssignmentRequest): Promise<AcademicAssignment> {
         return this.put<AcademicAssignment>(`/${id}/academic-assignments`, request);
+    }
+
+    updateAcademicAssignment(id: string | number, assignmentId: number, request: AcademicAssignmentRequest): Promise<AcademicAssignment> {
+        return this.put<AcademicAssignment>(`/${id}/academic-assignments/${assignmentId}`, request);
     }
 
     deleteAcademicAssignment(id: string | number, assignmentId: number): Promise<unknown> {

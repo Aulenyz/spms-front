@@ -16,11 +16,12 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
     onFilter: (filters: Record<string, any>) => void;
     selectedPeriodId: string | number | null;
 }) => {
-    const {control, setValue, watch} = useForm({
+    const {control, register, setValue, watch} = useForm({
         defaultValues: {
             periodId: selectedPeriodId || "",
             active: true as boolean,
             specializationId: "",
+            name: "",
         },
     });
 
@@ -50,10 +51,11 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
                 periodId: watch("periodId"),
                 active: watch("active"),
                 specializationId: watch("specializationId"),
+                name: watch("name"),
             });
         }, 250);
         return () => window.clearTimeout(timeout);
-    }, [watch("periodId"), watch("active"), watch("specializationId")]);
+    }, [watch("periodId"), watch("active"), watch("specializationId"), watch("name")]);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -100,6 +102,10 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
                 />
             </div>
 
+            <label className="input input-sm w-full sm:w-56">
+                <i className="fa fa-search me-1"/>
+                <input placeholder="Buscar por nombre" type="text" {...register("name")}/>
+            </label>
         </div>
     );
 };

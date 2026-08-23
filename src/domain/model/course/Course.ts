@@ -1,4 +1,5 @@
 import {BaseModel} from "../BaseModel.ts";
+import {Subject} from "./Subject.ts";
 
 export interface Course extends BaseModel {
     name: string;
@@ -6,6 +7,27 @@ export interface Course extends BaseModel {
     type: GradeType;
     division: string;
     specialization: Specialization | null;
+    academicAssignments?: CourseAcademicAssignment[];
+}
+
+export interface ScheduleSlot {
+    id?: number;
+    dayOfWeek: WeekDay;
+    startsAt: string;
+    endsAt: string;
+}
+
+export interface CourseAcademicAssignment extends BaseModel {
+    subject: Subject;
+    teacher?: CourseTeacher | null;
+    schedule?: ScheduleSlot[];
+}
+
+export interface CourseTeacher {
+    id: number;
+    name: string;
+    email: string;
+    image?: string;
 }
 
 export interface CourseTemplate extends BaseModel {
@@ -33,6 +55,16 @@ export enum GradeType {
     SECONDARY = "SECONDARY",
     TECHNICAL = "TECHNICAL",
 }
+
+export type WeekDay = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
+
+export const WeekDayLabel: Record<WeekDay, string> = {
+    MONDAY: "Lunes",
+    TUESDAY: "Martes",
+    WEDNESDAY: "Miércoles",
+    THURSDAY: "Jueves",
+    FRIDAY: "Viernes",
+};
 
 export const GradeTypeLabel: Record<GradeType, string> = {
     PRIMARY: "Primaria",

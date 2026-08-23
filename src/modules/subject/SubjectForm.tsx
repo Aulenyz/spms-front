@@ -7,10 +7,10 @@ import {SubjectService} from "../../services/course/SubjectService.ts";
 const subjectService = SubjectService.instance;
 
 export const SubjectForm = ({
-    initial,
-    onDone,
-    onSaved,
-}: {
+                                initial,
+                                onDone,
+                                onSaved,
+                            }: {
     initial?: Subject | null;
     onDone: () => void;
     onSaved?: () => void;
@@ -82,13 +82,13 @@ export const SubjectForm = ({
                 toast.success("Materia actualizada.");
             } else {
                 await subjectService.createSubject(payload);
-                toast.success("Materia creada.");
+                toast.success("Materia agregada satisfactoriamente.");
             }
 
             onSaved?.();
             onDone();
         } catch (error) {
-            const message = (error as {message?: string})?.message;
+            const message = (error as { message?: string })?.message;
             toast.error(message?.trim() || "No se pudo guardar la materia.");
         } finally {
             setSubmitting(false);
@@ -108,8 +108,13 @@ export const SubjectForm = ({
                 void submit();
             }}
         >
-            <div className="rounded-[22px] border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)", boxShadow: "var(--shadow-soft)"}}>
-                <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{color: "var(--text-tertiary)"}}>
+            <div className="rounded-[22px] border p-4" style={{
+                borderColor: "var(--border-soft)",
+                background: "var(--surface)",
+                boxShadow: "var(--shadow-soft)"
+            }}>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em]"
+                     style={{color: "var(--text-tertiary)"}}>
                     Datos principales
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>

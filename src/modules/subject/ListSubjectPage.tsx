@@ -23,7 +23,7 @@ const getApiErrorMessage = (error: unknown) => {
     if (!error) return null;
     if (typeof error === "string") return error;
     if (typeof error === "object") {
-        const maybeMessage = (error as {message?: unknown}).message;
+        const maybeMessage = (error as { message?: unknown }).message;
         if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
     }
     return null;
@@ -92,7 +92,8 @@ export const ListSubjectPage = () => {
                 title="Listado"
                 description="Filtra y revisa las materias registradas en el espacio de trabajo."
                 filters={<SubjectFilter onFilter={handleFilters}/>}
-                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} pageSizeOptions={[3, 6, 9]} page={pagerPage}/>}
+                footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange}
+                               pageSizeOptions={[3, 6, 9]} page={pagerPage}/>}
             >
                 {subjects.content.length === 0 ? (
                     <EmptyState
@@ -124,17 +125,24 @@ export const ListSubjectPage = () => {
                                 <div className="space-y-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
-                                                 style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                                            <div
+                                                className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                                                style={{
+                                                    borderColor: "var(--border-soft)",
+                                                    background: "var(--surface-muted)",
+                                                    color: "var(--text-secondary)"
+                                                }}>
                                                 <i className="fa fa-hashtag text-[10px]"/>
                                                 {subject.code ?? "-"}
                                             </div>
-                                            <h3 className="mt-3 truncate text-base font-semibold" style={{color: "var(--text-primary)"}}>
+                                            <h3 className="mt-3 truncate text-base font-semibold"
+                                                style={{color: "var(--text-primary)"}}>
                                                 {subject.name ?? "-"}
                                             </h3>
                                         </div>
 
-                                        <div className="relative flex-shrink-0" ref={menuId === subject.id ? menuRef : undefined}>
+                                        <div className="relative flex-shrink-0"
+                                             ref={menuId === subject.id ? menuRef : undefined}>
                                             {(hasAuthority(AuthorityKey.SUBJECT_EDIT) || hasAuthority(AuthorityKey.SUBJECT_STATUS_UPDATE)) && (
                                                 <button
                                                     type="button"
@@ -172,7 +180,7 @@ export const ListSubjectPage = () => {
                                                                     subjectService
                                                                         .updateStatus(subject.id)
                                                                         .then(() => {
-                                                                            toast.success("Estado actualizado.");
+                                                                            toast.success("Estado actualizado satisfactoriamente.");
                                                                             setMenuId(null);
                                                                             refresh();
                                                                         })
@@ -195,25 +203,10 @@ export const ListSubjectPage = () => {
                                         <CourseActivePill active={Boolean(subject.active)}/>
                                     </div>
 
-                                    <p className="line-clamp-4 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
+                                    <p className="line-clamp-4 text-sm leading-6"
+                                       style={{color: "var(--text-secondary)"}}>
                                         {subject.description ?? "Sin descripcion registrada."}
                                     </p>
-                                </div>
-
-                                <div className="mt-5 flex items-center justify-between border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
-                                    <span className="text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
-                                        Materia academica
-                                    </span>
-                                    {hasAuthority(AuthorityKey.SUBJECT_EDIT) && (
-                                        <button
-                                            type="button"
-                                            className="table-link"
-                                            onClick={() => setEditing(subject)}
-                                        >
-                                            Editar
-                                            <i className="fa fa-chevron-right text-2xs"/>
-                                        </button>
-                                    )}
                                 </div>
                             </article>
                         ))}
