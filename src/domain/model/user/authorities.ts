@@ -1,5 +1,10 @@
 export enum AuthorityKey {
     CONFIGURATION = "CONFIGURATION",
+    ORGANIZATIONS_VIEW = "ORGANIZATIONS_VIEW",
+    ORGANIZATION_CREATE = "ORGANIZATION_CREATE",
+    ORGANIZATION_EDIT = "ORGANIZATION_EDIT",
+    ORGANIZATION_DELETE = "ORGANIZATION_DELETE",
+    ORGANIZATION_STATUS_UPDATE = "ORGANIZATION_STATUS_UPDATE",
     DASHBOARD_VIEW = "DASHBOARD_VIEW",
     STUDENTS_VIEW = "STUDENTS_VIEW",
     STUDENT_CREATE = "STUDENT_CREATE",
@@ -61,6 +66,11 @@ export enum AuthorityKey {
 
 export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.CONFIGURATION]: "Permite consultar, modificar y ejecutar las configuraciones de la organización.",
+    [AuthorityKey.ORGANIZATIONS_VIEW]: "Permite ver las organizaciones del sistema.",
+    [AuthorityKey.ORGANIZATION_CREATE]: "Permite crear organizaciones.",
+    [AuthorityKey.ORGANIZATION_EDIT]: "Permite editar organizaciones.",
+    [AuthorityKey.ORGANIZATION_DELETE]: "Permite eliminar organizaciones.",
+    [AuthorityKey.ORGANIZATION_STATUS_UPDATE]: "Permite cambiar el estado de las organizaciones.",
     [AuthorityKey.DASHBOARD_VIEW]: "Permite ver el dashboard principal del sistema.",
 
     [AuthorityKey.STUDENTS_VIEW]: "Permite ver el listado de estudiantes.",

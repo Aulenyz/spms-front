@@ -98,12 +98,6 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.ENROLLMENTS_VIEW,
             },
             {
-                label: "Gestión Usuarios",
-                icon: "fa-users-gear",
-                to: "/users",
-                authority: AuthorityKey.USERS_VIEW,
-            },
-            {
                 label: "Padres / Tutores",
                 icon: "fa-people-roof",
                 to: "/guardians/list",
@@ -146,6 +140,18 @@ export const navigationSections: NavigationSection[] = [
             },
         ],
     },
+    {
+        title: "Configuración del sistema",
+        items: [
+            {label: "Gestión Usuarios", icon: "fa-users-gear", to: "/users", authority: AuthorityKey.USERS_VIEW},
+            {
+                label: "Gestión Organizaciones",
+                icon: "fa-building",
+                to: "/organizations",
+                authority: AuthorityKey.ORGANIZATIONS_VIEW
+            },
+        ],
+    },
 ];
 
 export const secondaryQuickLinks: NavigationItem[] = [
@@ -164,7 +170,7 @@ export const secondaryQuickLinks: NavigationItem[] = [
 
 type AuthorityResolver = (authority?: AuthorityKey) => boolean;
 
-const defaultAuthorizedRoutes: Array<{to: string; authority: AuthorityKey}> = [
+const defaultAuthorizedRoutes: Array<{ to: string; authority: AuthorityKey }> = [
     {to: "/home", authority: AuthorityKey.DASHBOARD_VIEW},
     {to: "/students/list", authority: AuthorityKey.STUDENTS_VIEW},
     {to: "/courses/list", authority: AuthorityKey.COURSES_VIEW},
@@ -181,6 +187,7 @@ const defaultAuthorizedRoutes: Array<{to: string; authority: AuthorityKey}> = [
     {to: "/courses/templates/prices", authority: AuthorityKey.PRICE_TEMPLATES_VIEW},
     {to: "/courses/templates/materials", authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW},
     {to: "/help", authority: AuthorityKey.HELP_VIEW},
+    {to: "/organizations", authority: AuthorityKey.ORGANIZATIONS_VIEW},
 ];
 
 export const resolveFirstAuthorizedPath = (canAccess: AuthorityResolver): string | undefined => {

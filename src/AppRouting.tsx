@@ -29,6 +29,8 @@ import {SubjectRouting} from "./modules/subject/SubjectRouting.tsx";
 import {HelpCenterPage} from "./modules/help/HelpCenterPage.tsx";
 import {CatalogRouting} from "./modules/catalog/CatalogRouting.tsx";
 import {TeacherRouting} from "./modules/teacher/TeacherRouting.tsx";
+import {OrganizationListPage} from "./modules/organization/OrganizationListPage.tsx";
+import {OrganizationDetailsPage} from "./modules/organization/OrganizationDetailsPage.tsx";
 
 export const AppRouting = () => {
     return (
@@ -54,6 +56,8 @@ export const AppRouting = () => {
                 </Route>
                 <Route path="/users/:id" element={<UserDetailsPage/>}/>
                 <Route path="/users/roles/:id" element={<RoleDetailsPage/>}/>
+                <Route path="/organizations" element={<OrganizationListPage/>}/>
+                <Route path="/organizations/:id" element={<OrganizationDetailsPage/>}/>
 
                 {/* Full details screen (outside templates tabs) */}
                 <Route path="/courses/templates/:id" element={<CourseTemplateDetailsPage/>}/>

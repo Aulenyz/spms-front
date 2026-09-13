@@ -126,7 +126,7 @@ export const DropdownSelect = forwardRef<HTMLInputElement, DropdownSelectProps>(
                         value={selectedLabel}
                         onKeyDown={handleKeyDown}
                         onFocus={() => setIsOpen(true)}
-                        onClick={() => setIsOpen((prev) => !prev)}
+                        onClick={() => setIsOpen(true)}
                         className={clsx("input select select-sm search-select-input cursor-pointer", className, {
                             "border-red-500": hasError,
                         })}

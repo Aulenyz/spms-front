@@ -37,6 +37,7 @@ const routeAuthorityRules: RouteAuthorityRule[] = [
     {pattern: /^\/users\/invitations$/, authority: AuthorityKey.USER_INVITATIONS_VIEW},
     {pattern: /^\/users\/\d+$/, authority: AuthorityKey.USER_DETAILS_VIEW},
     {pattern: /^\/users$/, authority: AuthorityKey.USERS_VIEW},
+    {pattern: /^\/organizations$/, authority: AuthorityKey.ORGANIZATIONS_VIEW},
 
     {pattern: /^\/help$/, authority: AuthorityKey.HELP_VIEW},
 ];
