@@ -13,7 +13,7 @@ import {
     GenderOptions,
     PublicRegisterUserFormValues
 } from "../../domain/model/user/user.ts";
-import {PublicUserService} from "../../services/public/PublicUserService.ts";
+import {PublicUserService, UserInvitationRegistrationDetails} from "../../services/public/PublicUserService.ts";
 import {PublicFileService} from "../../services/public/PublicFileService.ts";
 import {resolveErrorPath} from "../errors/resolveErrorPath.ts";
 
@@ -24,7 +24,7 @@ const getApiErrorMessage = (error: unknown) => {
     if (!error) return null;
     if (typeof error === "string") return error;
     if (typeof error === "object") {
-        const maybeMessage = (error as {message?: unknown}).message;
+        const maybeMessage = (error as { message?: unknown }).message;
         if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
     }
     return null;
@@ -39,7 +39,10 @@ const formatIdCard = (value: string) => {
     return `${digits.slice(0, 3)}-${digits.slice(3, 10)}-${digits.slice(10)}`;
 };
 
-export const RegisterInvitationForm = ({token}: { token: string }) => {
+export const RegisterInvitationForm = ({token, existingUser}: {
+    token: string;
+    existingUser?: UserInvitationRegistrationDetails
+}) => {
     const navigate = useNavigate();
     const fileRef = useRef<HTMLInputElement | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -58,6 +61,8 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
         type: DocumentType.ID_CARD,
         document: "",
     });
+
+    if (existingUser) return <ExistingUserInvitationForm token={token} details={existingUser}/>;
 
     const canSubmit = useMemo(() => {
         const normalizedDocument = values.type === DocumentType.ID_CARD
@@ -119,7 +124,7 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
             setField("image", uploaded);
             toast.success("Imagen cargada.");
         } catch (error) {
-            const errorPath = resolveErrorPath(error as {status?: number});
+            const errorPath = resolveErrorPath(error as { status?: number });
             if (errorPath) {
                 navigate(errorPath, {replace: true});
                 return;
@@ -178,7 +183,7 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
             toast.success("Registro completado.");
             navigate("/auth/login", {replace: true});
         } catch (error) {
-            const errorPath = resolveErrorPath(error as {status?: number});
+            const errorPath = resolveErrorPath(error as { status?: number });
             if (errorPath) {
                 navigate(errorPath, {replace: true});
                 return;
@@ -212,11 +217,13 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
                         {preview ? (
                             <img src={preview} alt="Vista previa" className="h-full w-full object-cover"/>
                         ) : (
-                            <i className={uploading ? "fa fa-spinner fa-spin" : "fa fa-camera"} style={{color: "var(--text-secondary)"}}/>
+                            <i className={uploading ? "fa fa-spinner fa-spin" : "fa fa-camera"}
+                               style={{color: "var(--text-secondary)"}}/>
                         )}
                     </button>
                     <div className="min-w-0 flex-1">
-                        <button type="button" className="btn btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                        <button type="button" className="btn btn-sm" onClick={() => fileRef.current?.click()}
+                                disabled={uploading}>
                             {uploading ? "Subiendo..." : "Cargar imagen"}
                         </button>
                         <p className="mt-2 text-xs" style={{color: "var(--text-tertiary)"}}>
@@ -341,7 +348,8 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
                 />
             </div>
 
-            <button className="btn btn-primary flex justify-center grow" disabled={submitting || uploading || !canSubmit}>
+            <button className="btn btn-primary flex justify-center grow"
+                    disabled={submitting || uploading || !canSubmit}>
                 {submitting ? "Registrando..." : "Completar registro"}
                 {(submitting || uploading) && <i className="fa fa-spin fa-spinner"/>}
             </button>
@@ -357,4 +365,46 @@ export const RegisterInvitationForm = ({token}: { token: string }) => {
             <ErrorMessage message={message}/>
         </form>
     );
+};
+
+const ExistingUserInvitationForm = ({token, details}: {
+    token: string;
+    details: UserInvitationRegistrationDetails
+}) => {
+    const navigate = useNavigate();
+    const [submitting, setSubmitting] = useState(false);
+    const [message, setMessage] = useState<string>();
+    const submit = async () => {
+        if (submitting) return;
+        setSubmitting(true);
+        setMessage(undefined);
+        try {
+            await publicUserService.associateExisting(token);
+            toast.success("Usuario asociado a la organización.");
+            navigate("/auth/login", {replace: true});
+        } catch (error) {
+            setMessage(getApiErrorMessage(error) ?? "No se pudo asociar el usuario.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+    return <div className="auth-minimal-form">
+        <div className="rounded-[22px] border p-5"
+             style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+            <div className="flex items-center gap-3"><i className="fa fa-user-check text-xl"
+                                                        style={{color: "var(--accent)"}}/>
+                <div><h3 className="font-semibold">Hola, {details.email}</h3><p className="mt-1 text-sm"
+                                                                                style={{color: "var(--text-secondary)"}}></p>
+                    Has sido invitado a unirte a la organización {details.organization} como {details.role}.
+                </div>
+            </div>
+        </div>
+        <button type="button" className="btn btn-primary flex justify-center" disabled={submitting}
+                onClick={() => void submit()}>{submitting ? "Asociando..." : "Aceptar invitación"}{submitting &&
+            <i className="fa fa-spin fa-spinner"/>}</button>
+        <Link to="/auth/login"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2"><i
+            className="fa fa-arrow-left text-blue-500"/>Ir a iniciar sesion</Link>
+        <ErrorMessage message={message}/>
+    </div>;
 };

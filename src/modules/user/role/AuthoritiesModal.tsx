@@ -1,6 +1,5 @@
-import {ChangeEvent, KeyboardEvent, useEffect, useState} from "react";
+import {ChangeEvent, KeyboardEvent, UIEvent, useEffect, useState} from "react";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
-import {Pager} from "../../../components/io/input/Pager.tsx";
 import clsx from "clsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {AuthorityService} from "../../../services/user/AuthorityService.ts";
@@ -24,19 +23,27 @@ const roleService = RoleService.instance;
 export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthorities, onSaved,}: AuthoritiesModalProps) => {
 
     const [authorities, setAuthorities] = useState<Page<UserAuthority>>(Pagination.empty<UserAuthority>());
-    const [pagination, setPagination] = useState<Pagination>(Pagination.first);
+    const [page, setPage] = useState(0);
     const [selected, setSelected] = useState<number[]>([]);
     const [original, setOriginal] = useState<number[]>([]);
     const [search, setSearch] = useState<string>("");
     const [searchInput, setSearchInput] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
         if (!open) return;
         setIsLoading(true);
+        const pagination = Pagination.of(page, 30);
         const fetchAuthorities = search.trim() ? authorityService.search(search, pagination) : authorityService.getAll({sort: "createdAt,desc", ...pagination});
-        fetchAuthorities.then(setAuthorities).finally(() => setIsLoading(false));
-    }, [open, pagination.page, pagination.size, search]);
+        fetchAuthorities.then((response) => {
+            setAuthorities((current) => ({
+                ...response,
+                content: page === 0 ? response.content : [...current.content, ...response.content],
+            }));
+            setHasMore(page + 1 < (response.page?.totalPages ?? 1));
+        }).finally(() => setIsLoading(false));
+    }, [open, page, search]);
 
     useEffect(() => {
         if (!open) return;
@@ -50,11 +57,17 @@ export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthor
             setSearch("");
             setSearchInput("");
             setAuthorities(Pagination.empty<UserAuthority>());
-            setPagination(Pagination.first);
+            setPage(0);
+            setHasMore(true);
         }
     }, [open]);
 
-    const handlerPageChange = (page: number) => setPagination(prev => ({...prev, page}));
+    useEffect(() => {
+        if (!open) return;
+        setPage(0);
+        setHasMore(true);
+        setAuthorities(Pagination.empty<UserAuthority>());
+    }, [open, search]);
 
     const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>, id: number) => {
         setSelected(prev => (e.target.checked ? [...prev, id] : prev.filter(x => x !== id)));
@@ -74,6 +87,12 @@ export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthor
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") setSearch(searchInput);
+    };
+
+    const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+        const element = event.currentTarget;
+        if (isLoading || !hasMore || element.scrollTop + element.clientHeight < element.scrollHeight - 80) return;
+        setPage((current) => current + 1);
     };
 
     return (
@@ -103,7 +122,7 @@ export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthor
             </div>
 
             <div className="relative flex flex-col flex-grow overflow-hidden mt-2">
-                <div className="flex-grow scrollable-y-auto">
+                <div className="flex-grow scrollable-y-auto" onScroll={handleScroll}>
                     {authorities.content.length > 0 ? (
                         <ul className="divide-y divide-gray-100">
                             {authorities.content.map((auth) => {
@@ -149,9 +168,7 @@ export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthor
                     )}
                 </div>
 
-                <div className="flex justify-center">
-                    <Pager page={authorities} onChange={handlerPageChange} compact={true}/>
-                </div>
+                {hasMore && !isLoading && authorities.content.length > 0 && <div className="py-3 text-center text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>Desplázate para cargar más permisos</div>}
             </div>
 
             <div className="flex justify-end mt-2">

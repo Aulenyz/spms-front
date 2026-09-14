@@ -17,4 +17,8 @@ export class UserInvitationService extends BaseService<UserInvitation> {
         const res = await this.get<{ result: boolean; }>(`/email/${email}/exists`);
         return res.result;
     }
+
+    resend(id: number): Promise<UserInvitation> {
+        return this.post<UserInvitation>(`/${id}/resend`);
+    }
 }

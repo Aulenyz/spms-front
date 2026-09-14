@@ -226,9 +226,6 @@ export const SelectOrganizationPage = () => {
                                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                                         {spacesLabel}
                                     </div>
-                                    <div className="mt-2 text-sm font-semibold text-[var(--text-secondary)]">
-                                        Desliza hacia los lados o usa las flechas para elegir tu espacio.
-                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-center gap-3">

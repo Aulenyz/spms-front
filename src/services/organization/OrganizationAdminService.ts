@@ -1,5 +1,6 @@
 import {BaseService} from "../BaseService.ts";
-import {Organization} from "../../domain/model/organization/Organization.ts";
+import {Organization, OrganizationInvitation, OrganizationUser} from "../../domain/model/organization/Organization.ts";
+import {Page, Pagination} from "../../domain/filters/Page.ts";
 
 export class OrganizationAdminService extends BaseService<Organization> {
     private static factory = new OrganizationAdminService();
@@ -26,5 +27,25 @@ export class OrganizationAdminService extends BaseService<Organization> {
 
     updateStatus(id: number | string): Promise<Organization> {
         return this.put<Organization>(`/${id}/status`);
+    }
+
+    users(id: number | string, pagination: Pagination): Promise<Page<OrganizationUser>> {
+        return this.get<Page<OrganizationUser>>(`/${id}/users`, {...pagination});
+    }
+
+    invitations(id: number | string, pagination: Pagination): Promise<Page<OrganizationInvitation>> {
+        return this.get<Page<OrganizationInvitation>>(`/${id}/invitations`, {...pagination});
+    }
+
+    roles(id: number | string): Promise<Page<{id: number; name: string; description?: string}>> {
+        return this.get<Page<{id: number; name: string; description?: string}>>(`/${id}/roles`, {page: 0, size: 100, sort: "name,asc"});
+    }
+
+    invite(id: number | string, data: {email: string; roleId: number}): Promise<void> {
+        return this.post<void>(`/${id}/users/invitations`, data);
+    }
+
+    createRole(id: number | string, data: {name: string; description: string}): Promise<void> {
+        return this.post<void>(`/${id}/roles`, data);
     }
 }

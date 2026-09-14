@@ -3,6 +3,7 @@ import {useEffect, useState} from "react";
 
 import {AuthShell} from "../../components/ui/layout/AuthShell.tsx";
 import {PublicUserService} from "../../services/public/PublicUserService.ts";
+import {UserInvitationRegistrationDetails} from "../../services/public/PublicUserService.ts";
 import {RegisterInvitationForm} from "./RegisterInvitationForm.tsx";
 import {resolveErrorPath} from "../errors/resolveErrorPath.ts";
 
@@ -14,6 +15,7 @@ export const RegisterInvitationPage = () => {
     const token = params.get("token")?.trim() ?? "";
     const [validating, setValidating] = useState(true);
     const [isValid, setIsValid] = useState(false);
+    const [details, setDetails] = useState<UserInvitationRegistrationDetails | null>(null);
 
     useEffect(() => {
         if (!token) {
@@ -22,8 +24,11 @@ export const RegisterInvitationPage = () => {
             return;
         }
 
-        publicUserService.tokenIsValid(token)
-            .then((valid) => setIsValid(Boolean(valid)))
+        publicUserService.registrationDetails(token)
+            .then((value) => {
+                setDetails(value);
+                setIsValid(true);
+            })
             .catch((error) => {
                 const errorPath = resolveErrorPath(error as {status?: number});
                 if (errorPath) {
@@ -61,11 +66,11 @@ export const RegisterInvitationPage = () => {
 
     return (
         <AuthShell
-            title="Completar registro"
-            description="Crea tu acceso con la invitacion recibida."
             accentTitle="Activa tu cuenta institucional, sube tu foto y configura tus credenciales para entrar al campus."
             variant="login"
-            form={<RegisterInvitationForm token={token}/>}
+            title={details?.existingUser ? "Unirse a organización" : "Completar registro"}
+            description={details?.existingUser ? "Confirma para asociarla a la organización." : "Crea tu acceso con la invitacion recibida."}
+            form={<RegisterInvitationForm token={token} existingUser={details?.existingUser ? details : undefined}/>} 
         />
     );
 };

@@ -22,6 +22,13 @@ const parseJson = async <T>(response: Response): Promise<T> => {
     return response.json() as Promise<T>;
 };
 
+export interface UserInvitationRegistrationDetails {
+    existingUser: boolean;
+    email: string;
+    organization: string;
+    role: string;
+}
+
 export class PublicUserService {
     private static factory = new PublicUserService();
 
@@ -38,6 +45,38 @@ export class PublicUserService {
                 headers: jsonHeaders,
             });
             return parseJson<boolean>(response);
+        } catch (error) {
+            throw normalizeFetchError(error);
+        }
+    }
+
+    async registrationDetails(token: string): Promise<UserInvitationRegistrationDetails> {
+        try {
+            const response = await fetch(`${this.baseURL}/token/${encodeURIComponent(token)}/details`, {
+                method: "GET",
+                headers: jsonHeaders,
+            });
+            return parseJson<UserInvitationRegistrationDetails>(response);
+        } catch (error) {
+            throw normalizeFetchError(error);
+        }
+    }
+
+    async associateExisting(token: string): Promise<void> {
+        try {
+            const response = await fetch(`${this.baseURL}/register/existing`, {
+                method: "POST",
+                headers: jsonHeaders,
+                body: JSON.stringify({token}),
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    throw JSON.parse(text);
+                } catch {
+                    throw {message: text || response.statusText, status: response.status};
+                }
+            }
         } catch (error) {
             throw normalizeFetchError(error);
         }

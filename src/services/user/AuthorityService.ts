@@ -15,7 +15,7 @@ export class AuthorityService extends BaseService<UserAuthority> {
     }
 
     search(term: string, pagination: Pagination = Pagination.default) {
-        return super.get<Page<UserAuthority>>('/search', {...pagination, term});
+        return super.get<Page<UserAuthority>>('', {...pagination, term});
     }
 
     async existsByName(name: string): Promise<boolean> {
