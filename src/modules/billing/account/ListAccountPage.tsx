@@ -36,6 +36,7 @@ export const ListAccountPage = () => {
                         description="Cuánto se le ha facturado a cada estudiante, cuánto ha pagado y cuánto debe."/>
 
             <DataTableCard
+                filtersLayout="row"
                 title="Saldos por estudiante"
                 description="Ordenados de mayor a menor deuda."
                 filters={

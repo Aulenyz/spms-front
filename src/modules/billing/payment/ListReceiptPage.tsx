@@ -52,6 +52,7 @@ export const ListReceiptPage = () => {
             />
 
             <DataTableCard
+                filtersLayout="row"
                 title="Recibos"
                 description="Los más recientes primero. Toca un pago para ver todo su detalle."
                 filters={
@@ -65,7 +66,7 @@ export const ListReceiptPage = () => {
                                     setMethod(event.target.value as PaymentMethod | "");
                                     resetPage();
                                 }}>
-                            <option value="">Todas las formas de pago</option>
+                            <option value="">Todas las formas</option>
                             {Object.values(PaymentMethod).map((value) => <option key={value} value={value}>{PaymentMethodLabel[value]}</option>)}
                         </select>
                         <select className="select select-bordered select-sm" value={status} aria-label="Estado"

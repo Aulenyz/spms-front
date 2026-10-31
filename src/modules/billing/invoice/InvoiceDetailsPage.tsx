@@ -15,6 +15,8 @@ import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {InvoiceStatusPill, ReceiptStatusPill} from "../components/BillingPills.tsx";
 import {VoidDialog} from "../components/VoidDialog.tsx";
 import {RegisterPaymentModal} from "../payment/RegisterPaymentModal.tsx";
+import {invoiceHtml, printHtml} from "../print/printDocuments.ts";
+import {useCurrentOrganization} from "../../shared/main/navbarQueries.ts";
 
 const OPEN = [InvoiceStatus.PENDING, InvoiceStatus.PARTIAL, InvoiceStatus.OVERDUE];
 
@@ -22,6 +24,7 @@ export const InvoiceDetailsPage = () => {
     const {id = ""} = useParams();
     const {hasAuthority} = useAuthContext();
     const queryClient = useQueryClient();
+    const {data: organization} = useCurrentOrganization();
     const [paying, setPaying] = useState(false);
     const [voiding, setVoiding] = useState(false);
 
@@ -61,6 +64,9 @@ export const InvoiceDetailsPage = () => {
                 backTo="/invoices/list"
                 backLabel="Facturas"
                 actions={<>
+                    <button type="button" className="btn btn-sm" onClick={() => printHtml(invoiceHtml(details, {
+                        name: organization?.name ?? "", document: organization?.document, logo: organization?.logo,
+                    }))}><i className="fa fa-print"/>Imprimir</button>
                     {isOpen && hasAuthority(AuthorityKey.INVOICE_VOID) && !hasPayments && (
                         <button type="button" className="btn btn-sm" onClick={() => setVoiding(true)}><i className="fa fa-ban"/>Anular</button>
                     )}

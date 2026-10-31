@@ -77,6 +77,7 @@ export const ListInvoicePage = () => {
             />
 
             <DataTableCard
+                filtersLayout="row"
                 title="Facturas emitidas"
                 description="Las más recientes primero. Abre una para ver sus conceptos y pagos."
                 filters={
