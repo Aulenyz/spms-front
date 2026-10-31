@@ -21,6 +21,7 @@ import {
 } from "../../../domain/billing/Invoice.ts";
 import {InvoiceStatusPill} from "../components/BillingPills.tsx";
 import {StudentPicker} from "../components/StudentPicker.tsx";
+import {printHtml, receiptHtml} from "../print/printDocuments.ts";
 import {Guardian} from "../../../domain/student/Guardian.ts";
 import {NewStudentForm} from "./NewStudentForm.tsx";
 import {GuardiansStep} from "./GuardiansStep.tsx";
@@ -312,9 +313,9 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                             <div className="flex justify-center gap-2">
                                 <button type="button" className="btn btn-sm" onClick={reset}>Nuevo cobro</button>
                                 {result.receipt ? (
-                                    <Link to={`/payments/${result.receipt.receipt.id}`} className="btn btn-sm btn-primary" onClick={close}>
-                                        <i className="fa fa-print"/>Ver e imprimir recibo
-                                    </Link>
+                                    <button type="button" className="btn btn-sm btn-primary" onClick={() => printHtml(receiptHtml(result.receipt!))}>
+                                        <i className="fa fa-print"/>Imprimir recibo
+                                    </button>
                                 ) : result.invoice && (
                                     <Link to={`/invoices/${result.invoice.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>Ver factura</Link>
                                 )}

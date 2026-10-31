@@ -1,10 +1,9 @@
 import {useState} from "react";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
-import {Link} from "react-router-dom";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {ReceiptService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {formatDate, money, PaymentMethod, PaymentMethodLabel, Receipt, ReceiptStatus} from "../../../domain/billing/Invoice.ts";
+import {PaymentMethod, PaymentMethodLabel, Receipt, ReceiptStatus} from "../../../domain/billing/Invoice.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
@@ -13,9 +12,9 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
-import {PaymentMethodTag, ReceiptStatusPill} from "../components/BillingPills.tsx";
 import {ListToolbar} from "../components/ListToolbar.tsx";
 import {RegisterPaymentModal} from "./RegisterPaymentModal.tsx";
+import {ReceiptAccordionRow} from "./ReceiptAccordionRow.tsx";
 
 const EMPTY_PAGE: Page<Receipt> = Pagination.empty<Receipt>();
 
@@ -26,6 +25,7 @@ export const ListReceiptPage = () => {
     const [status, setStatus] = useState<ReceiptStatus | "">(ReceiptStatus.PAID);
     const [pagination, setPagination] = useState<Pagination>(Pagination.ofSize(10));
     const [paying, setPaying] = useState(false);
+    const [openId, setOpenId] = useState<number | null>(null);
     const debouncedTerm = useDebouncedValue(term);
     const filters = {term: debouncedTerm, method: method || undefined, status: status || undefined};
 
@@ -53,7 +53,7 @@ export const ListReceiptPage = () => {
 
             <DataTableCard
                 title="Recibos"
-                description="Los más recientes primero."
+                description="Los más recientes primero. Toca un pago para ver todo su detalle."
                 filters={
                     <ListToolbar term={term} placeholder="Buscar por recibo, estudiante o referencia"
                                  onTerm={(value) => {
@@ -89,45 +89,12 @@ export const ListReceiptPage = () => {
                         <EmptyState title="No hay pagos para mostrar" icon="fa-hand-holding-dollar"
                                     description="Registra un pago con el botón «Registrar pago»."/>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="table-shell min-w-[820px]">
-                                <thead>
-                                <tr>
-                                    <th>Recibo</th>
-                                    <th>Estudiante</th>
-                                    <th>Forma de pago</th>
-                                    <th className="text-right">Monto</th>
-                                    <th>Estado</th>
-                                    <th className="w-12"/>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {receipts.content.map((receipt) => (
-                                    <tr key={receipt.id}>
-                                        <td>
-                                            <Link to={`/payments/${receipt.id}`} className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">{receipt.number}</Link>
-                                            <span className="block text-xs text-[var(--text-tertiary)]">{formatDate(receipt.date)}</span>
-                                        </td>
-                                        <td>
-                                            <Link to={`/accounts/${receipt.student.id}`} className="hover:text-[var(--accent)]">{receipt.student.name}</Link>
-                                            {receipt.guardian && <span className="block text-xs text-[var(--text-tertiary)]">Pagó {receipt.guardian.name}</span>}
-                                        </td>
-                                        <td>
-                                            <PaymentMethodTag method={receipt.method}/>
-                                            {receipt.reference && <span className="block text-xs text-[var(--text-tertiary)]">Ref. {receipt.reference}</span>}
-                                        </td>
-                                        <td className="text-right font-semibold text-[var(--text-primary)]">{money.format(receipt.amount)}</td>
-                                        <td><ReceiptStatusPill status={receipt.status}/></td>
-                                        <td className="text-right">
-                                            <Link to={`/payments/${receipt.id}`} className="row-action" title="Ver recibo" aria-label="Ver recibo">
-                                                <i className="fa fa-chevron-right"/>
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <ul>
+                            {receipts.content.map((receipt) => (
+                                <ReceiptAccordionRow key={receipt.id} receipt={receipt} open={openId === receipt.id}
+                                                     onToggle={() => setOpenId((current) => current === receipt.id ? null : receipt.id)}/>
+                            ))}
+                        </ul>
                     )}
                 </LoadingContent>
             </DataTableCard>
