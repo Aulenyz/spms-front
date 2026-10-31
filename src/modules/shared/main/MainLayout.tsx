@@ -8,6 +8,7 @@ import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {RouteErrorBoundary} from "../../../app/routing/RouteErrorBoundary.tsx";
 import {resolveRouteAuthority} from "../../../app/security/routeAuthorities.ts";
 import {resolveFirstAuthorizedPath, resolveRouteTone} from "../../../app/navigation/menu.ts";
+import {AssistantChat} from "../../assistant/AssistantChat.tsx";
 
 const resolvePageMeta = (pathname: string) => {
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
@@ -240,6 +241,7 @@ export const MainLayout = () => {
                     </div>
                 </main>
             </div>
+            <AssistantChat/>
         </div>
     );
 };
