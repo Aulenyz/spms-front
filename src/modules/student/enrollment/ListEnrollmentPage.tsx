@@ -14,11 +14,16 @@ import {Enrollment, EnrollmentStatus} from "../../../domain/student/Enrollment.t
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
+import {EnrollStudentModal} from "./modal/EnrollStudentModal.tsx";
 
 const enrollmentService: EnrollmentService = EnrollmentService.instance;
 const EMPTY_PAGE: Page<Enrollment> = Pagination.empty<Enrollment>();
 
 export const ListEnrollmentPage = () => {
+    const {hasAuthority} = useAuthContext();
+    const [enrolling, setEnrolling] = useState(false);
     const [pagination, setPagination] = useState<Pagination>(Pagination.first);
     const [filters, setFilters] = useState<{
         active: boolean;
@@ -71,6 +76,12 @@ export const ListEnrollmentPage = () => {
             <PageHeader
                 title="Listado de inscripciones"
                 description="Revisa altas por periodo, curso y estado desde una tabla unificada."
+                actions={hasAuthority(AuthorityKey.ENROLLMENT_CREATE) ? (
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => setEnrolling(true)}>
+                        <i className="fa fa-user-plus"/>
+                        Inscribir estudiante
+                    </button>
+                ) : undefined}
             />
 
             <EnrollmentBreadcrumb selectedPeriodId={effectiveFilters.periodId}/>
@@ -123,7 +134,12 @@ export const ListEnrollmentPage = () => {
                                 <td><strong>{enrollment.student.document}</strong></td>
                                 <td>{enrollment.student.firstname}</td>
                                 <td>{enrollment.student.lastname}</td>
-                                <td>{enrollment.course.specialization?.name}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
+                                <td>
+                                    {enrollment.course.name} {enrollment.course.division}
+                                    {enrollment.course.specialization?.name && (
+                                        <span className="block text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
+                                    )}
+                                </td>
                                 <td><EnrollmentStatusPill status={enrollment.status}/></td>
                                 <td className="text-right">
                                     <TableDetailAction to={`/enrollments/${enrollment.id}`}/>
@@ -134,6 +150,8 @@ export const ListEnrollmentPage = () => {
                     )}
                 </table>
             </DataTableCard>
+
+            <EnrollStudentModal isOpen={enrolling} onClose={() => setEnrolling(false)}/>
         </div>
     );
 };

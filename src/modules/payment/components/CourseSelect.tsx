@@ -23,10 +23,10 @@ const getApiErrorMessage = (error: unknown) => {
 };
 
 const courseLabel = (course: Course) => {
-    const division = (course.division ?? "").toString().trim();
+    const base = [course.name, course.division].filter(Boolean).join(" ").trim();
     const specialization = (course.specialization?.name ?? "").toString().trim();
-    if (specialization && division) return `${specialization} - ${division}`;
-    return specialization || division || "Curso";
+    if (base && specialization) return `${base} · ${specialization}`;
+    return base || specialization || "Curso";
 };
 
 export const CourseSelect = ({value, onChange}: Props) => {

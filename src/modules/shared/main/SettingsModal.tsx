@@ -12,9 +12,25 @@ import {addThreeMonths, configurationValue, dayAfter, tomorrowValue} from "./nav
 import {useSchoolCalendar} from "./useSchoolCalendar.ts";
 import {useCurrentOrganization} from "./navbarQueries.ts";
 
-type SettingsCategory = "schoolYear" | "courses";
+type SettingsCategory = "schoolYear" | "courses" | "billing";
 
-const SETTINGS_ORDER = ["AUTO_CREATE_SCHOOL_YEAR", "SCHOOL_YEAR_START_DATE", "SCHOOL_YEAR_END_DATE", "AUTO_CREATE_COURSES"];
+const SETTINGS_ORDER = [
+    "AUTO_CREATE_SCHOOL_YEAR", "SCHOOL_YEAR_START_DATE", "SCHOOL_YEAR_END_DATE", "AUTO_CREATE_COURSES",
+    "ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX",
+];
+const BILLING_SETTINGS = ["ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX"];
+
+const CATEGORIES: {key: SettingsCategory; label: string; icon: string; description: string}[] = [
+    {key: "schoolYear", label: "Año académico", icon: "fa-calendar-days", description: "Define el inicio y la finalización del próximo período académico."},
+    {key: "courses", label: "Cursos", icon: "fa-book", description: "Configura cómo se crean los cursos de cada período."},
+    {key: "billing", label: "Facturación", icon: "fa-file-invoice-dollar", description: "Cómo se cobra la inscripción y cómo se numeran las facturas."},
+];
+
+const categoryOf = (name: string): SettingsCategory => {
+    if (BILLING_SETTINGS.includes(name)) return "billing";
+    if (name === "AUTO_CREATE_COURSES") return "courses";
+    return "schoolYear";
+};
 
 const settingPresentation = (configuration: OrganizationConfiguration) => {
     if (configuration.name === "AUTO_CREATE_SCHOOL_YEAR") {
@@ -26,6 +42,15 @@ const settingPresentation = (configuration: OrganizationConfiguration) => {
     if (configuration.name === "SCHOOL_YEAR_END_DATE") {
         return {label: "Fin del año escolar", icon: "fa-calendar-check", help: "Marca el cierre del próximo período académico."};
     }
+    if (configuration.name === "ENROLLMENT_REQUIRES_PAYMENT") {
+        return {label: "La inscripción requiere pago", icon: "fa-user-check", help: "Si está activo, el estudiante queda pendiente hasta pagar la factura de inscripción. Si no, queda inscrito de inmediato y la factura queda por cobrar."};
+    }
+    if (configuration.name === "INVOICE_REQUIRES_NCF") {
+        return {label: "Facturas con comprobante fiscal (NCF)", icon: "fa-receipt", help: "Por ahora las facturas se emiten sin NCF. La integración con la DGII llegará más adelante."};
+    }
+    if (configuration.name === "INVOICE_PREFIX") {
+        return {label: "Prefijo de las facturas", icon: "fa-hashtag", help: "De 1 a 6 letras. Las facturas se numeran así: FAC-000001."};
+    }
     return {label: "Crear cursos automáticamente", icon: "fa-wand-magic-sparkles", help: "Genera únicamente las secciones faltantes y conserva los cursos existentes."};
 };
 
@@ -34,7 +59,7 @@ type SettingsModalProps = {
     onClose: () => void;
 };
 
-/** Modal de configuración de la organización (año académico y cursos). */
+/** Modal de configuración de la organización (año académico, cursos y facturación). */
 export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
     const queryClient = useQueryClient();
     const {canConfigure, configurationQuery, settings, currentPeriod, automaticSchoolYear} = useSchoolCalendar();
@@ -42,6 +67,7 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
     const [saving, setSaving] = useState(false);
     const [settingsSearch, setSettingsSearch] = useState("");
     const [settingsCategory, setSettingsCategory] = useState<SettingsCategory>("schoolYear");
+    const [prefixDraft, setPrefixDraft] = useState<string | null>(null);
     const {refetch} = configurationQuery;
 
     // Al abrir se recarga la configuración (los datos en caché se muestran mientras tanto).
@@ -78,16 +104,23 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
         await saveSetting(configuration, value, "Fecha del año escolar actualizada.", "No se pudo guardar la fecha.");
     };
 
+    const updateTextSetting = async (configuration: OrganizationConfiguration, value: string) => {
+        setPrefixDraft(null);
+        const next = value.trim().toUpperCase();
+        if (!next || next === configuration.value) return;
+        await saveSetting(configuration, next, "Prefijo de factura actualizado.", "No se pudo guardar el prefijo.");
+    };
+
+    const activeCategory = CATEGORIES.find((category) => category.key === settingsCategory) ?? CATEGORIES[0];
     const visibleSettings = settings.filter((configuration) => {
-        const belongsToCategory = settingsCategory === "schoolYear"
-            ? configuration.dataType === "DATE" || configuration.name === "AUTO_CREATE_SCHOOL_YEAR"
-            : configuration.name === "AUTO_CREATE_COURSES";
+        const belongsToCategory = categoryOf(configuration.name) === settingsCategory;
         const query = settingsSearch.trim().toLowerCase();
         return belongsToCategory && (!query || `${settingPresentation(configuration).label} ${configuration.name} ${configuration.description ?? ""}`.toLowerCase().includes(query));
     }).sort((left, right) => SETTINGS_ORDER.indexOf(left.name) - SETTINGS_ORDER.indexOf(right.name));
     const schoolYearSettings = visibleSettings.filter((configuration) =>
         configuration.name === "AUTO_CREATE_SCHOOL_YEAR" || (automaticSchoolYear && configuration.dataType === "DATE"));
     const courseSettings = visibleSettings.filter((configuration) => configuration.name === "AUTO_CREATE_COURSES");
+    const billingSettings = visibleSettings.filter((configuration) => BILLING_SETTINGS.includes(configuration.name));
 
     const renderSettingRows = (configurations: OrganizationConfiguration[]) => configurations.map((configuration, index) => (
         <div
@@ -123,6 +156,20 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                     onChange={(value) => void updateDateSetting(configuration, value)}
                 />
             )}
+            {configuration.dataType === "TEXT" && (
+                <input
+                    className="input input-bordered input-sm w-28 shrink-0 text-center font-semibold uppercase"
+                    maxLength={6}
+                    value={prefixDraft ?? configuration.value ?? ""}
+                    disabled={settingsLoading || !canConfigure}
+                    onChange={(event) => setPrefixDraft(event.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())}
+                    onBlur={(event) => void updateTextSetting(configuration, event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                    aria-label={settingPresentation(configuration).label}
+                />
+            )}
         </div>
     ));
 
@@ -151,26 +198,21 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                         />
                     </label>
 
-                    <div className="mt-5">
-                        <button type="button" onClick={() => setSettingsCategory("schoolYear")}
-                                className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left"
-                                style={{background: settingsCategory === "schoolYear" ? "var(--accent)" : "transparent", color: settingsCategory === "schoolYear" ? "white" : "var(--text-primary)"}}>
-                            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] text-xs"
-                                  style={{background: settingsCategory === "schoolYear" ? "rgba(255,255,255,.2)" : "var(--accent-soft)", color: settingsCategory === "schoolYear" ? "white" : "var(--accent)"}}><i
-                                className="fa fa-calendar-days"/></span>
-                            <span>
-                                <strong className="block text-sm">Año académico</strong>
-                            </span>
-                        </button>
-                        <button type="button" onClick={() => setSettingsCategory("courses")}
-                                className="mt-1 flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left"
-                                style={{background: settingsCategory === "courses" ? "var(--accent)" : "transparent", color: settingsCategory === "courses" ? "white" : "var(--text-primary)"}}>
-                            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] text-xs"
-                                  style={{background: settingsCategory === "courses" ? "rgba(255,255,255,.2)" : "var(--accent-soft)", color: settingsCategory === "courses" ? "white" : "var(--accent)"}}>
-                                <i className="fa fa-book"/>
-                            </span>
-                            <strong className="block text-sm">Cursos</strong>
-                        </button>
+                    <div className="mt-5 space-y-1">
+                        {CATEGORIES.map((category) => {
+                            const selected = settingsCategory === category.key;
+                            return (
+                                <button key={category.key} type="button" onClick={() => setSettingsCategory(category.key)}
+                                        className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left"
+                                        style={{background: selected ? "var(--accent)" : "transparent", color: selected ? "white" : "var(--text-primary)"}}>
+                                    <span className="flex h-7 w-7 items-center justify-center rounded-[9px] text-xs"
+                                          style={{background: selected ? "rgba(255,255,255,.2)" : "var(--accent-soft)", color: selected ? "white" : "var(--accent)"}}>
+                                        <i className={`fa ${category.icon}`}/>
+                                    </span>
+                                    <strong className="block text-sm">{category.label}</strong>
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <div className="mt-5 border-t px-2 pt-4"
@@ -195,16 +237,12 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                         <span
                             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] text-xl text-white shadow-lg"
                             style={{background: "linear-gradient(145deg, #38bdf8, #2563eb)"}}>
-                            <i className={settingsCategory === "schoolYear" ? "fa fa-calendar-days" : "fa fa-book"}/>
+                            <i className={`fa ${activeCategory.icon}`}/>
                         </span>
                         <div>
                             <h3 className="text-xl font-extrabold"
-                                style={{color: "var(--text-primary)"}}>{settingsCategory === "schoolYear" ? "Año académico" : "Cursos"}</h3>
-                            <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>
-                                {settingsCategory === "schoolYear"
-                                    ? "Define el inicio y la finalización del próximo período académico."
-                                    : "Configura cómo se crean los cursos de cada período."}
-                            </p>
+                                style={{color: "var(--text-primary)"}}>{activeCategory.label}</h3>
+                            <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>{activeCategory.description}</p>
                         </div>
                     </div>
 
@@ -239,6 +277,17 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                             <p className="mt-3 px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>
                                 Si esta opción está desactivada, puedes usar “Agregar cursos” desde los detalles de cada
                                 plantilla.
+                            </p>
+                        </section>}
+
+                        {billingSettings.length > 0 && <section aria-labelledby="billing-settings-title">
+                            <h4 id="billing-settings-title" className="mb-2 px-1 text-xs font-bold uppercase tracking-[0.1em]"
+                                style={{color: "var(--text-tertiary)"}}>Inscripción y facturas</h4>
+                            <div className="overflow-hidden rounded-2xl border" style={{borderColor: "var(--border-soft)"}}>
+                                {renderSettingRows(billingSettings)}
+                            </div>
+                            <p className="mt-3 px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>
+                                El precio de la inscripción y la reinscripción se define en Finanzas → Conceptos de pago.
                             </p>
                         </section>}
                     </div>}
