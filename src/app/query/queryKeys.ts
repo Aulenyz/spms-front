@@ -79,5 +79,6 @@ export const queryKeys = {
         all: ['enrollments'] as const,
         list: (params: unknown) => ['enrollments', 'list', params] as const,
         totals: (periodId?: number) => ['enrollments', 'totals', periodId ?? null] as const,
+        preview: (studentId?: number, courseId?: number) => ['enrollments', 'preview', studentId ?? null, courseId ?? null] as const,
     },
 };
