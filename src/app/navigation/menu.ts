@@ -68,7 +68,7 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.PAYMENTS_VIEW,
             },
             {
-                label: "Facturas",
+                label: "Facturas emitidas",
                 icon: "fa-file-invoice-dollar",
                 to: "/invoices/list",
                 authority: AuthorityKey.INVOICES_VIEW,

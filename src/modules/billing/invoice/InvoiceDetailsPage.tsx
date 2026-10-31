@@ -65,7 +65,7 @@ export const InvoiceDetailsPage = () => {
                 subtitle={<>{invoice.number}{invoice.student && <> · <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${invoice.student.id}`} className="hover:text-[var(--accent)]">{invoice.student.name}</PermittedLink></>}</>}
                 badges={<InvoiceStatusPill status={invoice.status}/>}
                 backTo="/invoices/list"
-                backLabel="Facturas"
+                backLabel="Facturas emitidas"
                 actions={<>
                     <button type="button" className="btn btn-sm" onClick={() => printHtml(invoiceHtml(details, taxesEnabled, {
                         name: organization?.name ?? "", document: organization?.document, logo: organization?.logo,
