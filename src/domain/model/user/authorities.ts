@@ -128,11 +128,11 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.CATALOG_VIEW]: "Permite ver los conceptos de pago, sus categorías e impuestos.",
     [AuthorityKey.CATALOG_EDIT]: "Permite crear y editar conceptos de pago, categorías, impuestos y precios.",
 
-    [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de plantillas de cursos.",
-    [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevas plantillas de cursos.",
-    [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar plantillas de cursos existentes.",
-    [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de una plantilla de curso.",
-    [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de una plantilla para el período académico actual.",
+    [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de cursos base.",
+    [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevos cursos base.",
+    [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar cursos base existentes.",
+    [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de un curso base.",
+    [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de un curso base para el período académico actual.",
 
 
     [AuthorityKey.SUBJECTS_VIEW]: "Permite ver el listado de materias.",

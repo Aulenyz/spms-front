@@ -48,23 +48,23 @@ export const ListCourseTemplatePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Configuración"
-                title="Plantillas de cursos"
-                description="Gestiona las plantillas base usadas para organizar cursos, niveles y estructuras académicas."
+                eyebrow="Configuración académica"
+                title="Cursos base"
+                description="Define cada curso con sus secciones y materias; con ellos se generan los cursos de cada período."
             />
 
             <CourseTemplateBreadcrumb onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
                 title="Listado"
-                description="Filtra por nombre o tipo para localizar rapidamente una plantilla."
+                description="Filtra por nombre o tipo para localizar rápidamente un curso base."
                 filters={<CourseTemplateFilter onFilter={handleFilters}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={courseTemplates}/>}
             >
                 {courseTemplates.content.length === 0 ? (
                     <EmptyState
-                        title="No hay plantillas de cursos"
-                        description="Crea una nueva plantilla o ajusta los filtros para continuar."
+                        title="No hay cursos base"
+                        description="Crea un curso base o ajusta los filtros para continuar."
                         icon="fa-layer-group"
                     />
                 ) : (
@@ -81,7 +81,7 @@ export const ListCourseTemplatePage = () => {
                         <tbody>
                         {courseTemplates.content.map((template) => (
                             <tr key={template.id}>
-                                <td><strong>{template.name ?? "Plantilla"}</strong></td>
+                                <td><strong>{template.name ?? "Curso base"}</strong></td>
                                 <td><GradeTypePill type={template.type}/></td>
                                 <td>{template.count}</td>
                                 <td>{template.specialization?.name ?? "Sin área especializada"}</td>
@@ -96,7 +96,7 @@ export const ListCourseTemplatePage = () => {
             </DataTableCard>
 
             <LeftModal
-                title="Nuevo curso"
+                title="Nuevo curso base"
                 isOpen={showCreate}
                 onClose={() => setShowCreate(false)}
                 className="w-[420px] h-full z-[9999]"

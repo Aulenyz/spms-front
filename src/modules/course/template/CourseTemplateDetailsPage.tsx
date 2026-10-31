@@ -53,7 +53,7 @@ export const CourseTemplateDetailsPage = () => {
         queryKey: templateKey,
         queryFn: ({signal}) => service.withSignal(signal).getOne(id),
         enabled: Boolean(id),
-        meta: {errorMessage: "No se pudo cargar la plantilla."},
+        meta: {errorMessage: "No se pudo cargar el curso base."},
     });
     const subjectsQuery = useQuery({
         queryKey: subjectsKey,
@@ -72,7 +72,7 @@ export const CourseTemplateDetailsPage = () => {
             await service.deleteTemplateSubject(subjectToRemove.id);
             await queryClient.invalidateQueries({queryKey: subjectsKey});
             setSubjectToRemove(null);
-            toast.success("Materia removida de la plantilla.");
+            toast.success("Materia removida del curso base.");
         } catch (error) {
             toast.error(message(error, "No se pudo remover la materia."));
         } finally {
@@ -86,7 +86,7 @@ export const CourseTemplateDetailsPage = () => {
         try {
             await service.generateCourses(id);
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
-            toast.success("Cursos del período actualizados con las materias y profesores de la plantilla.");
+            toast.success("Cursos del período actualizados con las materias y profesores del curso base.");
         } catch (error) {
             toast.error(message(error, "No se pudieron generar los cursos."));
         } finally {
@@ -95,10 +95,10 @@ export const CourseTemplateDetailsPage = () => {
     };
 
     if (templateQuery.isLoading) return <LoadingContent loading className="py-16"/>;
-    if (!template || !id) return <EmptyState title="No se encontró la plantilla"
+    if (!template || !id) return <EmptyState title="No se encontró el curso base"
                                              description="Vuelve al listado e intenta nuevamente." icon="fa-layer-group"/>;
 
-    const title = template.name ?? template.specialization?.name ?? "Plantilla";
+    const title = template.name ?? template.specialization?.name ?? "Curso base";
 
     return <div className="space-y-4">
         <DetailHeader
@@ -135,7 +135,7 @@ export const CourseTemplateDetailsPage = () => {
             )}
         </DetailSection>
 
-        <RightModal title="Editar plantilla" isOpen={canEdit && showEdit} onClose={() => setShowEdit(false)}
+        <RightModal title="Editar curso base" isOpen={canEdit && showEdit} onClose={() => setShowEdit(false)}
                     className="h-full w-[420px] z-[9999]">
             <CourseTemplateForm initial={template} onDone={() => setShowEdit(false)}
                                 onSaved={() => void queryClient.invalidateQueries({queryKey: templateKey})}/>
@@ -158,8 +158,8 @@ export const CourseTemplateDetailsPage = () => {
                      onClose={() => !removing && setSubjectToRemove(null)} className="max-w-md">
             <div className="space-y-5">
                 <p className="text-sm" style={{color: "var(--text-secondary)"}}>
-                    ¿Quitar <strong style={{color: "var(--text-primary)"}}>{subjectToRemove?.name}</strong> de esta
-                    plantilla, con sus profesores y horarios? Los cursos dejarán de tenerla cuando se vuelvan a generar.
+                    ¿Quitar <strong style={{color: "var(--text-primary)"}}>{subjectToRemove?.name}</strong> de este
+                    curso base, con sus profesores y horarios? Los cursos dejarán de tenerla cuando se vuelvan a generar.
                 </p>
                 <div className="flex justify-end gap-2">
                     <button type="button" className="btn btn-sm" disabled={removing} onClick={() => setSubjectToRemove(null)}>

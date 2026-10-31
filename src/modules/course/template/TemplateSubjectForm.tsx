@@ -142,7 +142,7 @@ export const TemplateSubjectForm = ({templateId, divisions, initial, initialDivi
                 </label>
 
                 {divisions.length === 0 ? (
-                    <p className="text-sm" style={{color: "var(--danger)"}}>La plantilla no tiene secciones. Edítala y define cuántas tiene.</p>
+                    <p className="text-sm" style={{color: "var(--danger)"}}>Este curso base no tiene secciones. Edítalo y define cuántas tiene.</p>
                 ) : <>
                     <div>
                         <span className="form-label">Sección *</span>

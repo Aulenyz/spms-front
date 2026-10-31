@@ -13,7 +13,7 @@ export type HelpArea =
     | "Representantes"
     | "Cobros"
     | "Usuarios y roles"
-    | "Plantillas"
+    | "Cursos base"
     | "Sistema";
 
 export type HelpArticle = {
@@ -45,7 +45,7 @@ export const helpAreaOptions: Array<{value: "" | HelpArea; description: string}>
     {value: "Representantes", description: "Representantes"},
     {value: "Cobros", description: "Cobros"},
     {value: "Usuarios y roles", description: "Usuarios y roles"},
-    {value: "Plantillas", description: "Plantillas"},
+    {value: "Cursos base", description: "Cursos base"},
     {value: "Sistema", description: "Sistema"},
 ];
 
@@ -160,17 +160,17 @@ export const helpArticles: HelpArticle[] = [
     {
         id: "course-template-next-year",
         type: "Configuración",
-        area: "Plantillas",
-        title: "Plantillas para el próximo año escolar",
-        question: "¿Los cambios en plantillas de cursos afectan el próximo año?",
+        area: "Cursos base",
+        title: "Cursos base para el próximo año escolar",
+        question: "¿Los cambios en los cursos base afectan el próximo año?",
         answer: "Sí. El formulario indica que esos cambios se reflejan en el sistema para el próximo año escolar.",
         solution: [
-            "Abre Configuración académica > Cursos.",
+            "Abre Configuración académica > Cursos base.",
             "Crea o edita el curso base que necesitas.",
             "Revisa la nota visible en el formulario antes de guardar.",
             "Coordina con el administrador académico si el próximo período ya fue configurado.",
         ],
-        tags: ["plantillas", "curso", "próximo año", "configuración"],
+        tags: ["cursos base", "plantillas", "curso", "próximo año", "configuración"],
     },
     {
         id: "roles-and-authorities",

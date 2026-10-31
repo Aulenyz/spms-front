@@ -123,7 +123,7 @@ export const navigationSections: NavigationSection[] = [
         tone: "amber",
         items: [
             {
-                label: "Cursos",
+                label: "Cursos base",
                 icon: "fa-layer-group",
                 to: "/courses/templates",
                 authority: AuthorityKey.COURSE_TEMPLATES_VIEW,

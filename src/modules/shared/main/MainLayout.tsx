@@ -12,7 +12,7 @@ import {AssistantChat} from "../../assistant/AssistantChat.tsx";
 
 const resolvePageMeta = (pathname: string) => {
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
-        return {title: "Detalles", subtitle: "Plantillas de cursos"};
+        return {title: "Detalles", subtitle: "Cursos base"};
     }
 
     if (pathname.startsWith("/payments")) {
@@ -46,6 +46,10 @@ const resolvePageMeta = (pathname: string) => {
         return {title: "Conceptos de pago", subtitle: "Finanzas"};
     }
 
+    if (pathname.startsWith("/courses/templates")) {
+        return {title: "Cursos base", subtitle: "Configuración académica"};
+    }
+
     if (pathname.startsWith("/courses")) {
         return /^\/courses\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Cursos"}
@@ -74,10 +78,6 @@ const resolvePageMeta = (pathname: string) => {
         return {title: "Representantes", subtitle: "Administración"};
     }
 
-    if (pathname.startsWith("/courses/templates")) {
-        return {title: "Plantillas", subtitle: "Configuración base"};
-    }
-
     return {title: "Panel", subtitle: "Resumen operativo"};
 };
 
@@ -85,8 +85,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     // Breadcrumbs are hierarchical for navigation (no "volver" wording).
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
         return [
-            {label: "Plantillas", to: "/courses/templates"},
-            {label: "Cursos", to: "/courses/templates"},
+            {label: "Cursos base", to: "/courses/templates"},
             {label: "Detalles", to: pathname},
         ];
     }
@@ -94,13 +93,6 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (/^\/courses\/\d+/.test(pathname)) {
         return [
             {label: "Cursos", to: "/courses/list"},
-            {label: "Detalles", to: pathname},
-        ];
-    }
-
-    if (/^\/specializations\/\d+/.test(pathname)) {
-        return [
-            {label: "Áreas especializadas", to: "/specializations/list"},
             {label: "Detalles", to: pathname},
         ];
     }
@@ -120,16 +112,9 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         ];
     }
 
-    if (/^\/guardians\/\d+/.test(pathname)) {
-        return [
-            {label: "Representantes", to: "/guardians/list"},
-            {label: "Detalles", to: pathname},
-        ];
-    }
 
     if (pathname.startsWith("/courses/templates")) {
-        if (pathname === "/courses/templates") return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: "/courses/templates"}];
-        return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: pathname}];
+        return [{label: "Cursos base", to: "/courses/templates"}];
     }
 
     if (pathname.startsWith("/courses")) {
