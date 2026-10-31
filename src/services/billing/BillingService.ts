@@ -4,6 +4,8 @@ import {
     AccountBalance,
     AccountStatement,
     BillingSummary,
+    CheckoutResult,
+    CheckoutValues,
     Invoice,
     InvoiceDetails,
     InvoiceFormValues,
@@ -77,6 +79,11 @@ export class ReceiptService extends BaseService<Receipt> {
 
     register(values: PaymentFormValues): Promise<ReceiptDetails> {
         return this.post<ReceiptDetails>("", values);
+    }
+
+    /** Caja: factura los conceptos y cobra todo en una sola operación. */
+    checkout(values: CheckoutValues): Promise<CheckoutResult> {
+        return this.post<CheckoutResult>("/checkout", values);
     }
 
     voidReceipt(id: number, reason: string): Promise<ReceiptDetails> {

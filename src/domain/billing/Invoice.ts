@@ -237,6 +237,26 @@ export interface PaymentFormValues {
     allocations?: {invoiceId: number; amount: number}[];
 }
 
+/** Una transacción de caja: conceptos que se venden ahora, facturas pendientes que se pagan y lo recibido. */
+export interface CheckoutValues {
+    studentId: number;
+    guardianId?: number;
+    method: PaymentMethod;
+    reference?: string;
+    date?: string;
+    notes?: string;
+    discount?: number;
+    items: {productId: number; quantity: number; unitPrice?: number}[];
+    invoiceIds: number[];
+    received: number;
+}
+
+export interface CheckoutResult {
+    invoice?: InvoiceDetails;
+    receipt?: ReceiptDetails;
+    change: number;
+}
+
 export interface InvoiceFormValues {
     studentId: number;
     dueDate?: string;
