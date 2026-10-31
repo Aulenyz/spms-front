@@ -10,9 +10,6 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
-import {TaxSection} from "./TaxSection.tsx";
-import {useAuthContext} from "../../../contexts/AuthContext.tsx";
-import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {ProductCategoryCard} from "./ProductCategoryCard.tsx";
 import {ProductCategoryActions} from "./ProductCategoryActions.tsx";
@@ -30,7 +27,6 @@ const getApiErrorMessage = (error: unknown) => {
 };
 
 export const ListProductCategoryPage = () => {
-    const {hasAuthority} = useAuthContext();
     const [pagination, setPagination] = useState(Pagination.ofSize(6));
     const [filters, setFilters] = useState<ProductCategorySearchFilters>({term: "", active: true});
     const [showCreate, setShowCreate] = useState(false);
@@ -78,7 +74,7 @@ export const ListProductCategoryPage = () => {
         <div className="space-y-6">
             <PageHeader
                 title="Categorías de pago"
-                description="Agrupa los conceptos de pago (inscripciones, mensualidades, materiales...) y define los impuestos que se aplican."
+                description="Agrupa los conceptos de pago: inscripciones, mensualidades, materiales y otros cargos."
             />
 
             <ProductCategoryActions counts={statusCounts} onCreate={() => setShowCreate(true)}/>
@@ -142,7 +138,6 @@ export const ListProductCategoryPage = () => {
                 />
             </LeftModal>
 
-            <TaxSection canEdit={hasAuthority(AuthorityKey.CATALOG_EDIT)}/>
         </div>
     );
 };

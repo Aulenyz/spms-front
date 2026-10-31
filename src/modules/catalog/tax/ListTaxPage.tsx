@@ -5,6 +5,10 @@ import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {TaxCategory} from "../../../domain/model/product/Product.ts";
 import {TaxCategoryService} from "../../../services/product/TaxCategoryService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
+import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
+import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {RightModal} from "../../../components/shared/RightModal.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
@@ -15,8 +19,13 @@ const errorMessage = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as {message?: unknown}).message === "string"
         ? (error as {message: string}).message : fallback;
 
-/** Impuestos que se pueden aplicar a los conceptos de pago. Los del sistema solo permiten cambiar el nombre. */
-export const TaxSection = ({canEdit}: {canEdit: boolean}) => {
+/**
+ * Impuestos que se aplican a los conceptos de pago. Los del sistema (Exento, ITBIS 18%) solo permiten
+ * cambiar el nombre; los demás se crean, editan y activan o inactivan aquí.
+ */
+export const ListTaxPage = () => {
+    const {hasAuthority} = useAuthContext();
+    const canEdit = hasAuthority(AuthorityKey.CATALOG_EDIT);
     const queryClient = useQueryClient();
     const [editing, setEditing] = useState<TaxCategory | null | undefined>(undefined);
     const {data: taxes = [], isLoading} = useQuery({
@@ -26,50 +35,60 @@ export const TaxSection = ({canEdit}: {canEdit: boolean}) => {
     });
 
     return (
-        <DetailSection title="Impuestos" description="Se aplican a cada concepto de pago. La educación suele estar exenta." flush
-                       actions={canEdit && <button type="button" className="btn btn-sm" onClick={() => setEditing(null)}>
-                           <i className="fa fa-plus"/>Nuevo impuesto
-                       </button>}>
-            <LoadingContent loading={isLoading} className="py-10">
-                <table className="table-shell">
-                    <thead>
-                    <tr>
-                        <th>Impuesto</th>
-                        <th>Código</th>
-                        <th className="text-right">Tasa</th>
-                        <th>Estado</th>
-                        {canEdit && <th className="w-12"/>}
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {taxes.map((tax) => (
-                        <tr key={tax.id}>
-                            <td className="font-semibold text-[var(--text-primary)]">
-                                {tax.name}
-                                {tax.systemKey && <i className="fa fa-lock ms-2 text-xs text-[var(--text-tertiary)]" title="Del sistema"/>}
-                            </td>
-                            <td>{tax.code}</td>
-                            <td className="text-right">{percent(tax.rate)}</td>
-                            <td><StatusBadge active={tax.active}/></td>
-                            {canEdit && <td className="text-right">
-                                <button type="button" className="row-action" title="Editar" aria-label="Editar impuesto" onClick={() => setEditing(tax)}>
-                                    <i className="fa fa-pen"/>
-                                </button>
-                            </td>}
+        <div className="space-y-4">
+            <PageHeader title="Impuestos"
+                        description="Los impuestos que se aplican a cada concepto de pago. La educación suele estar exenta de ITBIS."/>
+            <DetailSection title="Impuestos registrados" description="Los que tienen candado son del sistema: solo se les puede cambiar el nombre." flush
+                           actions={canEdit && <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditing(null)}>
+                               <i className="fa fa-plus"/>Nuevo impuesto
+                           </button>}>
+                <LoadingContent loading={isLoading} className="py-10">
+                    {taxes.length === 0 ? (
+                        <div className="p-5">
+                            <EmptyState title="Sin impuestos" icon="fa-percent" description="Crea el primer impuesto de la organización."/>
+                        </div>
+                    ) : (
+                    <table className="table-shell">
+                        <thead>
+                        <tr>
+                            <th>Impuesto</th>
+                            <th>Código</th>
+                            <th className="text-right">Tasa</th>
+                            <th>Estado</th>
+                            {canEdit && <th className="w-12"/>}
                         </tr>
-                    ))}
-                    </tbody>
-                </table>
-            </LoadingContent>
+                        </thead>
+                        <tbody>
+                        {taxes.map((tax) => (
+                            <tr key={tax.id}>
+                                <td className="font-semibold text-[var(--text-primary)]">
+                                    {tax.name}
+                                    {tax.systemKey && <i className="fa fa-lock ms-2 text-xs text-[var(--text-tertiary)]" title="Del sistema"/>}
+                                </td>
+                                <td>{tax.code}</td>
+                                <td className="text-right">{percent(tax.rate)}</td>
+                                <td><StatusBadge active={tax.active}/></td>
+                                {canEdit && <td className="text-right">
+                                    <button type="button" className="row-action" title="Editar" aria-label="Editar impuesto" onClick={() => setEditing(tax)}>
+                                        <i className="fa fa-pen"/>
+                                    </button>
+                                </td>}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    )}
+                </LoadingContent>
 
-            <RightModal title={editing ? "Editar impuesto" : "Nuevo impuesto"} isOpen={editing !== undefined}
-                        onClose={() => setEditing(undefined)} className="h-full w-[420px] z-[9999]">
-                {editing !== undefined && (
-                    <TaxForm tax={editing} onDone={() => setEditing(undefined)}
-                             onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.taxes})}/>
-                )}
-            </RightModal>
-        </DetailSection>
+                <RightModal title={editing ? "Editar impuesto" : "Nuevo impuesto"} isOpen={editing !== undefined}
+                            onClose={() => setEditing(undefined)} className="h-full w-[420px] z-[9999]">
+                    {editing !== undefined && (
+                        <TaxForm tax={editing} onDone={() => setEditing(undefined)}
+                                 onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.taxes})}/>
+                    )}
+                </RightModal>
+            </DetailSection>
+        </div>
     );
 };
 

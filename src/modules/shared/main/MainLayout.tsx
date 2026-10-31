@@ -33,6 +33,7 @@ const resolvePageMeta = (pathname: string) => {
     if (pathname.startsWith("/catalog")) {
         if (/^\/catalog\/products\/\d+/.test(pathname)) return {title: "Detalles", subtitle: "Conceptos de pago"};
         if (pathname.startsWith("/catalog/categories")) return {title: "Categorías de pago", subtitle: "Finanzas"};
+        if (pathname.startsWith("/catalog/taxes")) return {title: "Impuestos", subtitle: "Finanzas"};
         return {title: "Conceptos de pago", subtitle: "Finanzas"};
     }
 
@@ -136,6 +137,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (pathname.startsWith("/catalog")) {
         if (/^\/catalog\/products\/\d+/.test(pathname)) return [{label: "Conceptos de pago", to: "/catalog/products"}, {label: "Detalles", to: pathname}];
         if (pathname.startsWith("/catalog/categories")) return [{label: "Categorías de pago", to: pathname}];
+        if (pathname.startsWith("/catalog/taxes")) return [{label: "Impuestos", to: pathname}];
         return [{label: "Conceptos de pago", to: pathname}];
     }
 

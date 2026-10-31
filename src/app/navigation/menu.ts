@@ -83,6 +83,12 @@ export const navigationSections: NavigationSection[] = [
                 to: "/catalog/categories",
                 authority: AuthorityKey.CATALOG_VIEW,
             },
+            {
+                label: "Impuestos",
+                icon: "fa-percent",
+                to: "/catalog/taxes",
+                authority: AuthorityKey.CATALOG_VIEW,
+            },
         ],
     },
     {
