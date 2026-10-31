@@ -10,7 +10,7 @@ import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 type DraftState = {status: "pending" | "saving" | "done" | "discarded" | "error"; receiptId?: number; receiptNumber?: string; error?: string};
-type Entry = ChatMessage & {id: number; drafts?: PaymentDraft[]; draftStates?: DraftState[]; failed?: boolean};
+type Entry = ChatMessage & {id: number; drafts?: PaymentDraft[]; draftStates?: DraftState[]; failed?: boolean; provider?: string};
 
 const SUGGESTIONS = [
     "¿Cuánto se ha cobrado este mes?",
@@ -69,7 +69,7 @@ export const AssistantChat = () => {
     const send = useMutation({
         mutationFn: (history: ChatMessage[]) => AssistantService.instance.chat(history.slice(-MAX_HISTORY)),
         onSuccess: (reply) => setEntries((current) => [...current, {
-            id: Date.now(), role: "assistant", content: reply.reply,
+            id: Date.now(), role: "assistant", content: reply.reply, provider: reply.provider,
             drafts: reply.drafts, draftStates: reply.drafts.map(() => ({status: "pending"})),
         }]),
         onError: (error) => setEntries((current) => [...current, {
@@ -117,6 +117,7 @@ export const AssistantChat = () => {
         }
     };
 
+    const providers = statusQuery.data?.providers ?? [];
     if (!statusQuery.data?.enabled) return null;
 
     return (
@@ -132,7 +133,9 @@ export const AssistantChat = () => {
                         </span>
                         <div className="min-w-0 flex-1">
                             <strong className="block text-sm" style={{color: "var(--text-primary)"}}>Asistente</strong>
-                            <span className="text-xs" style={{color: "var(--text-tertiary)"}}>Consulta cobros, saldos e inscripciones</span>
+                            <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                                {providers.length > 1 ? `${providers[0]} · respaldo: ${providers.slice(1).join(", ")}` : "Consulta cobros, saldos e inscripciones"}
+                            </span>
                         </div>
                         {entries.length > 0 && (
                             <button type="button" className="row-action" title="Nueva conversación" aria-label="Nueva conversación"
@@ -170,6 +173,11 @@ export const AssistantChat = () => {
                                      style={entry.role === "user" ? {background: "var(--accent)"} : {color: entry.failed ? "var(--danger)" : "var(--text-primary)"}}>
                                     {entry.role === "user" ? <p className="whitespace-pre-wrap">{entry.content}</p> : <RichText text={entry.content}/>}
                                 </div>
+                                {entry.provider && providers.length > 1 && (
+                                    <span className="text-[10px] uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>
+                                        Respondió {entry.provider}{entry.provider !== providers[0] && " (respaldo)"}
+                                    </span>
+                                )}
                                 {entry.drafts?.map((draft, index) => {
                                     const state = entry.draftStates?.[index] ?? {status: "pending"};
                                     return (

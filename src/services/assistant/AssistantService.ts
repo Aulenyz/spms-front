@@ -21,6 +21,14 @@ export interface PaymentDraft {
 export interface ChatReply {
     reply: string;
     drafts: PaymentDraft[];
+    /** IA que respondió (puede ser una de respaldo). */
+    provider?: string;
+}
+
+export interface AssistantStatus {
+    enabled: boolean;
+    /** IAs configuradas, en el orden en que se prueban. */
+    providers: string[];
 }
 
 export class AssistantService extends BaseService<ChatReply> {
@@ -34,8 +42,8 @@ export class AssistantService extends BaseService<ChatReply> {
         super("/assistant");
     }
 
-    status(): Promise<{enabled: boolean}> {
-        return this.get<{enabled: boolean}>("/status");
+    status(): Promise<AssistantStatus> {
+        return this.get<AssistantStatus>("/status");
     }
 
     chat(messages: ChatMessage[]): Promise<ChatReply> {
