@@ -10,7 +10,7 @@ export type HelpArea =
     | "General"
     | "Estudiantes"
     | "Cursos"
-    | "Padres y tutores"
+    | "Representantes"
     | "Cobros"
     | "Usuarios y roles"
     | "Plantillas"
@@ -42,7 +42,7 @@ export const helpAreaOptions: Array<{value: "" | HelpArea; description: string}>
     {value: "General", description: "General"},
     {value: "Estudiantes", description: "Estudiantes"},
     {value: "Cursos", description: "Cursos"},
-    {value: "Padres y tutores", description: "Padres y tutores"},
+    {value: "Representantes", description: "Representantes"},
     {value: "Cobros", description: "Cobros"},
     {value: "Usuarios y roles", description: "Usuarios y roles"},
     {value: "Plantillas", description: "Plantillas"},
@@ -98,17 +98,17 @@ export const helpArticles: HelpArticle[] = [
     {
         id: "guardian-selection",
         type: "Académico",
-        area: "Padres y tutores",
-        title: "Asignar padres o tutores",
-        question: "¿Cómo agrego uno o varios padres al proceso de cobro o inscripción?",
-        answer: "Después de elegir el estudiante, el sistema carga los padres vinculados y también te permite registrar nuevos desde el mismo flujo.",
+        area: "Representantes",
+        title: "Asignar representantes",
+        question: "¿Cómo agrego uno o varios representantes al proceso de cobro o inscripción?",
+        answer: "Después de elegir el estudiante, el sistema carga los representantes vinculados y también te permite registrar nuevos desde el mismo flujo.",
         solution: [
             "Busca y selecciona el estudiante.",
-            "Revisa los padres ya asociados y agrégalos al listado inferior.",
-            "Si falta uno, usa el formulario lateral para crear un nuevo padre o tutor.",
-            "Confirma que las tarjetas inferiores muestren todos los padres requeridos antes de continuar.",
+            "Revisa los representantes ya asociados y agrégalos al listado inferior.",
+            "Si falta uno, usa el formulario lateral para crear un nuevo representante.",
+            "Confirma que las tarjetas inferiores muestren todos los representantes requeridos antes de continuar.",
         ],
-        tags: ["guardianes", "padres", "tutores", "inscripción"],
+        tags: ["representantes", "padres", "tutores", "inscripción"],
     },
     {
         id: "course-selection",
@@ -131,11 +131,11 @@ export const helpArticles: HelpArticle[] = [
         area: "Cobros",
         title: "Completar una nueva cobranza",
         question: "¿Qué información debo completar para registrar una cobranza escolar?",
-        answer: "El flujo se divide por pasos: estudiante, curso, padres, recursos o aportes y revisión final.",
+        answer: "El flujo se divide por pasos: estudiante, curso, representantes, recursos o aportes y revisión final.",
         solution: [
             "Busca y selecciona al estudiante.",
             "Elige el curso correspondiente si el flujo lo requiere.",
-            "Agrega uno o varios padres o tutores.",
+            "Agrega uno o varios representantes.",
             "Selecciona recursos, aportes o conceptos de cobro.",
             "Revisa el resumen lateral antes de guardar.",
         ],

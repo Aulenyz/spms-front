@@ -117,12 +117,7 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
                                 <Field label="Estudiante">{receipt.student.name}</Field>
                                 <Field label="Documento">{receipt.student.document}</Field>
-                                <Field label="Pagado por">
-                                    {receipt.guardian
-                                        ? <PermittedLink authority={AuthorityKey.GUARDIANS_VIEW} to={`/guardians/${receipt.guardian.id}`}
-                                                         className="hover:text-[var(--accent)] hover:underline">{receipt.guardian.name}</PermittedLink>
-                                        : null}
-                                </Field>
+                                <Field label="Pagado por">{receipt.guardian?.name}</Field>
                                 <Field label="Forma de pago">{PaymentMethodLabel[receipt.method]}</Field>
                                 <Field label="Referencia">{receipt.reference}</Field>
                                 <Field label="Total recibido">{money.format(receipt.amount)}</Field>

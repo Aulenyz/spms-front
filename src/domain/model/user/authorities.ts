@@ -119,9 +119,9 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.AUTHORITIES_VIEW]: "Permite ver el listado de permisos del sistema.",
     [AuthorityKey.AUTHORITY_CREATE]: "Permite crear nuevos permisos del sistema.",
 
-    [AuthorityKey.GUARDIANS_VIEW]: "Permite ver el listado de padres o tutores.",
-    [AuthorityKey.GUARDIAN_CREATE]: "Permite registrar nuevos padres o tutores.",
-    [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un padre o tutor.",
+    [AuthorityKey.GUARDIANS_VIEW]: "Permite ver el listado de representantes.",
+    [AuthorityKey.GUARDIAN_CREATE]: "Permite registrar nuevos representantes.",
+    [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un representante.",
 
     [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al módulo de profesores.",
     [AuthorityKey.TEACHER]: "Identifica usuarios elegibles para impartir clases.",

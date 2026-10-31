@@ -111,7 +111,7 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.ENROLLMENTS_VIEW,
             },
             {
-                label: "Padres / Tutores",
+                label: "Representantes",
                 icon: "fa-people-roof",
                 to: "/guardians/list",
                 authority: AuthorityKey.GUARDIANS_VIEW,

@@ -129,12 +129,7 @@ export const InvoiceAccordionRow = ({invoice, open, onToggle}: {invoice: Invoice
                             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
                                 <Field label="Estudiante">{invoice.student?.name}</Field>
                                 <Field label="Documento">{invoice.student?.document}</Field>
-                                <Field label="Facturada a">
-                                    {invoice.guardian && (
-                                        <PermittedLink authority={AuthorityKey.GUARDIANS_VIEW} to={`/guardians/${invoice.guardian.id}`}
-                                                       className="hover:text-[var(--accent)] hover:underline">{invoice.guardian.name}</PermittedLink>
-                                    )}
-                                </Field>
+                                <Field label="Facturada a">{invoice.guardian?.name}</Field>
                                 <Field label="Emitida">{formatDate(invoice.emittedAt)}</Field>
                                 <Field label="Pagado">{money.format(invoice.paid)}</Field>
                                 <Field label="Origen">{invoice.manual ? "Factura manual" : "Inscripción o cobro automático"}</Field>

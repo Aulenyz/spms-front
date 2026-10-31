@@ -1,7 +1,6 @@
 import {useCallback, useState} from "react";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {queryKeys} from "../../app/query/queryKeys.ts";
-import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
@@ -42,12 +41,12 @@ export const ListGuardianPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Padres / Tutores"
+                title="Representantes"
                 description="Consulta representantes registrados por documento, nombre o apellido desde una sola vista."
             />
 
             <DataTableCard
-                title="Listado de padres / tutores"
+                title="Listado de representantes"
                 description="Filtra por documento, nombre o apellido para localizar rapidamente un representante."
                 filters={<GuardianFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={guardians}/>}
@@ -60,15 +59,14 @@ export const ListGuardianPage = () => {
                         <th scope="col">Apellido</th>
                         <th scope="col">Teléfono</th>
                         <th scope="col">Correo</th>
-                        <th scope="col"></th>
                     </tr>
                     </thead>
                     <tbody>
                     {guardians.content.length === 0 && (
                         <tr>
-                            <td colSpan={6}>
+                            <td colSpan={5}>
                                 <EmptyState
-                                    title="No hay padres / tutores para mostrar"
+                                    title="No hay representantes para mostrar"
                                     description="Prueba otros filtros para ver mas resultados."
                                     icon="fa-people-roof"
                                 />
@@ -83,9 +81,6 @@ export const ListGuardianPage = () => {
                             <td>{guardian.lastname ?? "-"}</td>
                             <td>{guardian.phone ?? "-"}</td>
                             <td className="truncate max-w-[240px]">{guardian.email ?? "-"}</td>
-                            <td className="text-right">
-                                <TableDetailAction to={`/guardians/${guardian.id}`} state={{guardian}}/>
-                            </td>
                         </tr>
                     ))}
                     </tbody>

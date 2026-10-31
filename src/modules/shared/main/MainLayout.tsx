@@ -71,9 +71,7 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/guardians")) {
-        return /^\/guardians\/\d+/.test(pathname)
-            ? {title: "Detalles", subtitle: "Padres / Tutores"}
-            : {title: "Padres / Tutores", subtitle: "Administración"};
+        return {title: "Representantes", subtitle: "Administración"};
     }
 
     if (pathname.startsWith("/courses/templates")) {
@@ -124,7 +122,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
 
     if (/^\/guardians\/\d+/.test(pathname)) {
         return [
-            {label: "Padres / Tutores", to: "/guardians/list"},
+            {label: "Representantes", to: "/guardians/list"},
             {label: "Detalles", to: pathname},
         ];
     }
@@ -157,8 +155,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
     if (pathname.startsWith("/students")) return [{label: "Estudiantes", to: pathname}];
     if (pathname.startsWith("/guardians")) {
-        if (pathname === "/guardians/list") return [{label: "Padres / Tutores", to: "/guardians/list"}];
-        return [{label: "Padres / Tutores", to: "/guardians/list"}, {label: "Detalles", to: pathname}];
+        return [{label: "Representantes", to: "/guardians/list"}];
     }
     if (pathname.startsWith("/users")) {
         if (pathname === "/users") return [{label: "Gestión de usuarios", to: "/users"}, {label: "Usuarios", to: "/users"}];

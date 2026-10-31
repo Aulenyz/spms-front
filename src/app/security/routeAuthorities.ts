@@ -22,7 +22,6 @@ const routeAuthorityRules: RouteAuthorityRule[] = [
     {pattern: /^\/specializations\/\d+$/, authority: AuthorityKey.SPECIALIZATION_DETAILS_VIEW},
     {pattern: /^\/specializations(\/list)?$/, authority: AuthorityKey.SPECIALIZATIONS_VIEW},
 
-    {pattern: /^\/guardians\/\d+$/, authority: AuthorityKey.GUARDIAN_DETAILS_VIEW},
     {pattern: /^\/guardians(\/list)?$/, authority: AuthorityKey.GUARDIANS_VIEW},
 
     {pattern: /^\/payments(\/list)?$/, authority: AuthorityKey.PAYMENTS_VIEW},

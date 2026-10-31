@@ -50,7 +50,7 @@ export const AccountStatementPage = () => {
                 <DetailHeader
                     avatar={statement.student.name}
                     title={statement.student.name}
-                    subtitle={<>{statement.student.document}{statement.guardian && ` · Tutor: ${statement.guardian.name}`}</>}
+                    subtitle={<>{statement.student.document}{statement.guardian && ` · Representante: ${statement.guardian.name}`}</>}
                     badges={Number(statement.due) > 0
                         ? <span className={`billing-pill billing-pill-${Number(statement.overdue) > 0 ? "danger" : "warning"}`}>
                             {Number(statement.overdue) > 0 ? "Con atraso" : "Con saldo"}
