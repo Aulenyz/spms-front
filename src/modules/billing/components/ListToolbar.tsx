@@ -3,13 +3,15 @@ import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 import {SelectOption} from "../../../components/io/output/Select.tsx";
 
 /** Filtro desplegable con el mismo diseño de Estudiantes. */
-export const FilterDropdown = <T extends string, >({text, value, options, onChange}: {
+export const FilterDropdown = <T extends string, >({text, value, options, onChange, wide}: {
     text: string;
     value: T;
     options: {value: T; description: string}[];
     onChange: (value: T) => void;
+    /** Para opciones con textos largos. */
+    wide?: boolean;
 }) => (
-    <div className="w-full sm:w-[140px]">
+    <div className={wide ? "w-full sm:w-[190px]" : "w-full sm:w-[140px]"}>
         <DropdownSelect text={text} hasError={false} options={options as SelectOption[]} value={value}
                         onSelect={(selected) => onChange((selected ?? "") as T)} className="w-full"/>
     </div>

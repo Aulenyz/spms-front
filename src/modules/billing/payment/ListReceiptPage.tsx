@@ -60,7 +60,7 @@ export const ListReceiptPage = () => {
                                      setTerm(value);
                                      resetPage();
                                  }}>
-                        <FilterDropdown text="Forma de pago" value={method}
+                        <FilterDropdown text="Forma de pago" value={method} wide
                                         options={[{value: "", description: "Todas las formas"}, ...Object.values(PaymentMethod).map((value) => ({value, description: PaymentMethodLabel[value]}))]}
                                         onChange={(value) => {
                                             setMethod(value as PaymentMethod | "");

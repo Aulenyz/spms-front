@@ -25,6 +25,9 @@ import {StudentPicker} from "../components/StudentPicker.tsx";
 import {printHtml, receiptHtml} from "../print/printDocuments.ts";
 import {Guardian} from "../../../domain/student/Guardian.ts";
 import {NewStudentForm} from "./NewStudentForm.tsx";
+import {CourseSelect} from "../../../components/io/input/business/CourseSelect.tsx";
+import {Course} from "../../../domain/model/course/Course.ts";
+import {EnrollmentService} from "../../../services/student/enrollment/EnrollmentService.ts";
 import {GuardiansStep} from "./GuardiansStep.tsx";
 
 const invoiceService = InvoiceService.instance;
@@ -67,6 +70,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const [creatingStudent, setCreatingStudent] = useState(false);
     const [cart, setCart] = useState<CartLine[]>([]);
     const [pending, setPending] = useState<number[]>([]);
+    const [enrollCourse, setEnrollCourse] = useState<Course | null>(null);
     const [productId, setProductId] = useState("");
     const [quantity, setQuantity] = useState("1");
     const [price, setPrice] = useState("");
@@ -78,12 +82,15 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const [received, setReceived] = useState<string | null>(null);
     const [result, setResult] = useState<CheckoutResult | null>(null);
 
+    // Solo al abrir (o si cambia el estudiante de origen): un objeto nuevo del mismo estudiante no reinicia el cobro.
+    const initialStudentId = initialStudent?.id;
     useEffect(() => {
         if (!isOpen) return;
         setStudent(initialStudent ?? null);
         setPending(invoiceId ? [invoiceId] : []);
         setStep(initialStudent ? "GUARDIAN" : "STUDENT");
-    }, [isOpen, initialStudent, invoiceId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, initialStudentId, invoiceId]);
 
     const productsQuery = useQuery({
         queryKey: [...queryKeys.products.all, "checkout"],
@@ -104,10 +111,26 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? "")), [invoicesQuery.data]);
     const owedBefore = round(openInvoices.reduce((sum, invoice) => sum + invoice.due, 0));
 
+    // La inscripción va primero: sin inscripción en el periodo no se pueden agregar otros conceptos.
+    const standingQuery = useQuery({
+        queryKey: [...queryKeys.enrollments.all, "standing", student?.id ?? null],
+        queryFn: ({signal}) => EnrollmentService.instance.withSignal(signal).standing(student!.id),
+        enabled: isOpen && Boolean(student),
+        meta: {errorMessage: "No se pudo consultar la inscripción del estudiante."},
+    });
+    const standing = standingQuery.data;
+    const notEnrolled = standing?.state === "NOT_ENROLLED";
+    const pendingEnrollmentInvoice = standing?.state === "PENDING" ? standing.invoiceId : undefined;
+    const conceptsLocked = notEnrolled && !enrollCourse;
+    const enrollmentAmount = notEnrolled && enrollCourse ? round(Number(standing?.conceptPrice ?? 0)) : 0;
+    useEffect(() => {
+        if (pendingEnrollmentInvoice) setPending((current) => current.includes(pendingEnrollmentInvoice) ? current : [pendingEnrollmentInvoice, ...current]);
+    }, [pendingEnrollmentInvoice]);
+
     const subtotal = round(cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0));
     const discountAmount = Math.min(subtotal, Math.max(0, Number(discount) || 0));
     const pendingTotal = round(openInvoices.filter((invoice) => pending.includes(invoice.id)).reduce((sum, invoice) => sum + invoice.due, 0));
-    const total = round(subtotal - discountAmount + pendingTotal);
+    const total = round(enrollmentAmount + subtotal - discountAmount + pendingTotal);
     const receivedAmount = received === null ? total : Math.max(0, Number(received) || 0);
     const balance = round(total - receivedAmount);
     const guardian = payer;
@@ -121,6 +144,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
             discount: discountAmount || undefined,
             items: cart.map((line) => ({productId: line.productId, quantity: line.quantity, unitPrice: line.unitPrice})),
             invoiceIds: openInvoices.filter((invoice) => pending.includes(invoice.id)).map((invoice) => invoice.id),
+            enrollCourseId: notEnrolled && enrollCourse ? enrollCourse.id : undefined,
             received: receivedAmount,
         }),
         onSuccess: (saved) => {
@@ -139,6 +163,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         setCreatingStudent(false);
         setCart([]);
         setPending(invoiceId ? [invoiceId] : []);
+        setEnrollCourse(null);
         setProductId("");
         setQuantity("1");
         setPrice("");
@@ -227,12 +252,19 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                 </div>
                 <div className="rounded-2xl px-3 py-3" style={{background: "var(--surface-muted)"}}>
                     <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em]" style={{color: "var(--text-tertiary)"}}>
-                        <span>Conceptos</span><span className="font-semibold">{cart.length + pending.length}</span>
+                        <span>Conceptos</span><span className="font-semibold">{cart.length + pending.length + (enrollmentAmount > 0 ? 1 : 0)}</span>
                     </div>
-                    {cart.length + pending.length === 0 ? (
+                    {cart.length + pending.length + (enrollmentAmount > 0 ? 1 : 0) === 0 ? (
                         <p className="mt-2" style={{color: "var(--text-tertiary)"}}>Sin conceptos</p>
                     ) : (
                         <div className="mt-2 space-y-1.5">
+                            {enrollmentAmount > 0 && enrollCourse && (
+                                <div className="flex justify-between gap-3">
+                                    <span className="truncate" style={{color: "var(--text-primary)"}}>{standing?.conceptName}
+                                        <span className="ms-1 text-xs" style={{color: "var(--text-tertiary)"}}>({[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")})</span></span>
+                                    <span className="font-semibold" style={{color: "var(--text-primary)"}}>{money.format(enrollmentAmount)}</span>
+                                </div>
+                            )}
                             {cart.map((line) => (
                                 <div key={line.key} className="flex justify-between gap-3">
                                     <span className="truncate" style={{color: "var(--text-primary)"}}>{line.quantity > 1 && `${line.quantity} × `}{line.name}</span>
@@ -400,11 +432,46 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
 
                                         {step === "CONCEPTS" && (
                                             <div className="space-y-6">
-                                                <div className="space-y-3">
-                                                    <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>Conceptos</h3>
+                                                {notEnrolled && (
+                                                    <div className="space-y-3 rounded-2xl border p-4"
+                                                         style={{borderColor: enrollCourse ? "var(--success)" : "var(--warning)", background: enrollCourse ? "var(--success-soft)" : "var(--warning-soft)"}}>
+                                                        <p className="text-sm font-semibold" style={{color: "var(--text-primary)"}}>
+                                                            <i className={`fa ${enrollCourse ? "fa-circle-check" : "fa-user-clock"} me-2`}
+                                                               style={{color: enrollCourse ? "var(--success)" : "var(--warning)"}}/>
+                                                            {enrollCourse
+                                                                ? `Se inscribirá en ${[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")} (${standing?.periodName}); la ${(standing?.conceptName ?? "inscripción").toLowerCase()} se cobra primero.`
+                                                                : `${student?.name} no está inscrito en ${standing?.periodName}. Elige el curso para cobrar la ${(standing?.conceptName ?? "inscripción").toLowerCase()} primero:`}
+                                                        </p>
+                                                        {Number(standing?.conceptPrice ?? 0) > 0 ? (
+                                                            <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto]">
+                                                                <CourseSelect value={enrollCourse} onChange={(course) => {
+                                                                    setEnrollCourse(course);
+                                                                    setReceived(null);
+                                                                }}/>
+                                                                <strong className="whitespace-nowrap pb-2 text-sm" style={{color: "var(--text-primary)"}}>
+                                                                    {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
+                                                                </strong>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-sm" style={{color: "var(--danger)"}}>
+                                                                Configura el precio de {standing?.conceptName} en Conceptos de pago para poder inscribir.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {standing?.state === "PENDING" && standing.invoiceNumber && (
+                                                    <p className="rounded-2xl px-4 py-3 text-sm" style={{background: "var(--warning-soft)", color: "var(--text-primary)"}}>
+                                                        <i className="fa fa-user-clock me-2" style={{color: "var(--warning)"}}/>
+                                                        La inscripción en {standing.courseName} está pendiente de pago: {standing.invoiceNumber} va incluida primero.
+                                                    </p>
+                                                )}
+                                                <div className={`space-y-3 ${conceptsLocked ? "pointer-events-none opacity-50" : ""}`} aria-disabled={conceptsLocked}>
+                                                    <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>
+                                                        Conceptos{conceptsLocked && <span className="ms-2 text-xs font-normal" style={{color: "var(--text-tertiary)"}}>disponibles después de elegir el curso</span>}
+                                                    </h3>
                                                     <div className="flex flex-wrap gap-2">
                                                         {products.filter((product) => Number(product.price) > 0).map((product) => (
-                                                            <button key={product.id} type="button" onClick={() => addToCart(product.id)}
+                                                            <button key={product.id} type="button" onClick={() => addToCart(product.id)} disabled={conceptsLocked}
                                                                     className="rounded-full border px-3 py-1.5 text-xs font-semibold"
                                                                     style={{borderColor: "var(--border-soft)", color: "var(--text-secondary)", background: "var(--surface)"}}>
                                                                 + {product.name} · {money.format(Number(product.price))}
@@ -472,6 +539,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                                     <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5">
                                                                         <input type="checkbox" className="checkbox checkbox-sm checkbox-primary"
                                                                                checked={pending.includes(invoice.id)}
+                                                                               disabled={invoice.id === pendingEnrollmentInvoice}
+                                                                               title={invoice.id === pendingEnrollmentInvoice ? "La inscripción se cobra primero" : undefined}
                                                                                onChange={(event) => {
                                                                                    setPending((current) => event.target.checked ? [...current, invoice.id] : current.filter((id) => id !== invoice.id));
                                                                                    setReceived(null);
@@ -547,6 +616,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                 <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>Revisa antes de cobrar</h3>
                                                 <ul className="space-y-2 text-sm" style={{color: "var(--text-secondary)"}}>
                                                     <li><i className="fa fa-id-card me-2"/>{student?.name}{guardian && ` · paga ${guardian.firstname} ${guardian.lastname}`}</li>
+                                                    {notEnrolled && enrollCourse && <li><i className="fa fa-user-check me-2"/>Se inscribe en {[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")} con {standing?.conceptName} por {money.format(enrollmentAmount)}.</li>}
                                                     {cart.length > 0 && <li><i className="fa fa-file-invoice-dollar me-2"/>Se crea una factura por {money.format(subtotal - discountAmount)} con {cart.length} {cart.length === 1 ? "concepto" : "conceptos"}{discountAmount > 0 && ` (descuento ${money.format(discountAmount)})`}.</li>}
                                                     {pending.length > 0 && <li><i className="fa fa-clock-rotate-left me-2"/>Se pagan {pending.length} {pending.length === 1 ? "factura pendiente" : "facturas pendientes"} por {money.format(pendingTotal)}.</li>}
                                                     <li><i className={`fa ${PaymentMethodIcon[method]} me-2`}/>{receivedAmount > 0 ? `Se reciben ${money.format(receivedAmount)} en ${PaymentMethodLabel[method].toLowerCase()}.` : "No se recibe dinero: todo queda pendiente."}</li>
