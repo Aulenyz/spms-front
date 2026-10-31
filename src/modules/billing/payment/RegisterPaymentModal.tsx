@@ -7,7 +7,6 @@ import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {InvoiceService, ReceiptService} from "../../../services/billing/BillingService.ts";
 import {ProductService} from "../../../services/product/ProductService.ts";
-import {GuardianService} from "../../../services/student/guardian/GuardianService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
 import {ProductStatus} from "../../../domain/model/product/Product.ts";
 import {
@@ -22,6 +21,9 @@ import {
 } from "../../../domain/billing/Invoice.ts";
 import {InvoiceStatusPill} from "../components/BillingPills.tsx";
 import {StudentPicker} from "../components/StudentPicker.tsx";
+import {Guardian} from "../../../domain/student/Guardian.ts";
+import {NewStudentForm} from "./NewStudentForm.tsx";
+import {GuardiansStep} from "./GuardiansStep.tsx";
 
 const invoiceService = InvoiceService.instance;
 const SYSTEM_ONLY = ["ENROLLMENT", "RE_ENROLLMENT"];
@@ -59,7 +61,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const queryClient = useQueryClient();
     const [step, setStep] = useState<Step>("STUDENT");
     const [student, setStudent] = useState<PersonRef | null>(null);
-    const [guardianId, setGuardianId] = useState<number | undefined>();
+    const [payer, setPayer] = useState<Guardian | undefined>();
+    const [creatingStudent, setCreatingStudent] = useState(false);
     const [cart, setCart] = useState<CartLine[]>([]);
     const [pending, setPending] = useState<number[]>([]);
     const [productId, setProductId] = useState("");
@@ -89,17 +92,6 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const products = useMemo(() => (productsQuery.data?.content ?? [])
         .filter((product) => !SYSTEM_ONLY.includes(product.systemKey ?? "")), [productsQuery.data]);
 
-    const guardiansQuery = useQuery({
-        queryKey: ["guardians", "by-student", student?.id ?? null],
-        queryFn: ({signal}) => GuardianService.instance.withSignal(signal).listByStudentId(student!.id, {...Pagination.first, size: 20}),
-        enabled: isOpen && Boolean(student),
-        meta: {silent: true},
-    });
-    const guardians = guardiansQuery.data?.content ?? [];
-    useEffect(() => {
-        if (guardians.length > 0 && guardianId === undefined) setGuardianId(guardians[0].id);
-    }, [guardians, guardianId]);
-
     const invoicesQuery = useQuery({
         queryKey: queryKeys.invoices.open(student?.id),
         queryFn: ({signal}) => invoiceService.withSignal(signal).open(student!.id),
@@ -116,13 +108,13 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const total = round(subtotal - discountAmount + pendingTotal);
     const receivedAmount = received === null ? total : Math.max(0, Number(received) || 0);
     const balance = round(total - receivedAmount);
-    const guardian = guardians.find((item) => item.id === guardianId);
+    const guardian = payer;
     const needsReference = NEEDS_REFERENCE.includes(method) && receivedAmount > 0 && !reference.trim();
     const overpaidByCard = balance < 0 && method !== PaymentMethod.CASH;
 
     const checkout = useMutation({
         mutationFn: () => ReceiptService.instance.checkout({
-            studentId: student!.id, guardianId, method, date,
+            studentId: student!.id, guardianId: payer!.id, method, date,
             reference: reference.trim() || undefined, notes: notes.trim() || undefined,
             discount: discountAmount || undefined,
             items: cart.map((line) => ({productId: line.productId, quantity: line.quantity, unitPrice: line.unitPrice})),
@@ -141,7 +133,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const reset = () => {
         setStep(initialStudent ? "GUARDIAN" : "STUDENT");
         setStudent(initialStudent ?? null);
-        setGuardianId(undefined);
+        setPayer(undefined);
+        setCreatingStudent(false);
         setCart([]);
         setPending(invoiceId ? [invoiceId] : []);
         setProductId("");
@@ -190,12 +183,12 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         if (target === "STUDENT") return true;
         if (!student) return false;
         if (target === "GUARDIAN") return true;
+        if (!payer) return false;
         if (target === "CONCEPTS") return true;
         return total > 0 && !needsReference && !overpaidByCard;
     };
     const currentIndex = STEPS.findIndex((item) => item.id === step);
     const next = STEPS[currentIndex + 1]?.id;
-    const previous = STEPS[currentIndex - 1]?.id;
 
     if (!isOpen) return null;
 
@@ -364,14 +357,32 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                     <section className="rounded-[22px] border p-5" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
                                         {step === "STUDENT" && (
                                             <div className="space-y-4">
-                                                <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>¿A quién se le cobra?</h3>
-                                                <StudentPicker value={student} onChange={(value) => {
-                                                    setStudent(value);
-                                                    setGuardianId(undefined);
-                                                    setPending([]);
-                                                    setReceived(null);
-                                                }}/>
-                                                {student && (
+                                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                                    <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>¿A quién se le cobra?</h3>
+                                                    {!creatingStudent && (
+                                                        <button type="button" className="btn btn-sm" onClick={() => setCreatingStudent(true)}>
+                                                            <i className="fa fa-user-plus"/>Registrar estudiante nuevo
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {creatingStudent ? (
+                                                    <NewStudentForm onCancel={() => setCreatingStudent(false)} onCreated={(created) => {
+                                                        setCreatingStudent(false);
+                                                        setStudent(created);
+                                                        setPayer(undefined);
+                                                        setPending([]);
+                                                        setReceived(null);
+                                                        setStep("GUARDIAN");
+                                                    }}/>
+                                                ) : (
+                                                    <StudentPicker value={student} onChange={(value) => {
+                                                        setStudent(value);
+                                                        setPayer(undefined);
+                                                        setPending([]);
+                                                        setReceived(null);
+                                                    }}/>
+                                                )}
+                                                {student && !creatingStudent && (
                                                     <p className="rounded-xl px-4 py-3 text-sm" style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
                                                         {openInvoices.length > 0
                                                             ? <>Tiene <strong>{openInvoices.length}</strong> {openInvoices.length === 1 ? "factura pendiente" : "facturas pendientes"} por <strong>{money.format(owedBefore)}</strong>.</>
@@ -381,36 +392,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                             </div>
                                         )}
 
-                                        {step === "GUARDIAN" && (
-                                            <div className="space-y-4">
-                                                <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>¿Quién paga?</h3>
-                                                {guardiansQuery.isPending ? (
-                                                    <p className="text-sm"><i className="fa fa-spinner fa-spin me-2"/>Cargando representantes…</p>
-                                                ) : guardians.length === 0 ? (
-                                                    <p className="text-sm" style={{color: "var(--text-tertiary)"}}>
-                                                        Este estudiante no tiene representantes registrados. Puedes continuar; el recibo saldrá a nombre del estudiante.
-                                                    </p>
-                                                ) : (
-                                                    <div className="grid gap-3 sm:grid-cols-2">
-                                                        {guardians.map((item) => (
-                                                            <button key={item.id} type="button" onClick={() => setGuardianId(item.id)}
-                                                                    className="flex items-center gap-3 rounded-2xl border p-3 text-left"
-                                                                    style={{borderColor: item.id === guardianId ? "var(--accent)" : "var(--border-soft)",
-                                                                        background: item.id === guardianId ? "var(--accent-soft)" : "var(--surface)"}}>
-                                                                <span className="flex h-10 w-10 items-center justify-center rounded-xl font-bold"
-                                                                      style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
-                                                                    {item.firstname[0]}{item.lastname[0]}
-                                                                </span>
-                                                                <span className="min-w-0">
-                                                                    <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>{item.firstname} {item.lastname}</strong>
-                                                                    <span className="text-xs" style={{color: "var(--text-tertiary)"}}>{item.document}{item.phone && ` · ${item.phone}`}</span>
-                                                                </span>
-                                                                {item.id === guardianId && <i className="fa fa-circle-check ms-auto" style={{color: "var(--accent)"}}/>}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                        {step === "GUARDIAN" && student && (
+                                            <GuardiansStep student={student} payerId={payer?.id} onPayer={setPayer}/>
                                         )}
 
                                         {step === "CONCEPTS" && (
@@ -577,12 +560,11 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                             </div>
                         </div>
 
-                        <footer className="flex items-center justify-between gap-3 border-t px-5 py-3 lg:px-6"
+                        <footer className="flex items-center justify-end gap-3 border-t px-5 py-3 lg:px-6"
                                 style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                            <button type="button" className="btn btn-sm" disabled={!previous || (step === "GUARDIAN" && Boolean(initialStudent))}
-                                    onClick={() => previous && setStep(previous)}>
-                                <i className="fa fa-arrow-left"/>Atrás
-                            </button>
+                            {step === "GUARDIAN" && !payer && (
+                                <span className="me-auto text-xs" style={{color: "var(--text-tertiary)"}}>Agrega o elige el representante que paga para continuar.</span>
+                            )}
                             {next ? (
                                 <button type="button" className="btn btn-sm btn-primary" disabled={!canContinue(next)} onClick={() => setStep(next)}>
                                     Continuar<i className="fa fa-arrow-right"/>
