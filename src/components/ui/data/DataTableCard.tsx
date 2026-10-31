@@ -10,6 +10,8 @@ type DataTableCardProps = {
     children: ReactNode;
     footer?: ReactNode;
     className?: string;
+    /** "row": filters on their own line under the title, in one row. Default: beside the title. */
+    filtersLayout?: "side" | "row";
 };
 
 export const DataTableCard = ({
@@ -21,6 +23,7 @@ export const DataTableCard = ({
     children,
     footer,
     className,
+    filtersLayout = "side",
 }: DataTableCardProps) => {
     return (
         <section className={clsx("data-table-card", className)}>
@@ -35,13 +38,14 @@ export const DataTableCard = ({
                             {description && <p className="surface-card-description">{description}</p>}
                         </div>
 
-                        {(actions || filters) && (
+                        {(actions || (filters && filtersLayout === "side")) && (
                             <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
                                 {actions && <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">{actions}</div>}
-                                {filters && <div className="w-full lg:w-auto">{filters}</div>}
+                                {filters && filtersLayout === "side" && <div className="w-full lg:w-auto">{filters}</div>}
                             </div>
                         )}
                     </div>
+                    {filters && filtersLayout === "row" && <div className="pt-2">{filters}</div>}
                 </div>
             </header>
             <div className="data-table-card-body">{children}</div>

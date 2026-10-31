@@ -8,6 +8,7 @@ import {ProductService} from "../../../services/product/ProductService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
 import {ProductStatus} from "../../../domain/model/product/Product.ts";
 import {money, PersonRef} from "../../../domain/billing/Invoice.ts";
+import {useBillingSettings} from "../useBillingSettings.ts";
 import {StudentPicker} from "../components/StudentPicker.tsx";
 
 const SYSTEM_ONLY = ["ENROLLMENT", "RE_ENROLLMENT"];
@@ -21,9 +22,11 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
     student?: PersonRef | null;
 }) => {
     const queryClient = useQueryClient();
+    const {taxesEnabled} = useBillingSettings();
     const [student, setStudent] = useState<PersonRef | null>(initialStudent ?? null);
     const [lines, setLines] = useState<Line[]>([{key: 1, quantity: "1", unitPrice: ""}]);
-    const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
+    // Vacío: vence según los días para pagar de Configuración → Facturación.
+    const [dueDate, setDueDate] = useState("");
     const [notes, setNotes] = useState("");
 
     const productsQuery = useQuery({
@@ -41,7 +44,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
 
     const create = useMutation({
         mutationFn: () => InvoiceService.instance.createInvoice({
-            studentId: student!.id, dueDate, notes: notes.trim() || undefined,
+            studentId: student!.id, dueDate: dueDate || undefined, notes: notes.trim() || undefined,
             items: lines.map((line) => ({productId: line.productId!, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice)})),
         }),
         onSuccess: (saved) => {
@@ -61,6 +64,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
         setStudent(initialStudent ?? null);
         setLines([{key: 1, quantity: "1", unitPrice: ""}]);
         setNotes("");
+        setDueDate("");
         onClose();
     };
 
@@ -108,6 +112,9 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
                         <span className="form-label mb-1 block text-sm font-semibold">Vence</span>
                         <input type="date" className="input input-bordered input-sm w-full" value={dueDate}
                                onChange={(event) => setDueDate(event.target.value)}/>
+                        <span className="mt-1 block text-xs" style={{color: "var(--text-tertiary)"}}>
+                            Vacío: según los días para pagar de Configuración.
+                        </span>
                     </label>
                     <label className="block">
                         <span className="form-label mb-1 block text-sm font-semibold">Descripción</span>
@@ -120,7 +127,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
                     <div>
                         <span className="block text-xs uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>Subtotal</span>
                         <strong className="text-xl" style={{color: "var(--text-primary)"}}>{money.format(total)}</strong>
-                        <span className="ms-2 text-xs" style={{color: "var(--text-tertiary)"}}>+ impuestos de cada concepto</span>
+                        {taxesEnabled && <span className="ms-2 text-xs" style={{color: "var(--text-tertiary)"}}>+ impuestos de cada concepto</span>}
                     </div>
                     <div className="flex gap-2">
                         <button type="button" className="btn btn-sm" onClick={close}>Cancelar</button>

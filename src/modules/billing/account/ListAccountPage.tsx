@@ -1,6 +1,7 @@
 import {useState} from "react";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
-import {Link} from "react-router-dom";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {AccountService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -11,7 +12,7 @@ import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
-import {ListToolbar} from "../components/ListToolbar.tsx";
+import {FilterDropdown, ListToolbar} from "../components/ListToolbar.tsx";
 
 const EMPTY_PAGE: Page<AccountBalance> = Pagination.empty<AccountBalance>();
 
@@ -39,19 +40,17 @@ export const ListAccountPage = () => {
                 title="Saldos por estudiante"
                 description="Ordenados de mayor a menor deuda."
                 filters={
-                    <ListToolbar term={term} placeholder="Buscar estudiante por nombre o documento"
+                    <ListToolbar term={term} placeholder="Nombre o documento"
                                  onTerm={(value) => {
                                      setTerm(value);
                                      setPagination((current) => ({...current, page: 0}));
                                  }}>
-                        <label className="flex items-center gap-2 text-sm" style={{color: "var(--text-secondary)"}}>
-                            <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={withDebt}
-                                   onChange={(event) => {
-                                       setWithDebt(event.target.checked);
-                                       setPagination((current) => ({...current, page: 0}));
-                                   }}/>
-                            Solo con deuda
-                        </label>
+                        <FilterDropdown text="Mostrar" value={withDebt ? "debt" : "all"}
+                                        options={[{value: "debt", description: "Con deuda"}, {value: "all", description: "Todos"}]}
+                                        onChange={(value) => {
+                                            setWithDebt(value === "debt");
+                                            setPagination((current) => ({...current, page: 0}));
+                                        }}/>
                     </ListToolbar>
                 }
                 footer={!loading ? (
@@ -81,9 +80,9 @@ export const ListAccountPage = () => {
                                 {accounts.content.map((account) => (
                                     <tr key={account.studentId}>
                                         <td>
-                                            <Link to={`/accounts/${account.studentId}`} className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+                                            <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${account.studentId}`} className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
                                                 {account.firstname} {account.lastname}
-                                            </Link>
+                                            </PermittedLink>
                                             <span className="block text-xs text-[var(--text-tertiary)]">
                                                 {account.document}{account.openInvoices > 0 && ` · ${account.openInvoices} ${account.openInvoices === 1 ? "factura pendiente" : "facturas pendientes"}`}
                                             </span>
@@ -96,9 +95,9 @@ export const ListAccountPage = () => {
                                         </td>
                                         <td>{account.oldestDueDate ? formatDate(account.oldestDueDate) : "Al día"}</td>
                                         <td className="text-right">
-                                            <Link to={`/accounts/${account.studentId}`} className="row-action" title="Ver estado de cuenta" aria-label="Ver estado de cuenta">
+                                            <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${account.studentId}`} className="row-action" title="Ver estado de cuenta" aria-label="Ver estado de cuenta">
                                                 <i className="fa fa-chevron-right"/>
-                                            </Link>
+                                            </PermittedLink>
                                         </td>
                                     </tr>
                                 ))}

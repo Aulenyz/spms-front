@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {Link, useParams} from "react-router-dom";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
+import {useParams} from "react-router-dom";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -51,7 +52,7 @@ export const ReceiptDetailsPage = () => {
                 <DetailHeader
                     avatar="fa-receipt"
                     title={`Recibo ${receipt.number}`}
-                    subtitle={<><Link to={`/accounts/${receipt.student.id}`} className="hover:text-[var(--accent)]">{receipt.student.name}</Link> · {formatDate(receipt.date)}</>}
+                    subtitle={<><PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${receipt.student.id}`} className="hover:text-[var(--accent)]">{receipt.student.name}</PermittedLink> · {formatDate(receipt.date)}</>}
                     badges={<ReceiptStatusPill status={receipt.status}/>}
                     backTo="/payments/list"
                     backLabel="Pagos recibidos"
@@ -99,7 +100,7 @@ export const ReceiptDetailsPage = () => {
                     <tbody>
                     {payments.map((payment) => (
                         <tr key={payment.id}>
-                            <td><Link to={`/invoices/${payment.invoiceId}`} className="hover:text-[var(--accent)]">{payment.invoiceNumber}</Link></td>
+                            <td><PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${payment.invoiceId}`} className="hover:text-[var(--accent)]">{payment.invoiceNumber}</PermittedLink></td>
                             <td>{payment.description ?? "—"}</td>
                             <td className="text-right">{money.format(payment.amount)}</td>
                         </tr>

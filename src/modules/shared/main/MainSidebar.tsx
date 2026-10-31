@@ -6,6 +6,7 @@ import logo from "../../../assets/images/logo.webp";
 import {navigationSections, secondaryQuickLinks} from "../../../app/navigation/menu.ts";
 import {APP_DESCRIPTOR, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 import {RegisterPaymentModal} from "../../billing/payment/RegisterPaymentModal.tsx";
+import {useBillingSettings} from "../../billing/useBillingSettings.ts";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 
 type MainSidebarProps = {
@@ -29,13 +30,15 @@ export const MainSidebar = ({
         navigationSections[1]?.title ?? "",
     ]);
 
+    const {taxesEnabled} = useBillingSettings();
+
     const filteredSections = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
 
         const visibleSections = navigationSections
             .map((section) => ({
                 ...section,
-                items: section.items.filter((item) => hasAuthority(item.authority)),
+                items: section.items.filter((item) => hasAuthority(item.authority) && (item.feature !== "taxes" || taxesEnabled)),
             }))
             .filter((section) => section.items.length > 0);
 
@@ -49,7 +52,7 @@ export const MainSidebar = ({
                 items: section.items.filter((item) => item.label.toLowerCase().includes(normalizedQuery)),
             }))
             .filter((section) => section.items.length > 0);
-    }, [hasAuthority, query]);
+    }, [hasAuthority, query, taxesEnabled]);
 
     const visibleQuickLinks = useMemo(
         () => secondaryQuickLinks.filter((item) => hasAuthority(item.authority)),
