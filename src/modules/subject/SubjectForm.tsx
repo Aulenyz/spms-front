@@ -36,8 +36,6 @@ export const SubjectForm = ({
     });
     const [suggesting, setSuggesting] = useState(false);
     const [suggested, setSuggested] = useState(false);
-    // El código solo se reemplaza si está vacío o lo puso la IA; uno escrito a mano se respeta.
-    const [codeFromAi, setCodeFromAi] = useState(false);
     const canSuggest = Boolean(assistant?.enabled) && values.name.trim().length >= 3;
 
     const suggest = async () => {
@@ -45,10 +43,8 @@ export const SubjectForm = ({
         setSuggesting(true);
         try {
             const {description, code} = await AssistantService.instance.describe("subject", values.name.trim());
-            const fillCode = Boolean(code) && (!values.code.trim() || codeFromAi);
-            setValues((prev) => ({...prev, description, code: fillCode ? code! : prev.code}));
-            setErrors((prev) => ({...prev, description: undefined, code: fillCode ? undefined : prev.code}));
-            if (fillCode) setCodeFromAi(true);
+            setValues((prev) => ({...prev, description, code: code || prev.code}));
+            setErrors((prev) => ({...prev, description: undefined, code: code ? undefined : prev.code}));
             setSuggested(true);
         } catch {
             // Si la IA no responde, la descripción se escribe a mano.
@@ -174,37 +170,16 @@ export const SubjectForm = ({
                 <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
                     Codigo*
                 </label>
-                <label className="input input-sm w-full">
-                    <i className="fa fa-hashtag me-1"/>
-                    <input
-                        placeholder="Código corto"
-                        value={values.code}
-                        maxLength={24}
-                        onChange={(event) => {
-                            setField("code", event.target.value);
-                            setCodeFromAi(false);
-                        }}
-                    />
-                </label>
-                {errors.code && <p className="mt-1 text-xs font-semibold text-red-500">{errors.code}</p>}
-            </div>
-
-            <div className="space-y-1">
-                <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Descripcion*
-                </label>
-                <div className="flex items-start gap-2">
-                    <textarea
-                        className="input h-auto min-h-[120px] min-w-0 flex-1 resize-none py-3 leading-relaxed"
-                        placeholder={assistant?.enabled ? "Escríbela o pulsa el botón para que la IA la sugiera" : "Describe la materia"}
-                        value={values.description}
-                        maxLength={255}
-                        rows={4}
-                        onChange={(event) => {
-                            setField("description", event.target.value);
-                            setSuggested(false);
-                        }}
-                    />
+                <div className="flex items-center gap-2">
+                    <label className="input input-sm min-w-0 flex-1">
+                        <i className="fa fa-hashtag me-1"/>
+                        <input
+                            placeholder="Código corto"
+                            value={values.code}
+                            maxLength={24}
+                            onChange={(event) => setField("code", event.target.value)}
+                        />
+                    </label>
                     {assistant?.enabled && (
                         <button type="button" className="btn btn-sm btn-square shrink-0" disabled={!canSuggest || suggesting}
                                 title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir código y descripción con IA"
@@ -215,9 +190,24 @@ export const SubjectForm = ({
                 </div>
                 {(suggesting || suggested) && (
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
-                        {suggesting ? "La IA está escribiendo…" : codeFromAi ? "Código y descripción sugeridos por IA; puedes editarlos." : "Sugerida por IA; puedes editarla."}
+                        {suggesting ? "La IA está escribiendo el código y la descripción…" : "Código y descripción sugeridos por IA; puedes editarlos."}
                     </p>
                 )}
+                {errors.code && <p className="mt-1 text-xs font-semibold text-red-500">{errors.code}</p>}
+            </div>
+
+            <div className="space-y-1">
+                <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
+                    Descripcion*
+                </label>
+                <textarea
+                    className="input h-auto min-h-[120px] w-full resize-none py-3 leading-relaxed"
+                    placeholder="Describe la materia"
+                    value={values.description}
+                    maxLength={255}
+                    rows={4}
+                    onChange={(event) => setField("description", event.target.value)}
+                />
                 {errors.description && <p className="mt-1 text-xs font-semibold text-red-500">{errors.description}</p>}
             </div>
 
