@@ -140,18 +140,6 @@ export const navigationSections: NavigationSection[] = [
                 to: "/specializations/list",
                 authority: AuthorityKey.SPECIALIZATIONS_VIEW,
             },
-            {
-                label: "Precios",
-                icon: "fa-tags",
-                to: "/courses/templates/prices",
-                authority: AuthorityKey.PRICE_TEMPLATES_VIEW,
-            },
-            {
-                label: "Materiales",
-                icon: "fa-boxes-stacked",
-                to: "/courses/templates/materials",
-                authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW,
-            },
         ],
     },
     {
@@ -199,8 +187,6 @@ const defaultAuthorizedRoutes: Array<{ to: string; authority: AuthorityKey }> = 
     {to: "/guardians/list", authority: AuthorityKey.GUARDIANS_VIEW},
     {to: "/subjects/list", authority: AuthorityKey.SUBJECTS_VIEW},
     {to: "/courses/templates", authority: AuthorityKey.COURSE_TEMPLATES_VIEW},
-    {to: "/courses/templates/prices", authority: AuthorityKey.PRICE_TEMPLATES_VIEW},
-    {to: "/courses/templates/materials", authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW},
     {to: "/help", authority: AuthorityKey.HELP_VIEW},
     {to: "/organizations", authority: AuthorityKey.ORGANIZATIONS_VIEW},
 ];

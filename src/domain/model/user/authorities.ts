@@ -56,8 +56,6 @@ export enum AuthorityKey {
     COURSE_TEMPLATE_DETAILS_VIEW = "COURSE_TEMPLATE_DETAILS_VIEW",
     COURSE_GENERATE = "COURSE_GENERATE",
 
-    PRICE_TEMPLATES_VIEW = "PRICE_TEMPLATES_VIEW",
-    MATERIAL_TEMPLATES_VIEW = "MATERIAL_TEMPLATES_VIEW",
 
     SUBJECTS_VIEW = "SUBJECTS_VIEW",
     SUBJECT_CREATE = "SUBJECT_CREATE",
@@ -136,8 +134,6 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de una plantilla de curso.",
     [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de una plantilla para el período académico actual.",
 
-    [AuthorityKey.PRICE_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de precios.",
-    [AuthorityKey.MATERIAL_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de materiales.",
 
     [AuthorityKey.SUBJECTS_VIEW]: "Permite ver el listado de materias.",
     [AuthorityKey.SUBJECT_CREATE]: "Permite crear nuevas materias.",

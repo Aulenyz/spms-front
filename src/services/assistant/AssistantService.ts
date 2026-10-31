@@ -47,7 +47,7 @@ export class AssistantService extends BaseService<ChatReply> {
     }
 
     /** Descripción escrita por la IA para un registro que se está creando (p. ej. un área especializada). */
-    describe(kind: "specialization", name: string, detail?: string): Promise<{description: string}> {
+    describe(kind: "specialization" | "subject", name: string, detail?: string): Promise<{description: string}> {
         return this.post<{description: string}>("/describe", {kind, name, detail});
     }
 

@@ -26,8 +26,6 @@ const UserOptionsPage = lazyPage(() => import("./modules/user/tabs/UserOptionsPa
 const RoleListPage = lazyPage(() => import("./modules/user/role/RoleListPage.tsx"), "RoleListPage");
 const AuthorityListPage = lazyPage(() => import("./modules/user/authority/AuthorityListPage.tsx"), "AuthorityListPage");
 const ListCourseTemplatePage = lazyPage(() => import("./modules/course/template/ListCourseTemplatePage.tsx"), "ListCourseTemplatePage");
-const ListPriceTemplatePage = lazyPage(() => import("./modules/course/template/ListPriceTemplatePage.tsx"), "ListPriceTemplatePage");
-const ListMaterialTemplatePage = lazyPage(() => import("./modules/course/template/ListMaterialTemplatePage.tsx"), "ListMaterialTemplatePage");
 const CourseTemplateDetailsPage = lazyPage(() => import("./modules/course/template/CourseTemplateDetailsPage.tsx"), "CourseTemplateDetailsPage");
 const SpecializationForm = lazyPage(() => import("./modules/specialization/create/SpecializationForm.tsx"), "SpecializationForm");
 const UserInvitationListPage = lazyPage(() => import("./modules/user/invitation/UserInvitationListPage.tsx"), "UserInvitationListPage");
@@ -77,8 +75,6 @@ export const AppRouting = () => {
 
                 {/* Templates as separate screens (no tabs). */}
                 <Route path="/courses/templates" element={<ListCourseTemplatePage/>}/>
-                <Route path="/courses/templates/prices" element={<ListPriceTemplatePage/>}/>
-                <Route path="/courses/templates/materials" element={<ListMaterialTemplatePage/>}/>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

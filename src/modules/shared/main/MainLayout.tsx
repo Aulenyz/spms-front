@@ -131,8 +131,6 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
 
     if (pathname.startsWith("/courses/templates")) {
         if (pathname === "/courses/templates") return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: "/courses/templates"}];
-        if (pathname.startsWith("/courses/templates/prices")) return [{label: "Plantillas", to: "/courses/templates"}, {label: "Precios", to: pathname}];
-        if (pathname.startsWith("/courses/templates/materials")) return [{label: "Plantillas", to: "/courses/templates"}, {label: "Materiales", to: pathname}];
         return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: pathname}];
     }
 

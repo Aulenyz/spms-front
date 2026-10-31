@@ -10,8 +10,6 @@ const routeAuthorityRules: RouteAuthorityRule[] = [
 
     {pattern: /^\/students(\/list)?$/, authority: AuthorityKey.STUDENTS_VIEW},
 
-    {pattern: /^\/courses\/templates\/prices$/, authority: AuthorityKey.PRICE_TEMPLATES_VIEW},
-    {pattern: /^\/courses\/templates\/materials$/, authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW},
     {pattern: /^\/courses\/templates\/\d+$/, authority: AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW},
     {pattern: /^\/courses\/templates$/, authority: AuthorityKey.COURSE_TEMPLATES_VIEW},
 
