@@ -294,3 +294,7 @@ export interface InvoiceFormValues {
 
 export const formatDate = (value?: string) =>
     value ? new Date(value.length === 10 ? `${value}T00:00:00` : value).toLocaleDateString("es-DO", {day: "2-digit", month: "short", year: "numeric"}) : "—";
+
+/** Enlaces a una factura o un recibo: la lista filtrada por su número, con ese elemento abierto. */
+export const invoiceLink = (number: string) => `/invoices/list?q=${encodeURIComponent(number)}`;
+export const receiptLink = (number: string) => `/payments/list?q=${encodeURIComponent(number)}`;

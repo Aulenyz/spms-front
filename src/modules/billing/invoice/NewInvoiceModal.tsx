@@ -18,7 +18,7 @@ type Line = {key: number; productId?: number; quantity: string; unitPrice: strin
 export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStudent}: {
     isOpen: boolean;
     onClose: () => void;
-    onCreated: (invoiceId: number) => void;
+    onCreated: (invoice: {id: number; number: string}) => void;
     student?: PersonRef | null;
 }) => {
     const queryClient = useQueryClient();
@@ -52,7 +52,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
             void queryClient.invalidateQueries({queryKey: queryKeys.invoices.all});
             void queryClient.invalidateQueries({queryKey: queryKeys.accounts.all});
             close();
-            onCreated(saved.invoice.id);
+            onCreated({id: saved.invoice.id, number: saved.invoice.number});
         },
         onError: (error) => toast.error((error as {message?: string})?.message ?? "No se pudo crear la factura."),
     });

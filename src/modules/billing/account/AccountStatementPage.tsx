@@ -4,7 +4,7 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import clsx from "clsx";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {AccountService} from "../../../services/billing/BillingService.ts";
-import {formatDate, money} from "../../../domain/billing/Invoice.ts";
+import {formatDate, money, invoiceLink, receiptLink} from "../../../domain/billing/Invoice.ts";
 import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
@@ -111,7 +111,7 @@ export const AccountStatementPage = () => {
                                     <tr key={`${movement.type}-${movement.documentId}`}>
                                         <td className="whitespace-nowrap">{formatDate(movement.date)}</td>
                                         <td className="whitespace-nowrap">
-                                            <Link to={movement.type === "INVOICE" ? `/invoices/${movement.documentId}` : `/payments/${movement.documentId}`}
+                                            <Link to={movement.type === "INVOICE" ? invoiceLink(movement.document) : receiptLink(movement.document)}
                                                   className="font-semibold hover:text-[var(--accent)]">{movement.document}</Link>
                                         </td>
                                         <td>{movement.description ?? "—"}</td>
@@ -135,7 +135,7 @@ export const AccountStatementPage = () => {
                                 <thead><tr><th>Factura</th><th>Vence</th><th className="text-right">Total</th><th className="text-right">Saldo</th><th>Estado</th></tr></thead>
                                 <tbody>
                                 {statement.invoices.map((invoice) => (
-                                    <tr key={invoice.id} className="cursor-pointer" onClick={() => navigate(`/invoices/${invoice.id}`)}>
+                                    <tr key={invoice.id} className="cursor-pointer" onClick={() => navigate(invoiceLink(invoice.number))}>
                                         <td>
                                             <span className="font-semibold">{invoice.description || invoice.number}</span>
                                             <span className="block text-xs text-[var(--text-tertiary)]">{invoice.number}</span>
@@ -161,7 +161,7 @@ export const AccountStatementPage = () => {
                                 <thead><tr><th>Recibo</th><th>Fecha</th><th>Forma de pago</th><th className="text-right">Monto</th><th>Estado</th></tr></thead>
                                 <tbody>
                                 {statement.receipts.map((receipt) => (
-                                    <tr key={receipt.id} className="cursor-pointer" onClick={() => navigate(`/payments/${receipt.id}`)}>
+                                    <tr key={receipt.id} className="cursor-pointer" onClick={() => navigate(receiptLink(receipt.number))}>
                                         <td className="font-semibold">{receipt.number}</td>
                                         <td className="whitespace-nowrap">{formatDate(receipt.date)}</td>
                                         <td><PaymentMethodTag method={receipt.method}/></td>
@@ -181,7 +181,7 @@ export const AccountStatementPage = () => {
                 refresh();
             }}/>
             <NewInvoiceModal isOpen={invoicing} student={statement.student} onClose={() => setInvoicing(false)}
-                             onCreated={(id) => navigate(`/invoices/${id}`)}/>
+                             onCreated={(invoice) => navigate(invoiceLink(invoice.number))}/>
         </div>
     );
 };

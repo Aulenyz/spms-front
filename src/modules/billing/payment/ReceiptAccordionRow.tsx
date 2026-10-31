@@ -4,7 +4,7 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {ReceiptService} from "../../../services/billing/BillingService.ts";
-import {formatDate, money, PaymentMethodLabel, Receipt, ReceiptStatus} from "../../../domain/billing/Invoice.ts";
+import {formatDate, money, PaymentMethodLabel, Receipt, ReceiptStatus, invoiceLink} from "../../../domain/billing/Invoice.ts";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {ReceiptStatusPill} from "../components/BillingPills.tsx";
@@ -151,7 +151,7 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                                                 <tr key={`${concept.invoiceId}-${index}`} className="border-t" style={{borderColor: "var(--border-soft)"}}>
                                                     <td className="px-3 py-1.5 font-semibold" style={{color: "var(--text-primary)"}}>{concept.description}</td>
                                                     <td className="px-3 py-1.5">
-                                                        <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${concept.invoiceId}`}
+                                                        <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={invoiceLink(concept.invoiceNumber)}
                                                                        className="hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-secondary)"}}>
                                                             {concept.invoiceNumber}
                                                         </PermittedLink>

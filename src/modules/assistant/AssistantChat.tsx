@@ -3,7 +3,7 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {Link} from "react-router-dom";
 import {AssistantService, ChatMessage, PaymentDraft} from "../../services/assistant/AssistantService.ts";
 import {ReceiptService} from "../../services/billing/BillingService.ts";
-import {money, PaymentMethodLabel} from "../../domain/billing/Invoice.ts";
+import {money, PaymentMethodLabel, receiptLink} from "../../domain/billing/Invoice.ts";
 import {queryKeys} from "../../app/query/queryKeys.ts";
 import {useCompany} from "../../contexts/CompanyContext.tsx";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
@@ -196,7 +196,7 @@ export const AssistantChat = () => {
                                             </ul>
                                             <div className="mt-3 flex items-center justify-end gap-2">
                                                 {state.status === "done" ? (
-                                                    <Link to={`/payments/${state.receiptId}`} className="text-xs font-semibold" style={{color: "var(--success)"}}>
+                                                    <Link to={receiptLink(state.receiptNumber ?? "")} className="text-xs font-semibold" style={{color: "var(--success)"}}>
                                                         <i className="fa fa-check me-1"/>Registrado: recibo {state.receiptNumber}
                                                     </Link>
                                                 ) : state.status === "discarded" ? (

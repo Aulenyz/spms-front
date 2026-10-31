@@ -11,7 +11,7 @@ import {queryKeys} from "../../../../app/query/queryKeys.ts";
 import {Course} from "../../../../domain/model/course/Course.ts";
 import {Student} from "../../../../domain/student/Student.ts";
 import {Pagination} from "../../../../domain/filters/Page.ts";
-import {EnrollmentResult, money} from "../../../../domain/billing/Invoice.ts";
+import {EnrollmentResult, money, invoiceLink} from "../../../../domain/billing/Invoice.ts";
 import {EnrollmentStatus, EnrollmentStatusLabel} from "../../../../domain/student/Enrollment.ts";
 
 const studentService = StudentService.instance;
@@ -104,7 +104,7 @@ export const EnrollStudentModal = ({isOpen, onClose}: Props) => {
                         }}>
                             Inscribir otro
                         </button>
-                        <Link to={`/invoices/${result.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>
+                        <Link to={invoiceLink(result.invoice.number)} className="btn btn-sm btn-primary" onClick={close}>
                             Ver factura
                         </Link>
                     </div>

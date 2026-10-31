@@ -1,11 +1,11 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {keepPreviousData, useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {InvoiceService, AccountService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {Invoice, InvoiceStatus, InvoiceStatusLabel} from "../../../domain/billing/Invoice.ts";
+import {Invoice, InvoiceStatus, InvoiceStatusLabel, invoiceLink} from "../../../domain/billing/Invoice.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
@@ -26,7 +26,13 @@ export const ListInvoicePage = () => {
     const canCreate = hasAuthority(AuthorityKey.INVOICE_CREATE);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [term, setTerm] = useState("");
+    // ?q=NÚMERO llega desde otros enlaces: filtra por ese número y lo abre.
+    const [searchParams] = useSearchParams();
+    const linked = searchParams.get("q") ?? "";
+    const [term, setTerm] = useState(linked);
+    useEffect(() => {
+        if (linked) setTerm(linked);
+    }, [linked]);
     const [status, setStatus] = useState<InvoiceStatus | "">("");
     const [open, setOpen] = useState(false);
     const [pagination, setPagination] = useState<Pagination>(Pagination.ofSize(10));
@@ -42,6 +48,10 @@ export const ListInvoicePage = () => {
         meta: {errorMessage: "No se pudieron cargar las facturas."},
     });
     const invoices = invoicesQuery.data ?? EMPTY_PAGE;
+    useEffect(() => {
+        const match = invoices.content.find((invoice) => invoice.number === linked);
+        if (match) setOpenId(match.id);
+    }, [invoices, linked]);
     const loading = invoicesQuery.isPending || (invoicesQuery.isFetching && invoicesQuery.isPlaceholderData);
 
     const recurring = useMutation({
@@ -128,7 +138,7 @@ export const ListInvoicePage = () => {
             </DataTableCard>
 
             <NewInvoiceModal isOpen={creating} onClose={() => setCreating(false)}
-                             onCreated={(id) => navigate(`/invoices/${id}`)}/>
+                             onCreated={(invoice) => navigate(invoiceLink(invoice.number))}/>
         </div>
     );
 };

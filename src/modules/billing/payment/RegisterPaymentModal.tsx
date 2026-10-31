@@ -10,16 +10,7 @@ import {InvoiceService, ReceiptService} from "../../../services/billing/BillingS
 import {ProductService} from "../../../services/product/ProductService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
 import {ProductStatus} from "../../../domain/model/product/Product.ts";
-import {
-    CheckoutResult,
-    formatDate,
-    money,
-    NEEDS_REFERENCE,
-    PaymentMethod,
-    PaymentMethodIcon,
-    PaymentMethodLabel,
-    PersonRef,
-} from "../../../domain/billing/Invoice.ts";
+import {CheckoutResult, formatDate, money, NEEDS_REFERENCE, PaymentMethod, PaymentMethodIcon, PaymentMethodLabel, PersonRef, invoiceLink} from "../../../domain/billing/Invoice.ts";
 import {InvoiceStatusPill} from "../components/BillingPills.tsx";
 import {StudentPicker} from "../components/StudentPicker.tsx";
 import {printHtml, receiptHtml} from "../print/printDocuments.ts";
@@ -350,7 +341,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                         <i className="fa fa-print"/>Imprimir recibo
                                     </button>
                                 ) : result.invoice && (
-                                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${result.invoice.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>Ver factura</PermittedLink>
+                                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={invoiceLink(result.invoice.invoice.number)} className="btn btn-sm btn-primary" onClick={close}>Ver factura</PermittedLink>
                                 )}
                             </div>
                         </div>

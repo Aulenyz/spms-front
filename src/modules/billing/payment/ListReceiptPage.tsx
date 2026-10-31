@@ -1,4 +1,5 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import {useSearchParams} from "react-router-dom";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {ReceiptService} from "../../../services/billing/BillingService.ts";
@@ -20,7 +21,13 @@ const EMPTY_PAGE: Page<Receipt> = Pagination.empty<Receipt>();
 
 export const ListReceiptPage = () => {
     const {hasAuthority} = useAuthContext();
-    const [term, setTerm] = useState("");
+    // ?q=NÚMERO llega desde otros enlaces: filtra por ese número y lo abre.
+    const [searchParams] = useSearchParams();
+    const linked = searchParams.get("q") ?? "";
+    const [term, setTerm] = useState(linked);
+    useEffect(() => {
+        if (linked) setTerm(linked);
+    }, [linked]);
     const [method, setMethod] = useState<PaymentMethod | "">("");
     const [status, setStatus] = useState<ReceiptStatus | "">(ReceiptStatus.PAID);
     const [pagination, setPagination] = useState<Pagination>(Pagination.ofSize(10));
@@ -36,6 +43,10 @@ export const ListReceiptPage = () => {
         meta: {errorMessage: "No se pudieron cargar los pagos."},
     });
     const receipts = receiptsQuery.data ?? EMPTY_PAGE;
+    useEffect(() => {
+        const match = receipts.content.find((receipt) => receipt.number === linked);
+        if (match) setOpenId(match.id);
+    }, [receipts, linked]);
     const loading = receiptsQuery.isPending || (receiptsQuery.isFetching && receiptsQuery.isPlaceholderData);
     const resetPage = () => setPagination((current) => ({...current, page: 0}));
 

@@ -8,7 +8,7 @@ import {SurfaceCard} from "../../../components/ui/surfaces/SurfaceCard.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {AccountService} from "../../../services/billing/BillingService.ts";
-import {formatDate, money, PaymentMethodLabel} from "../../../domain/billing/Invoice.ts";
+import {formatDate, money, PaymentMethodLabel, receiptLink} from "../../../domain/billing/Invoice.ts";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
@@ -143,7 +143,7 @@ export const Dashboard = () => {
                                     <ul className="divide-y" style={{borderColor: "var(--border-soft)"}}>
                                         {summary.latestReceipts.map((receipt) => (
                                             <li key={receipt.id}>
-                                                <PermittedLink authority={AuthorityKey.PAYMENTS_VIEW} to={`/payments/${receipt.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
+                                                <PermittedLink authority={AuthorityKey.PAYMENTS_VIEW} to={receiptLink(receipt.number)} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
                                                     <span>
                                                         <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{receipt.student.name}</strong>
                                                         <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
