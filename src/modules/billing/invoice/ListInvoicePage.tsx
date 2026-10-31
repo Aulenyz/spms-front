@@ -61,7 +61,7 @@ export const ListInvoicePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Facturas"
+                title="Facturas emitidas"
                 description="Todo lo que se ha cobrado a los estudiantes: inscripciones, mensualidades y ventas."
                 actions={canCreate ? (
                     <>
@@ -78,7 +78,7 @@ export const ListInvoicePage = () => {
             />
 
             <DataTableCard
-                title="Facturas emitidas"
+                title="Facturas"
                 description="Las más recientes primero. Toca una factura para ver sus conceptos y pagos."
                 filters={
                     <ListToolbar term={term} placeholder="Factura o estudiante"

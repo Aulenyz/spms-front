@@ -20,7 +20,7 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/invoices")) {
-        return /^\/invoices\/\d+/.test(pathname) ? {title: "Factura", subtitle: "Facturas"} : {title: "Facturas", subtitle: "Finanzas"};
+        return /^\/invoices\/\d+/.test(pathname) ? {title: "Factura", subtitle: "Facturas emitidas"} : {title: "Facturas emitidas", subtitle: "Finanzas"};
     }
 
     if (pathname.startsWith("/accounts")) {
@@ -155,8 +155,8 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         return [{label: "Pagos recibidos", to: "/payments/list"}, {label: "Recibo", to: pathname}];
     }
     if (pathname.startsWith("/invoices")) {
-        if (pathname === "/invoices/list") return [{label: "Facturas", to: pathname}];
-        return [{label: "Facturas", to: "/invoices/list"}, {label: "Factura", to: pathname}];
+        if (pathname === "/invoices/list") return [{label: "Facturas emitidas", to: pathname}];
+        return [{label: "Facturas emitidas", to: "/invoices/list"}, {label: "Factura", to: pathname}];
     }
     if (pathname.startsWith("/accounts")) {
         if (pathname === "/accounts/list") return [{label: "Estados de cuenta", to: pathname}];
