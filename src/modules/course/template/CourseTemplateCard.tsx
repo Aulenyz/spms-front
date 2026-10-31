@@ -59,7 +59,7 @@ export const CourseTemplateCard = ({courseTemplate}: Props) => {
                         {name}
                     </h3>
                     <p className="text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                        {description || "Sin descripcion registrada para esta plantilla."}
+                        {description || "Sin descripción registrada para esta plantilla."}
                     </p>
                 </div>
 

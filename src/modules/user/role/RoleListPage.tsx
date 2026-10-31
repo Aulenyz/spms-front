@@ -50,7 +50,7 @@ export const RoleListPage = () => {
 
             <DataTableCard
                 title="Roles"
-                description="Administra perfiles, descripcion y cantidad de permisos asignados."
+                description="Administra perfiles, descripción y cantidad de permisos asignados."
                 filters={<RoleFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={roles}/>}
             >
@@ -58,7 +58,7 @@ export const RoleListPage = () => {
                     <thead>
                     <tr>
                         <th scope="col">Nombre</th>
-                        <th scope="col">Descripcion</th>
+                        <th scope="col">Descripción</th>
                         <th scope="col">Permisos</th>
                         <th scope="col"></th>
                     </tr>

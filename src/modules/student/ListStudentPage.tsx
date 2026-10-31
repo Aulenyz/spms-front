@@ -51,14 +51,14 @@ export const ListStudentPage = () => {
         <div className="space-y-6">
             <PageHeader
                 title="Listado de estudiantes"
-                description="Consulta registro, genero y estado academico desde una sola vista."
+                description="Consulta registro, género y estado académico desde una sola vista."
             />
 
             <StudentBreadcrumb onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
                 title="Estudiantes"
-                description="Filtra el listado por estado y revisa la informacion principal de cada alumno."
+                description="Filtra el listado por estado y revisa la información principal de cada alumno."
                 status={<StudentStatusPill status={filters.status as StudentStatus}/>}
                 filters={<StudentFilter onFilter={handleUpdateFilter}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={students}/>}
@@ -69,7 +69,7 @@ export const ListStudentPage = () => {
                         <th scope="col">Documento</th>
                         <th scope="col">Nombre</th>
                         <th scope="col">Apellido</th>
-                        <th scope="col">Genero</th>
+                        <th scope="col">Género</th>
                         <th scope="col">Estado</th>
                         <th scope="col"></th>
                     </tr>

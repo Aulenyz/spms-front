@@ -92,7 +92,7 @@ export const SelectOrganizationPage = () => {
                                 navigate(errorPath, {replace: true});
                                 return;
                             }
-                            toast.error("No se pudo actualizar la sesion del espacio.");
+                            toast.error("No se pudo actualizar la sesión del espacio.");
                         }
                         return;
                     }
@@ -112,7 +112,7 @@ export const SelectOrganizationPage = () => {
                             navigate(errorPath, {replace: true});
                             return;
                         }
-                        toast.error("No se pudo actualizar la sesion del espacio.");
+                        toast.error("No se pudo actualizar la sesión del espacio.");
                     }
                     return;
                 }
@@ -148,7 +148,7 @@ export const SelectOrganizationPage = () => {
                 navigate(errorPath, {replace: true});
                 return;
             }
-            toast.error("No se pudo actualizar la sesion del espacio.");
+            toast.error("No se pudo actualizar la sesión del espacio.");
         }
     };
 
@@ -220,7 +220,7 @@ export const SelectOrganizationPage = () => {
                                 <p className="mt-2 text-sm text-[var(--text-secondary)]">Contacta al administrador para obtener acceso.</p>
                                 <div className="mt-5 flex justify-center">
                                     <button type="button" onClick={() => logout?.()} className="btn btn-sm btn-primary">
-                                        Cerrar sesion
+                                        Cerrar sesión
                                     </button>
                                 </div>
                             </div>
@@ -334,7 +334,7 @@ export const SelectOrganizationPage = () => {
 
                                 <div className="flex justify-center pt-2">
                                     <button type="button" onClick={() => logout?.()} className="btn btn-sm btn-light">
-                                        Cerrar sesion
+                                        Cerrar sesión
                                     </button>
                                 </div>
                             </>

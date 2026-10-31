@@ -49,9 +49,9 @@ export const ListCourseTemplatePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Configuracion"
+                eyebrow="Configuración"
                 title="Plantillas de cursos"
-                description="Gestiona las plantillas base usadas para organizar cursos, niveles y estructuras academicas."
+                description="Gestiona las plantillas base usadas para organizar cursos, niveles y estructuras académicas."
             />
 
             <CourseTemplateBreadcrumb onCreate={() => setShowCreate(true)}/>

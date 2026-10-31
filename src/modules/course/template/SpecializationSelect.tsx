@@ -126,7 +126,7 @@ export const SpecializationSelect = ({
             event.preventDefault();
             if (items.length > 0) {
                 onChange(items[0]);
-                toast.success("Especializacion seleccionada.");
+                toast.success("Especialización seleccionada.");
                 setOpen(false);
             }
         }
@@ -199,7 +199,7 @@ export const SpecializationSelect = ({
                                     type="button"
                                     onClick={() => {
                                         onChange(spec);
-                                        toast.success("Especializacion seleccionada.");
+                                        toast.success("Especialización seleccionada.");
                                         setOpen(false);
                                     }}
                                     className={clsx(

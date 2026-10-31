@@ -49,7 +49,7 @@ export const UserInvitationForm = ({onSubmit}: { onSubmit?: () => void }) => {
         const nextErrors: Partial<Record<keyof UserInvitationFormValues, string>> = {};
         const email = values.email.trim();
         if (!email) nextErrors.email = "El correo es obligatorio.";
-        else if (!/\S+@\S+\.\S+/.test(email)) nextErrors.email = "Introduce un correo valido.";
+        else if (!/\S+@\S+\.\S+/.test(email)) nextErrors.email = "Introduce un correo válido.";
         if (!values.roleId || Number(values.roleId) <= 0) nextErrors.roleId = "Selecciona un rol.";
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
@@ -72,10 +72,10 @@ export const UserInvitationForm = ({onSubmit}: { onSubmit?: () => void }) => {
             }
 
             await userInvitationService.create("/send", payload);
-            toast.success("Invitacion enviada con exito.");
+            toast.success("Invitación enviada con éxito.");
             onSubmit?.();
         } catch {
-            toast.error("Error enviando la invitacion.");
+            toast.error("Error enviando la invitación.");
         } finally {
             setSubmitting(false);
         }
@@ -94,7 +94,7 @@ export const UserInvitationForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     Datos principales
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Envia una invitacion con el rol que tendra disponible el usuario al aceptar.
+                    Envia una invitación con el rol que tendra disponible el usuario al aceptar.
                 </div>
             </div>
 
@@ -143,7 +143,7 @@ export const UserInvitationForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     className="btn btn-sm btn-primary"
                     disabled={submitting || !canSubmit}
                 >
-                    {submitting ? "Enviando..." : "Enviar invitacion"}
+                    {submitting ? "Enviando..." : "Enviar invitación"}
                     <i className="fa fa-paper-plane ms-2"/>
                 </button>
             </div>

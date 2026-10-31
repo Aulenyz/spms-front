@@ -47,10 +47,10 @@ export const SubjectForm = ({
         const nextErrors: Partial<Record<keyof SubjectFormValues, string>> = {};
         if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio.";
         else if (values.name.trim().length > 96) nextErrors.name = "El nombre no puede exceder 96 caracteres.";
-        if (!values.code.trim()) nextErrors.code = "El codigo es obligatorio.";
-        else if (values.code.trim().length > 24) nextErrors.code = "El codigo no puede exceder 24 caracteres.";
-        if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria.";
-        else if (values.description.trim().length > 255) nextErrors.description = "La descripcion no puede exceder 255 caracteres.";
+        if (!values.code.trim()) nextErrors.code = "El código es obligatorio.";
+        else if (values.code.trim().length > 24) nextErrors.code = "El código no puede exceder 24 caracteres.";
+        if (!values.description.trim()) nextErrors.description = "La descripción es obligatoria.";
+        else if (values.description.trim().length > 255) nextErrors.description = "La descripción no puede exceder 255 caracteres.";
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
     };
@@ -73,7 +73,7 @@ export const SubjectForm = ({
             }
 
             if (await subjectService.existsByCode(payload.code, initial?.id)) {
-                setErrors((prev) => ({...prev, code: "Ya existe una materia con ese codigo."}));
+                setErrors((prev) => ({...prev, code: "Ya existe una materia con ese código."}));
                 return;
             }
 
@@ -118,7 +118,7 @@ export const SubjectForm = ({
                     Datos principales
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Registra el nombre, codigo y descripcion base de la materia.
+                    Registra el nombre, código y descripción base de la materia.
                 </div>
             </div>
 
@@ -145,7 +145,7 @@ export const SubjectForm = ({
                 <label className="input input-sm w-full">
                     <i className="fa fa-hashtag me-1"/>
                     <input
-                        placeholder="Codigo corto"
+                        placeholder="Código corto"
                         value={values.code}
                         maxLength={24}
                         onChange={(event) => setField("code", event.target.value)}

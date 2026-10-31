@@ -48,13 +48,13 @@ export const ListSpecializationPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Areas especializadas"
-                description="Administra las areas especializadas disponibles."
+                title="Áreas especializadas"
+                description="Administra las áreas especializadas disponibles."
             />
 
             <DataTableCard
-                title="Areas especializadas"
-                description="Consulta las areas academica disponible."
+                title="Áreas especializadas"
+                description="Consulta las áreas académica disponible."
                 actions={
                     <>
                         {hasAuthority(AuthorityKey.SPECIALIZATION_CREATE) && (
@@ -64,10 +64,10 @@ export const ListSpecializationPage = () => {
                                     onClick={() => setShowModal(true)}
                                 >
                                     <i className="fa fa-plus me-1"/>
-                                    <span>Nueva area</span>
+                                    <span>Nueva área</span>
                                 </button>
                                 <LeftModal
-                                    title="Agregar area"
+                                    title="Agregar área"
                                     isOpen={showModal}
                                     onClose={() => setShowModal(false)}
                                     className="w-[400px] h-full z-[9999]"
@@ -93,8 +93,8 @@ export const ListSpecializationPage = () => {
             >
                 {specializations.content.length === 0 ? (
                     <EmptyState
-                        title="No hay areas especializadas"
-                        description="Ajusta los filtros o agrega una nueva area."
+                        title="No hay áreas especializadas"
+                        description="Ajusta los filtros o agrega una nueva área."
                         icon="fa-book-open"
                     />
                 ) : (

@@ -7,7 +7,7 @@ import {LoadingPage} from "../../../components/io/output/LoadingPage.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {RouteErrorBoundary} from "../../../app/routing/RouteErrorBoundary.tsx";
 import {resolveRouteAuthority} from "../../../app/security/routeAuthorities.ts";
-import {resolveFirstAuthorizedPath} from "../../../app/navigation/menu.ts";
+import {resolveFirstAuthorizedPath, resolveRouteTone} from "../../../app/navigation/menu.ts";
 
 const resolvePageMeta = (pathname: string) => {
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
@@ -19,11 +19,11 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/students")) {
-        return {title: "Estudiantes", subtitle: "Registro academico"};
+        return {title: "Estudiantes", subtitle: "Registro académico"};
     }
 
     if (pathname.startsWith("/subjects")) {
-        return {title: "Materias", subtitle: "Gestion academica"};
+        return {title: "Materias", subtitle: "Gestión académica"};
     }
 
     if (pathname.startsWith("/help")) {
@@ -40,35 +40,35 @@ const resolvePageMeta = (pathname: string) => {
     if (pathname.startsWith("/courses")) {
         return /^\/courses\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Cursos"}
-            : {title: "Cursos", subtitle: "Gestion academica"};
+            : {title: "Cursos", subtitle: "Gestión académica"};
     }
 
     if (pathname.startsWith("/enrollments")) {
-        return {title: "Inscripciones", subtitle: "Flujo academico"};
+        return {title: "Inscripciones", subtitle: "Flujo académico"};
     }
 
     if (pathname.startsWith("/users")) {
         return /^\/users\/roles\/\d+/.test(pathname)
-            ? {title: "Detalles", subtitle: "Gestion de usuarios"}
+            ? {title: "Detalles", subtitle: "Gestión de usuarios"}
             : /^\/users\/\d+/.test(pathname)
-            ? {title: "Detalles", subtitle: "Gestion de usuarios"}
-            : {title: "Usuarios", subtitle: "Gestion de usuarios"};
+            ? {title: "Detalles", subtitle: "Gestión de usuarios"}
+            : {title: "Usuarios", subtitle: "Gestión de usuarios"};
     }
 
     if (pathname.startsWith("/specializations")) {
         return /^\/specializations\/\d+/.test(pathname)
-            ? {title: "Detalles", subtitle: "Areas especializadas"}
-            : {title: "Areas especializadas", subtitle: "Estructura academica"};
+            ? {title: "Detalles", subtitle: "Áreas especializadas"}
+            : {title: "Áreas especializadas", subtitle: "Estructura académica"};
     }
 
     if (pathname.startsWith("/guardians")) {
         return /^\/guardians\/\d+/.test(pathname)
             ? {title: "Detalles", subtitle: "Padres / Tutores"}
-            : {title: "Padres / Tutores", subtitle: "Administracion"};
+            : {title: "Padres / Tutores", subtitle: "Administración"};
     }
 
     if (pathname.startsWith("/courses/templates")) {
-        return {title: "Plantillas", subtitle: "Configuracion base"};
+        return {title: "Plantillas", subtitle: "Configuración base"};
     }
 
     return {title: "Panel", subtitle: "Resumen operativo"};
@@ -93,21 +93,21 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
 
     if (/^\/specializations\/\d+/.test(pathname)) {
         return [
-            {label: "Areas especializadas", to: "/specializations/list"},
+            {label: "Áreas especializadas", to: "/specializations/list"},
             {label: "Detalles", to: pathname},
         ];
     }
 
     if (/^\/users\/\d+/.test(pathname)) {
         return [
-            {label: "Gestion de usuarios", to: "/users"},
+            {label: "Gestión de usuarios", to: "/users"},
             {label: "Usuarios", to: "/users"},
             {label: "Detalles", to: pathname},
         ];
     }
     if (/^\/users\/roles\/\d+/.test(pathname)) {
         return [
-            {label: "Gestion de usuarios", to: "/users"},
+            {label: "Gestión de usuarios", to: "/users"},
             {label: "Roles", to: "/users/roles"},
             {label: "Detalles", to: pathname},
         ];
@@ -150,13 +150,13 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         return [{label: "Padres / Tutores", to: "/guardians/list"}, {label: "Detalles", to: pathname}];
     }
     if (pathname.startsWith("/users")) {
-        if (pathname === "/users") return [{label: "Gestion de usuarios", to: "/users"}, {label: "Usuarios", to: "/users"}];
-        if (pathname.startsWith("/users/roles")) return [{label: "Gestion de usuarios", to: "/users"}, {label: "Roles", to: pathname}];
-        if (pathname.startsWith("/users/authorities")) return [{label: "Gestion de usuarios", to: "/users"}, {label: "Permisos", to: pathname}];
-        if (pathname.startsWith("/users/invitations")) return [{label: "Gestion de usuarios", to: "/users"}, {label: "Invitaciones", to: pathname}];
-        return [{label: "Gestion de usuarios", to: "/users"}, {label: "Usuarios", to: pathname}];
+        if (pathname === "/users") return [{label: "Gestión de usuarios", to: "/users"}, {label: "Usuarios", to: "/users"}];
+        if (pathname.startsWith("/users/roles")) return [{label: "Gestión de usuarios", to: "/users"}, {label: "Roles", to: pathname}];
+        if (pathname.startsWith("/users/authorities")) return [{label: "Gestión de usuarios", to: "/users"}, {label: "Permisos", to: pathname}];
+        if (pathname.startsWith("/users/invitations")) return [{label: "Gestión de usuarios", to: "/users"}, {label: "Invitaciones", to: pathname}];
+        return [{label: "Gestión de usuarios", to: "/users"}, {label: "Usuarios", to: pathname}];
     }
-    if (pathname.startsWith("/specializations")) return [{label: "Areas especializadas", to: pathname}];
+    if (pathname.startsWith("/specializations")) return [{label: "Áreas especializadas", to: pathname}];
     if (pathname.startsWith("/home")) return [{label: "Inicio", to: pathname}];
 
     return [];
@@ -212,7 +212,7 @@ export const MainLayout = () => {
                     }))}
                 />
 
-                <main id="content" role="main" className="app-shell-content">
+                <main id="content" role="main" className="app-shell-content" data-tone={resolveRouteTone(location.pathname)}>
                     <div className="app-shell-content-inner">
                         <RouteErrorBoundary resetKey={location.pathname}>
                             <Suspense fallback={<LoadingContent loading className="min-h-[50vh]"/>}>

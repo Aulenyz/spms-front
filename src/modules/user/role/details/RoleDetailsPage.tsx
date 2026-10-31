@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from "react";
-import {Link, useLocation, useParams} from "react-router-dom";
+import {useLocation, useParams} from "react-router-dom";
 import clsx from "clsx";
 import {toast} from "react-toastify";
 
@@ -9,13 +9,11 @@ import {UserAuthority, UserRole} from "../../../../domain/model/user/user.ts";
 import {Page, Pagination} from "../../../../domain/filters/Page.ts";
 import {useAuthContext} from "../../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../../domain/model/user/authorities.ts";
-
-type TabKey = "details" | "authorities";
-
-const TABS: Array<{key: TabKey; label: string; icon: string; hint: string}> = [
-    {key: "details", label: "Detalles", icon: "fa-id-card", hint: "Info"},
-    {key: "authorities", label: "Asignaciones", icon: "fa-sliders", hint: "Arrastrar"},
-];
+import {DetailHeader} from "../../../../components/ui/detail/DetailHeader.tsx";
+import {DetailSection} from "../../../../components/ui/detail/DetailSection.tsx";
+import {Badge} from "../../../../components/ui/detail/StatusBadge.tsx";
+import {EmptyState} from "../../../../components/ui/feedback/EmptyState.tsx";
+import {LoadingContent} from "../../../../components/io/output/LoadingContent.tsx";
 
 const roleService = RoleService.instance;
 const authorityService = AuthorityService.instance;
@@ -32,14 +30,6 @@ const getApiErrorMessage = (error: unknown) => {
     return null;
 };
 
-const getInitials = (value: string) =>
-    value
-        .split(" ")
-        .map((word) => word.charAt(0))
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
-
 export const RoleDetailsPage = () => {
     const {hasAuthority} = useAuthContext();
     const {id} = useParams<{id: string}>();
@@ -48,7 +38,6 @@ export const RoleDetailsPage = () => {
 
     const [loading, setLoading] = useState(false);
     const [role, setRole] = useState<UserRole | null>(stateRole ?? null);
-    const [tab, setTab] = useState<TabKey>("details");
 
     const [authorityLoading, setAuthorityLoading] = useState(false);
     const [authorities, setAuthorities] = useState<Page<UserAuthority>>(Pagination.empty<UserAuthority>());
@@ -126,10 +115,8 @@ export const RoleDetailsPage = () => {
     }, [assignedIds, filtered]);
 
     const name = useMemo(() => (role?.name ?? "Rol").toString().trim() || "Rol", [role?.name]);
-    const initials = useMemo(() => getInitials(name), [name]);
 
-    const handleDrop = async (target: "assigned" | "unassigned") => {
-        const authId = dragIdRef.current;
+    const moveAuthority = async (authId: number | null, target: "assigned" | "unassigned") => {
         if (!authId || !role?.id || updating) return;
 
         const isAssigned = assignedIds.has(authId);
@@ -178,336 +165,152 @@ export const RoleDetailsPage = () => {
         }
     };
 
-    return (
-        <div className="space-y-5">
+    const canAssign = hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES);
+    const permissionCount = role?.countAuthorities ?? role?.authorities?.length ?? 0;
+    const assignedReadOnly = (role?.authorities ?? []).map((ra) => ra.authority).filter(Boolean) as UserAuthority[];
+
+    const renderColumn = (bucket: "assigned" | "unassigned", items: UserAuthority[]) => {
+        const isAssigned = bucket === "assigned";
+        return (
             <div
-                className="px-4 pb-4 pt-8 sm:px-6 sm:pb-5"
-                style={{
-                    background:
-                        "radial-gradient(circle at top, rgba(15, 98, 254, 0.08), transparent 55%)," +
-                        "radial-gradient(circle at top right, rgba(18, 128, 92, 0.06), transparent 45%)," +
-                        "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.9))",
+                className={clsx("flex min-h-0 flex-col transition-colors", dragOver === bucket && "bg-[var(--accent-soft)]")}
+                onDragEnter={() => setDragOver(bucket)}
+                onDragLeave={() => setDragOver((prev) => (prev === bucket ? null : prev))}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                    setDragOver(null);
+                    void moveAuthority(dragIdRef.current, bucket);
                 }}
             >
-                <div className="mx-auto flex w-full max-w-[1480px] flex-col items-center text-center">
-                    <div
-                        className="mb-3 flex h-20 w-20 items-center justify-center rounded-full border text-lg font-extrabold"
-                        style={{borderColor: "var(--border-soft)", background: "var(--surface)", boxShadow: "var(--shadow-card)", color: "var(--text-primary)"}}
-                    >
-                        {initials}
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        <h1 className="text-2xl font-extrabold tracking-tight" style={{color: "var(--text-primary)"}}>
-                            {name}
-                        </h1>
-                        <Link
-                            to="/users/roles"
-                            className="inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-semibold"
-                            style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}
-                        >
-                            Roles
-                        </Link>
-                    </div>
-
-                    <div className="mt-2 max-w-[820px] text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                        {role?.description ?? "Sin descripcion"}
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                        <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                            Permisos: <span style={{color: "var(--text-primary)"}}>{String(role?.countAuthorities ?? role?.authorities?.length ?? 0)}</span>
-                        </div>
-                        {loading && (
-                            <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                Cargando...
-                            </div>
-                        )}
-                    </div>
+                <div className="flex items-center justify-between gap-2 border-b px-4 py-3" style={{borderColor: "var(--border-soft)"}}>
+                    <span className="text-sm font-semibold" style={{color: "var(--text-primary)"}}>
+                        {isAssigned ? "Asignados" : "Disponibles"}
+                    </span>
+                    <Badge>{items.length}</Badge>
                 </div>
-            </div>
-
-            <div className="mx-auto w-full max-w-[1480px] px-2 sm:px-4">
-                <div
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
-                    style={{
-                        borderColor: "var(--border-soft)",
-                        background: "color-mix(in srgb, var(--surface) 95%, transparent)",
-                        boxShadow: "var(--shadow-soft)",
-                    }}
-                >
-                    <div className="flex flex-wrap items-center gap-2">
-                        {TABS.filter((item) => item.key !== "authorities" || hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES)).map((item) => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                onClick={() => setTab(item.key)}
+                <div className="max-h-[60vh] overflow-auto">
+                    {!isAssigned && authorityLoading && items.length === 0 && <LoadingContent loading className="py-10"/>}
+                    {!authorityLoading && items.length === 0 && (
+                        <p className="px-4 py-6 text-center text-sm" style={{color: "var(--text-secondary)"}}>
+                            {isAssigned ? "Sin permisos asignados." : "No hay permisos disponibles."}
+                        </p>
+                    )}
+                    <ul className="divide-y divide-[var(--border-soft)]">
+                        {items.map((auth) => (
+                            <li
+                                key={auth.id}
+                                draggable={!updating}
+                                onDragStart={() => (dragIdRef.current = auth.id)}
+                                onDragEnd={() => {
+                                    dragIdRef.current = null;
+                                    setDragOver(null);
+                                }}
+                                title={auth.description || undefined}
                                 className={clsx(
-                                    "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition",
-                                    item.key === tab ? "shadow-sm" : "opacity-80 hover:opacity-100"
+                                    "flex cursor-grab items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--surface-muted)]",
+                                    animPulse?.id === auth.id && animPulse.bucket === bucket && "bg-[var(--accent-soft)]"
                                 )}
-                                style={{
-                                    borderColor: "var(--border-soft)",
-                                    background: item.key === tab ? "var(--surface)" : "transparent",
-                                    color: item.key === tab ? "var(--text-primary)" : "var(--text-secondary)",
-                                }}
                             >
-                                <i className={`fa ${item.icon}`}/>
-                                <span>{item.label}</span>
-                                <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
-                                    {item.hint}
-                                </span>
-                            </button>
+                                <div className="min-w-0 flex-1">
+                                    <div className="truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>{auth.name}</div>
+                                    <div className="truncate text-xs" style={{color: "var(--text-tertiary)"}}>{auth.key}</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className={isAssigned ? "row-action row-action-danger" : "row-action"}
+                                    disabled={updating}
+                                    title={isAssigned ? "Quitar permiso" : "Asignar permiso"}
+                                    aria-label={isAssigned ? "Quitar permiso" : "Asignar permiso"}
+                                    onClick={() => void moveAuthority(auth.id, isAssigned ? "unassigned" : "assigned")}
+                                >
+                                    <i className={isAssigned ? "fa fa-minus" : "fa fa-plus"}/>
+                                </button>
+                            </li>
                         ))}
-                    </div>
-
-                    {tab === "authorities" && hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
-                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                            <div className="relative w-full sm:w-[420px]">
-                                <i className="fa fa-search absolute left-3 top-3 text-sm" style={{color: "var(--text-tertiary)"}}/>
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Buscar permisos por llave o nombre..."
-                                    className="w-full rounded-2xl border bg-white px-10 py-2.5 text-sm font-semibold outline-none"
-                                    style={{borderColor: "var(--border-soft)", color: "var(--text-primary)"}}
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-4 overflow-hidden rounded-[26px] border" style={{borderColor: "var(--border-soft)", background: "var(--surface)", boxShadow: "var(--shadow-card)"}}>
-                    {tab === "details" && (
-                        <div className="grid gap-4 p-5 lg:grid-cols-2">
-                            <div className="space-y-3">
-                                <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
-                                    Datos del rol
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="rounded-2xl border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
-                                            Nombre
-                                        </div>
-                                        <div className="mt-1 truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>
-                                            {role?.name ?? "-"}
-                                        </div>
-                                    </div>
-                                    <div className="rounded-2xl border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
-                                            Permisos
-                                        </div>
-                                        <div className="mt-1 truncate text-sm font-semibold" style={{color: "var(--text-primary)"}}>
-                                            {String(role?.countAuthorities ?? role?.authorities?.length ?? 0)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="rounded-2xl border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
-                                        Descripcion
-                                    </div>
-                                    <div className="mt-2 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                                        {role?.description ?? "Sin descripcion"}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{color: "var(--text-tertiary)"}}>
-                                    Acciones
-                                </div>
-                                <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                                    <div className="text-sm font-semibold" style={{color: "var(--text-primary)"}}>
-                                        Gestion de permisos
-                                    </div>
-                                    <div className="mt-2 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                                        Mueve permisos entre columnas desde la pestana Permisos (arrastrando).
-                                    </div>
-                                    <div className="mt-4">
-                                        {hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
-                                            <button onClick={() => setTab("authorities")} className="btn btn-sm btn-primary" type="button">
-                                                <i className="fa fa-sliders me-1"/>
-                                                Administrar permisos
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {tab === "authorities" && hasAuthority(AuthorityKey.ROLE_ASSIGN_AUTHORITIES) && (
-                        <div className="grid gap-4 p-4 lg:grid-cols-2">
-                            <div
-                                className={clsx("rounded-[22px] border p-4 transition", dragOver === "unassigned" ? "shadow-sm" : "")}
-                                style={{
-                                    borderColor: "var(--border-soft)",
-                                    background: dragOver === "unassigned"
-                                        ? "color-mix(in srgb, var(--surface) 92%, rgba(15, 98, 254, 0.05))"
-                                        : "color-mix(in srgb, var(--surface) 98%, transparent)",
-                                }}
-                                onDragEnter={() => setDragOver("unassigned")}
-                                onDragLeave={() => setDragOver((prev) => (prev === "unassigned" ? null : prev))}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => {
-                                    setDragOver(null);
-                                    void handleDrop("unassigned");
+                    </ul>
+                    {!isAssigned && hasMoreAuthorities && (
+                        <div className="border-t px-4 py-3" style={{borderColor: "var(--border-soft)"}}>
+                            <button
+                                type="button"
+                                className="btn btn-sm w-full"
+                                disabled={authorityLoading}
+                                onClick={() => {
+                                    const next = authorityPage + 1;
+                                    setAuthorityPage(next);
+                                    void loadAuthoritiesPage(next);
                                 }}
                             >
-                                <div className="mb-3 flex items-center justify-between">
-                                    <div>
-                                        <div className="text-sm font-extrabold" style={{color: "var(--text-primary)"}}>No asignados</div>
-                                        <div className="text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>Arrastra hacia Asignados</div>
-                                    </div>
-                                    <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                        {String(unassigned.length)}
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-2 max-h-[62vh] overflow-auto pr-1">
-                                    {authorityLoading && (
-                                        <div className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                            Cargando permisos...
-                                        </div>
-                                    )}
-                                    {!authorityLoading && unassigned.length === 0 && (
-                                        <div className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                            No hay permisos disponibles.
-                                        </div>
-                                    )}
-                                    {unassigned.map((auth) => (
-                                        <div
-                                            key={auth.id}
-                                            draggable
-                                            onDragStart={() => (dragIdRef.current = auth.id)}
-                                            onDragEnd={() => {
-                                                dragIdRef.current = null;
-                                                setDragOver(null);
-                                            }}
-                                            className={clsx(
-                                                "rounded-2xl border px-4 py-3 transition will-change-transform",
-                                                updating ? "opacity-70" : "hover:-translate-y-[1px] hover:shadow-sm",
-                                                animPulse?.id === auth.id && animPulse.bucket === "unassigned" ? "ring-2" : ""
-                                            )}
-                                            style={{
-                                                borderColor: "var(--border-soft)",
-                                                background: "var(--surface)",
-                                                boxShadow: animPulse?.id === auth.id && animPulse.bucket === "unassigned"
-                                                    ? "0 0 0 4px rgba(15, 98, 254, 0.14), var(--shadow-soft)"
-                                                    : undefined,
-                                            }}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <div className="truncate text-sm font-extrabold" style={{color: "var(--text-primary)"}}>
-                                                        {auth.name}
-                                                    </div>
-                                                    <div className="mt-1 truncate text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
-                                                        {auth.key}
-                                                    </div>
-                                                    <div className="mt-2 line-clamp-2 text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                                                        {auth.description || "Permiso del sistema."}
-                                                    </div>
-                                                </div>
-                                                <i className="fa fa-grip-vertical mt-1" style={{color: "var(--text-tertiary)"}}/>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {hasMoreAuthorities && (
-                                        <button
-                                            type="button"
-                                            className="mt-1 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition hover:shadow-sm"
-                                            style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}
-                                            disabled={authorityLoading}
-                                            onClick={() => {
-                                                const next = authorityPage + 1;
-                                                setAuthorityPage(next);
-                                                void loadAuthoritiesPage(next);
-                                            }}
-                                        >
-                                            {authorityLoading ? "Cargando..." : "Cargar mas permisos"}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div
-                                className={clsx("rounded-[22px] border p-4 transition", dragOver === "assigned" ? "shadow-sm" : "")}
-                                style={{
-                                    borderColor: "var(--border-soft)",
-                                    background: dragOver === "assigned"
-                                        ? "color-mix(in srgb, var(--surface) 92%, rgba(18, 128, 92, 0.05))"
-                                        : "color-mix(in srgb, var(--surface) 98%, transparent)",
-                                }}
-                                onDragEnter={() => setDragOver("assigned")}
-                                onDragLeave={() => setDragOver((prev) => (prev === "assigned" ? null : prev))}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => {
-                                    setDragOver(null);
-                                    void handleDrop("assigned");
-                                }}
-                            >
-                                <div className="mb-3 flex items-center justify-between">
-                                    <div>
-                                        <div className="text-sm font-extrabold" style={{color: "var(--text-primary)"}}>Asignados</div>
-                                        <div className="text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>Arrastra hacia No asignados</div>
-                                    </div>
-                                    <div className="rounded-full border px-3 py-1 text-xs font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                        {String(assigned.length)}
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-2 max-h-[62vh] overflow-auto pr-1">
-                                    {!authorityLoading && assigned.length === 0 && (
-                                        <div className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                            Arrastra permisos aqui para asignarlos.
-                                        </div>
-                                    )}
-                                    {assigned.map((auth) => (
-                                        <div
-                                            key={auth.id}
-                                            draggable
-                                            onDragStart={() => (dragIdRef.current = auth.id)}
-                                            onDragEnd={() => {
-                                                dragIdRef.current = null;
-                                                setDragOver(null);
-                                            }}
-                                            className={clsx(
-                                                "rounded-2xl border px-4 py-3 transition will-change-transform",
-                                                updating ? "opacity-70" : "hover:-translate-y-[1px] hover:shadow-sm",
-                                                animPulse?.id === auth.id && animPulse.bucket === "assigned" ? "ring-2" : ""
-                                            )}
-                                            style={{
-                                                borderColor: "var(--border-soft)",
-                                                background: "var(--surface)",
-                                                boxShadow: animPulse?.id === auth.id && animPulse.bucket === "assigned"
-                                                    ? "0 0 0 4px rgba(18, 128, 92, 0.14), var(--shadow-soft)"
-                                                    : undefined,
-                                            }}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <div className="truncate text-sm font-extrabold" style={{color: "var(--text-primary)"}}>
-                                                        {auth.name}
-                                                    </div>
-                                                    <div className="mt-1 truncate text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>
-                                                        {auth.key}
-                                                    </div>
-                                                    <div className="mt-2 line-clamp-2 text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                                                        {auth.description || "Permiso del sistema."}
-                                                    </div>
-                                                </div>
-                                                <i className="fa fa-grip-vertical mt-1" style={{color: "var(--text-tertiary)"}}/>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                                {authorityLoading ? "Cargando..." : "Cargar más permisos"}
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
+        );
+    };
+
+    if (loading && !role) return <LoadingContent loading className="py-16"/>;
+    if (!role) return <EmptyState title="No se encontró el rol" description="Vuelve al listado e intenta nuevamente." icon="fa-user-shield"/>;
+
+    return (
+        <div className="space-y-4">
+            <DetailHeader
+                avatar="fa-user-shield"
+                title={name}
+                subtitle={role.description || "Sin descripción"}
+                badges={<Badge>{permissionCount} {permissionCount === 1 ? "permiso" : "permisos"}</Badge>}
+            />
+
+            {canAssign ? (
+                <DetailSection
+                    title="Permisos"
+                    description="Asigna o quita permisos con los botones o arrastrándolos entre columnas."
+                    flush
+                    actions={
+                        <label className="input input-sm flex w-full items-center gap-2 sm:w-72">
+                            <i className="fa fa-search text-xs" style={{color: "var(--text-tertiary)"}}/>
+                            <input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Buscar por llave o nombre"
+                                className="min-w-0 flex-1 bg-transparent outline-none"
+                            />
+                        </label>
+                    }
+                >
+                    <div className="grid divide-y divide-[var(--border-soft)] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                        {renderColumn("unassigned", unassigned)}
+                        {renderColumn("assigned", assigned)}
+                    </div>
+                </DetailSection>
+            ) : (
+                <DetailSection title="Permisos asignados" flush>
+                    {assignedReadOnly.length ? (
+                        <table className="table-shell">
+                            <thead>
+                            <tr>
+                                <th>Permiso</th>
+                                <th>Llave</th>
+                                <th>Descripción</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {assignedReadOnly.map((auth) => (
+                                <tr key={auth.id}>
+                                    <td className="font-semibold text-[var(--text-primary)]">{auth.name}</td>
+                                    <td className="text-xs">{auth.key}</td>
+                                    <td>{auth.description || "—"}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="p-5">
+                            <EmptyState title="Sin permisos" description="Este rol todavía no tiene permisos asignados." icon="fa-key"/>
+                        </div>
+                    )}
+                </DetailSection>
+            )}
         </div>
     );
 };

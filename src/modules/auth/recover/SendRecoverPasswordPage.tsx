@@ -4,7 +4,7 @@ import {AuthShell} from "../../../components/ui/layout/AuthShell.tsx";
 export const SendRecoverPasswordPage = () => {
     return (
         <AuthShell
-            title="Recuperar contrasena"
+            title="Recuperar contraseña"
             description="Escribe tu usuario para recibir instrucciones de acceso."
             accentTitle="Recupera tu acceso a Aulenyx sin salir del flujo principal del campus."
             variant="recover"

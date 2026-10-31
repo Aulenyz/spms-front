@@ -4,8 +4,8 @@ import {AuthShell} from "../../../components/ui/layout/AuthShell.tsx";
 export const RecoverPage = () => {
     return (
         <AuthShell
-            title="Restablecer contrasena"
-            description="Define una nueva contrasena para volver a entrar."
+            title="Restablecer contraseña"
+            description="Define una nueva contraseña para volver a entrar."
             accentTitle="Completa el cambio y vuelve a Aulenyx con una credencial nueva."
             variant="reset"
             backTo="/auth/login"

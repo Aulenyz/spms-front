@@ -63,7 +63,7 @@ export const UserListPage = () => {
                         <th scope="col">Nombre</th>
                         <th scope="col">Documento</th>
                         <th scope="col">Rol</th>
-                        <th scope="col">Genero</th>
+                        <th scope="col">Género</th>
                         <th scope="col">Estado</th>
                         <th scope="col"></th>
                     </tr>
@@ -74,7 +74,7 @@ export const UserListPage = () => {
                             <td colSpan={6}>
                                 <EmptyState
                                     title="No hay usuarios para mostrar"
-                                    description="Prueba otros filtros o crea una nueva invitacion."
+                                    description="Prueba otros filtros o crea una nueva invitación."
                                     icon="fa-users"
                                 />
                             </td>
