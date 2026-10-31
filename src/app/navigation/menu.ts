@@ -54,10 +54,9 @@ export const navigationSections: NavigationSection[] = [
         tone: "emerald",
         items: [
             {
-                label: "Nueva cobranza",
+                label: "Registrar pago",
                 icon: "fa-receipt",
                 action: "collection",
-                badge: "Nuevo",
                 authority: AuthorityKey.COLLECTION_CREATE,
             },
             {
@@ -67,20 +66,22 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.INVOICES_VIEW,
             },
             {
-                label: "Pendientes de cobro",
+                label: "Estados de cuenta",
                 icon: "fa-calendar-check",
                 to: "/tuition/list",
                 authority: AuthorityKey.TUITION_VIEW,
             },
             {
-                label: "Recursos",
-                icon: "fa-box-open",
+                label: "Conceptos de pago",
+                icon: "fa-tags",
                 to: "/catalog/products",
+                authority: AuthorityKey.CATALOG_VIEW,
             },
             {
-                label: "Categorías",
+                label: "Categorías de pago",
                 icon: "fa-folder-tree",
                 to: "/catalog/categories",
+                authority: AuthorityKey.CATALOG_VIEW,
             },
         ],
     },

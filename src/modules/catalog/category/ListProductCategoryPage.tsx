@@ -10,6 +10,9 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
+import {TaxSection} from "./TaxSection.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {ProductCategoryCard} from "./ProductCategoryCard.tsx";
 import {ProductCategoryActions} from "./ProductCategoryActions.tsx";
@@ -27,6 +30,7 @@ const getApiErrorMessage = (error: unknown) => {
 };
 
 export const ListProductCategoryPage = () => {
+    const {hasAuthority} = useAuthContext();
     const [pagination, setPagination] = useState(Pagination.ofSize(6));
     const [filters, setFilters] = useState<ProductCategorySearchFilters>({term: "", active: true});
     const [showCreate, setShowCreate] = useState(false);
@@ -43,7 +47,7 @@ export const ListProductCategoryPage = () => {
         queryKey: queryKeys.categories.list({filters, pagination}),
         queryFn: ({signal}) => productCategoryService.withSignal(signal).search(filters, pagination),
         placeholderData: keepPreviousData,
-        meta: {errorMessage: "No se pudieron cargar las categorías de recursos."},
+        meta: {errorMessage: "No se pudieron cargar las categorías."},
     });
     const categories: Page<ProductCategory> = categoriesQuery.data ?? EMPTY_PAGE;
     // Spinner en la carga inicial y al cambiar filtros/página (no en refrescos en segundo plano).
@@ -73,15 +77,15 @@ export const ListProductCategoryPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Categorías"
-                description="Clasifica los recursos escolares y distingue las categorías protegidas definidas por el sistema."
+                title="Categorías de pago"
+                description="Agrupa los conceptos de pago (inscripciones, mensualidades, materiales...) y define los impuestos que se aplican."
             />
 
             <ProductCategoryActions counts={statusCounts} onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
-                title="Categorías del catálogo"
-                description="Consulta y organiza las agrupaciones disponibles para los recursos de la institución."
+                title="Categorías"
+                description="Las categorías con candado son del sistema y siempre están activas."
                 filters={<ProductCategoryFilter onFilter={handleFilters}/>}
                 footer={!loading ? (
                     <Pager
@@ -96,7 +100,7 @@ export const ListProductCategoryPage = () => {
                     {categories.content.length === 0 ? (
                         <EmptyState
                             title="No hay categorías para mostrar"
-                            description="Ajusta los filtros para encontrar otras categorías de recursos."
+                            description="Ajusta los filtros para encontrar otras categorías."
                             icon="fa-folder-open"
                         />
                     ) : (
@@ -137,6 +141,8 @@ export const ListProductCategoryPage = () => {
                     onSaved={refresh}
                 />
             </LeftModal>
+
+            <TaxSection canEdit={hasAuthority(AuthorityKey.CATALOG_EDIT)}/>
         </div>
     );
 };
