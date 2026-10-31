@@ -1,4 +1,4 @@
-import {Link} from "react-router-dom";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {useQuery} from "@tanstack/react-query";
 import {Bar, Doughnut} from "react-chartjs-2";
 import {ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip} from "chart.js";
@@ -60,12 +60,12 @@ export const Dashboard = () => {
                         </div>
 
                         {summary.pendingEnrollments > 0 && (
-                            <Link to="/enrollments/list" className="flex items-center gap-3 rounded-[18px] border px-4 py-3 text-sm"
+                            <PermittedLink authority={AuthorityKey.ENROLLMENTS_VIEW} to="/enrollments/list" className="flex items-center gap-3 rounded-[18px] border px-4 py-3 text-sm"
                                   style={{borderColor: "var(--border-soft)", background: "var(--warning-soft)", color: "var(--warning)"}}>
                                 <i className="fa fa-user-clock"/>
                                 <span><strong>{summary.pendingEnrollments}</strong> {summary.pendingEnrollments === 1 ? "inscripción espera" : "inscripciones esperan"} el pago para confirmarse.</span>
                                 <i className="fa fa-chevron-right ms-auto text-xs"/>
-                            </Link>
+                            </PermittedLink>
                         )}
 
                         <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
@@ -118,7 +118,7 @@ export const Dashboard = () => {
                                     <ul className="divide-y" style={{borderColor: "var(--border-soft)"}}>
                                         {summary.topDebtors.map((account) => (
                                             <li key={account.studentId}>
-                                                <Link to={`/accounts/${account.studentId}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
+                                                <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${account.studentId}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
                                                     <span>
                                                         <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{account.firstname} {account.lastname}</strong>
                                                         <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
@@ -129,7 +129,7 @@ export const Dashboard = () => {
                                                         <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{money.format(account.due)}</strong>
                                                         {Number(account.overdue) > 0 && <span className="text-xs" style={{color: "var(--danger)"}}>{money.format(account.overdue)} vencido</span>}
                                                     </span>
-                                                </Link>
+                                                </PermittedLink>
                                             </li>
                                         ))}
                                     </ul>
@@ -143,7 +143,7 @@ export const Dashboard = () => {
                                     <ul className="divide-y" style={{borderColor: "var(--border-soft)"}}>
                                         {summary.latestReceipts.map((receipt) => (
                                             <li key={receipt.id}>
-                                                <Link to={`/payments/${receipt.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
+                                                <PermittedLink authority={AuthorityKey.PAYMENTS_VIEW} to={`/payments/${receipt.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
                                                     <span>
                                                         <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{receipt.student.name}</strong>
                                                         <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
@@ -151,7 +151,7 @@ export const Dashboard = () => {
                                                         </span>
                                                     </span>
                                                     <strong className="text-sm" style={{color: "var(--success)"}}>{money.format(receipt.amount)}</strong>
-                                                </Link>
+                                                </PermittedLink>
                                             </li>
                                         ))}
                                     </ul>

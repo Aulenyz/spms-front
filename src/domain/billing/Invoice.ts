@@ -170,8 +170,20 @@ export interface ReceiptDetails {
     voidReason?: string;
     voidedAt?: string;
     receivedBy?: string;
+    receivedById?: number;
     organization: {name: string; document?: string; logo?: string};
     payments: InvoicePayment[];
+    /** Conceptos de las facturas que pagó (cada factura puede tener varios). */
+    concepts: ReceiptConcept[];
+}
+
+export interface ReceiptConcept {
+    invoiceId: number;
+    invoiceNumber: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
 }
 
 export interface AccountBalance {

@@ -16,9 +16,9 @@ type SettingsCategory = "schoolYear" | "courses" | "billing";
 
 const SETTINGS_ORDER = [
     "AUTO_CREATE_SCHOOL_YEAR", "SCHOOL_YEAR_START_DATE", "SCHOOL_YEAR_END_DATE", "AUTO_CREATE_COURSES",
-    "ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX",
+    "ENROLLMENT_REQUIRES_PAYMENT", "TAXES_ENABLED", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX",
 ];
-const BILLING_SETTINGS = ["ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX"];
+const BILLING_SETTINGS = ["ENROLLMENT_REQUIRES_PAYMENT", "TAXES_ENABLED", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX"];
 
 const CATEGORIES: {key: SettingsCategory; label: string; icon: string; description: string}[] = [
     {key: "schoolYear", label: "Año académico", icon: "fa-calendar-days", description: "Define el inicio y la finalización del próximo período académico."},
@@ -44,6 +44,9 @@ const settingPresentation = (configuration: OrganizationConfiguration) => {
     }
     if (configuration.name === "ENROLLMENT_REQUIRES_PAYMENT") {
         return {label: "La inscripción requiere pago", icon: "fa-user-check", help: "Si está activo, el estudiante queda pendiente hasta pagar la factura de inscripción. Si no, queda inscrito de inmediato y la factura queda por cobrar."};
+    }
+    if (configuration.name === "TAXES_ENABLED") {
+        return {label: "Cobrar impuestos (ITBIS)", icon: "fa-percent", help: "Si está apagado, los conceptos se facturan sin impuestos y se ocultan las opciones de impuestos."};
     }
     if (configuration.name === "INVOICE_REQUIRES_NCF") {
         return {label: "Facturas con comprobante fiscal (NCF)", icon: "fa-receipt", help: "Por ahora las facturas se emiten sin NCF. La integración con la DGII llegará más adelante."};
@@ -88,6 +91,7 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                 (current) => current?.map((item) => item.name === saved.name ? saved : item),
             );
             void queryClient.invalidateQueries({queryKey: queryKeys.organizationConfiguration.all});
+            void queryClient.invalidateQueries({queryKey: ["billing", "settings"]});
             toast.success(successMessage);
         } catch (error) {
             toast.error((error as { message?: string })?.message ?? errorMessage);

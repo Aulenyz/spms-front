@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {Link, useParams} from "react-router-dom";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
+import {useParams} from "react-router-dom";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -16,6 +17,7 @@ import {InvoiceStatusPill, ReceiptStatusPill} from "../components/BillingPills.t
 import {VoidDialog} from "../components/VoidDialog.tsx";
 import {RegisterPaymentModal} from "../payment/RegisterPaymentModal.tsx";
 import {invoiceHtml, printHtml} from "../print/printDocuments.ts";
+import {useBillingSettings} from "../useBillingSettings.ts";
 import {useCurrentOrganization} from "../../shared/main/navbarQueries.ts";
 
 const OPEN = [InvoiceStatus.PENDING, InvoiceStatus.PARTIAL, InvoiceStatus.OVERDUE];
@@ -25,6 +27,7 @@ export const InvoiceDetailsPage = () => {
     const {hasAuthority} = useAuthContext();
     const queryClient = useQueryClient();
     const {data: organization} = useCurrentOrganization();
+    const {taxesEnabled} = useBillingSettings();
     const [paying, setPaying] = useState(false);
     const [voiding, setVoiding] = useState(false);
 
@@ -59,12 +62,12 @@ export const InvoiceDetailsPage = () => {
             <DetailHeader
                 avatar="fa-file-invoice-dollar"
                 title={invoice.description || `Factura ${invoice.number}`}
-                subtitle={<>{invoice.number}{invoice.student && <> · <Link to={`/accounts/${invoice.student.id}`} className="hover:text-[var(--accent)]">{invoice.student.name}</Link></>}</>}
+                subtitle={<>{invoice.number}{invoice.student && <> · <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${invoice.student.id}`} className="hover:text-[var(--accent)]">{invoice.student.name}</PermittedLink></>}</>}
                 badges={<InvoiceStatusPill status={invoice.status}/>}
                 backTo="/invoices/list"
                 backLabel="Facturas"
                 actions={<>
-                    <button type="button" className="btn btn-sm" onClick={() => printHtml(invoiceHtml(details, {
+                    <button type="button" className="btn btn-sm" onClick={() => printHtml(invoiceHtml(details, taxesEnabled, {
                         name: organization?.name ?? "", document: organization?.document, logo: organization?.logo,
                     }))}><i className="fa fa-print"/>Imprimir</button>
                     {isOpen && hasAuthority(AuthorityKey.INVOICE_VOID) && !hasPayments && (
@@ -115,7 +118,7 @@ export const InvoiceDetailsPage = () => {
                             <th>Concepto</th>
                             <th className="text-right">Cant.</th>
                             <th className="text-right">Precio</th>
-                            <th className="text-right">Impuesto</th>
+                            {taxesEnabled && <th className="text-right">Impuesto</th>}
                             <th className="text-right">Importe</th>
                         </tr>
                         </thead>
@@ -125,14 +128,16 @@ export const InvoiceDetailsPage = () => {
                                 <td>{item.description}</td>
                                 <td className="text-right">{Number(item.quantity)}</td>
                                 <td className="text-right">{money.format(item.unitPrice)}</td>
-                                <td className="text-right">{money.format(item.taxAmount)}</td>
+                                {taxesEnabled && <td className="text-right">{money.format(item.taxAmount)}</td>}
                                 <td className="text-right font-semibold">{money.format(item.amount)}</td>
                             </tr>
                         ))}
                         </tbody>
                         <tfoot>
                         <tr>
-                            <td colSpan={4} className="text-right text-sm">Subtotal {money.format(invoice.subtotal)} · Impuestos {money.format(invoice.taxAmount)}</td>
+                            <td colSpan={taxesEnabled ? 4 : 3} className="text-right text-sm">
+                                Subtotal {money.format(invoice.subtotal)}{taxesEnabled && ` · Impuestos ${money.format(invoice.taxAmount)}`}
+                            </td>
                             <td className="text-right font-bold">{money.format(invoice.total)}</td>
                         </tr>
                         </tfoot>
@@ -152,7 +157,7 @@ export const InvoiceDetailsPage = () => {
                         {payments.map((payment) => (
                             <tr key={payment.id}>
                                 <td>{payment.receiptId
-                                    ? <Link to={`/payments/${payment.receiptId}`} className="font-semibold hover:text-[var(--accent)]">{payment.receiptNumber}</Link>
+                                    ? <PermittedLink authority={AuthorityKey.PAYMENTS_VIEW} to={`/payments/${payment.receiptId}`} className="font-semibold hover:text-[var(--accent)]">{payment.receiptNumber}</PermittedLink>
                                     : "—"}</td>
                                 <td className="whitespace-nowrap">{formatDate(payment.date)}</td>
                                 <td>{PaymentMethodLabel[payment.method]}</td>

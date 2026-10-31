@@ -8,6 +8,7 @@ import {ProductService} from "../../../services/product/ProductService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
 import {ProductStatus} from "../../../domain/model/product/Product.ts";
 import {money, PersonRef} from "../../../domain/billing/Invoice.ts";
+import {useBillingSettings} from "../useBillingSettings.ts";
 import {StudentPicker} from "../components/StudentPicker.tsx";
 
 const SYSTEM_ONLY = ["ENROLLMENT", "RE_ENROLLMENT"];
@@ -21,6 +22,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
     student?: PersonRef | null;
 }) => {
     const queryClient = useQueryClient();
+    const {taxesEnabled} = useBillingSettings();
     const [student, setStudent] = useState<PersonRef | null>(initialStudent ?? null);
     const [lines, setLines] = useState<Line[]>([{key: 1, quantity: "1", unitPrice: ""}]);
     const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
@@ -120,7 +122,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
                     <div>
                         <span className="block text-xs uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>Subtotal</span>
                         <strong className="text-xl" style={{color: "var(--text-primary)"}}>{money.format(total)}</strong>
-                        <span className="ms-2 text-xs" style={{color: "var(--text-tertiary)"}}>+ impuestos de cada concepto</span>
+                        {taxesEnabled && <span className="ms-2 text-xs" style={{color: "var(--text-tertiary)"}}>+ impuestos de cada concepto</span>}
                     </div>
                     <div className="flex gap-2">
                         <button type="button" className="btn btn-sm" onClick={close}>Cancelar</button>

@@ -53,8 +53,10 @@ const page = (title: string, body: string) =>
 /** Recibo de pago imprimible. */
 export const receiptHtml = (details: ReceiptDetails) => {
     const {receipt, organization, payments} = details;
-    const rows = payments.map((payment) => `
-      <tr><td>${escape(payment.invoiceNumber)}</td><td>${escape(payment.description ?? "")}</td><td class="right">${money.format(payment.amount)}</td></tr>`).join("");
+    const rows = (details.concepts ?? []).map((concept) => `
+      <tr><td>${escape(concept.description)}</td><td>${escape(concept.invoiceNumber)}</td><td class="right">${Number(concept.quantity)}</td>
+      <td class="right">${money.format(concept.unitPrice)}</td><td class="right">${money.format(concept.amount)}</td></tr>`).join("");
+    const applied = payments.map((payment) => `${escape(payment.invoiceNumber)}: ${money.format(payment.amount)}`).join(" · ");
     return page(`Recibo ${receipt.number}`, `
       ${header(organization, "Recibo de pago", receipt.number, formatDate(receipt.date))}
       <dl>
@@ -64,20 +66,24 @@ export const receiptHtml = (details: ReceiptDetails) => {
         <div><dt>Recibido por</dt><dd>${escape(details.receivedBy ?? "—")}</dd></div>
       </dl>
       <table>
-        <thead><tr><th>Factura</th><th>Concepto</th><th class="right">Abonado</th></tr></thead>
+        <thead><tr><th>Concepto</th><th>Factura</th><th class="right">Cant.</th><th class="right">Precio</th><th class="right">Importe</th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr><td colspan="2" class="right">Total recibido</td><td class="right total">${money.format(receipt.amount)}</td></tr></tfoot>
+        <tfoot>
+          <tr><td colspan="4" class="right muted">Abonado: ${applied}</td><td></td></tr>
+          <tr><td colspan="4" class="right">Total recibido</td><td class="right total">${money.format(receipt.amount)}</td></tr>
+        </tfoot>
       </table>
       ${details.notes ? `<footer>Nota: ${escape(details.notes)}</footer>` : ""}
       ${receipt.status !== ReceiptStatus.PAID ? `<div class="void">ANULADO</div><footer>${escape(details.voidReason ?? "")}</footer>` : ""}`);
 };
 
 /** Factura imprimible con sus conceptos, impuestos y pagos. */
-export const invoiceHtml = (details: InvoiceDetails, organization: OrganizationRef) => {
+export const invoiceHtml = (details: InvoiceDetails, taxesEnabled: boolean, organization: OrganizationRef) => {
     const {invoice, items, payments} = details;
     const rows = items.map((item) => `
       <tr><td>${escape(item.description)}</td><td class="right">${Number(item.quantity)}</td><td class="right">${money.format(item.unitPrice)}</td>
-      <td class="right">${money.format(item.taxAmount)}</td><td class="right">${money.format(item.amount)}</td></tr>`).join("");
+      ${taxesEnabled ? `<td class="right">${money.format(item.taxAmount)}</td>` : ""}<td class="right">${money.format(item.amount)}</td></tr>`).join("");
+    const span = taxesEnabled ? 4 : 3;
     const paid = payments.filter((payment) => payment.status === ReceiptStatus.PAID)
         .map((payment) => `${escape(payment.receiptNumber ?? "")} (${formatDate(payment.date)}) ${money.format(payment.amount)}`).join(" · ");
     return page(`Factura ${invoice.number}`, `
@@ -90,14 +96,14 @@ export const invoiceHtml = (details: InvoiceDetails, organization: OrganizationR
         <div><dt>Estado</dt><dd>${InvoiceStatusLabel[invoice.status]}</dd></div>
       </dl>
       <table>
-        <thead><tr><th>Concepto</th><th class="right">Cant.</th><th class="right">Precio</th><th class="right">Impuesto</th><th class="right">Importe</th></tr></thead>
+        <thead><tr><th>Concepto</th><th class="right">Cant.</th><th class="right">Precio</th>${taxesEnabled ? `<th class="right">Impuesto</th>` : ""}<th class="right">Importe</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot>
-          <tr><td colspan="4" class="right">Subtotal</td><td class="right">${money.format(invoice.subtotal)}</td></tr>
-          <tr><td colspan="4" class="right">Impuestos</td><td class="right">${money.format(invoice.taxAmount)}</td></tr>
-          <tr><td colspan="4" class="right">Total</td><td class="right total">${money.format(invoice.total)}</td></tr>
-          <tr><td colspan="4" class="right">Pagado</td><td class="right">${money.format(invoice.paid)}</td></tr>
-          <tr><td colspan="4" class="right">Saldo</td><td class="right">${money.format(invoice.due)}</td></tr>
+          <tr><td colspan="${span}" class="right">Subtotal</td><td class="right">${money.format(invoice.subtotal)}</td></tr>
+          ${taxesEnabled ? `<tr><td colspan="${span}" class="right">Impuestos</td><td class="right">${money.format(invoice.taxAmount)}</td></tr>` : ""}
+          <tr><td colspan="${span}" class="right">Total</td><td class="right total">${money.format(invoice.total)}</td></tr>
+          <tr><td colspan="${span}" class="right">Pagado</td><td class="right">${money.format(invoice.paid)}</td></tr>
+          <tr><td colspan="${span}" class="right">Saldo</td><td class="right">${money.format(invoice.due)}</td></tr>
         </tfoot>
       </table>
       ${paid ? `<footer>Pagos: ${paid}</footer>` : ""}

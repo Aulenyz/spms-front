@@ -1,4 +1,5 @@
 import {FormEvent, useState} from "react";
+import {useBillingSettings} from "../../billing/useBillingSettings.ts";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -24,6 +25,7 @@ const errorMessage = (error: unknown, fallback: string) =>
  * cambiar el nombre; los demás se crean, editan y activan o inactivan aquí.
  */
 export const ListTaxPage = () => {
+    const {taxesEnabled} = useBillingSettings();
     const {hasAuthority} = useAuthContext();
     const canEdit = hasAuthority(AuthorityKey.CATALOG_EDIT);
     const queryClient = useQueryClient();
@@ -33,6 +35,13 @@ export const ListTaxPage = () => {
         queryFn: ({signal}) => taxService.withSignal(signal).list(),
         meta: {errorMessage: "No se pudieron cargar los impuestos."},
     });
+
+    if (!taxesEnabled) {
+        return (
+            <EmptyState title="Los impuestos están desactivados" icon="fa-percent"
+                        description="Actívalos en Configuración → Facturación si el colegio cobra ITBIS."/>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -69,9 +78,11 @@ export const ListTaxPage = () => {
                                 <td className="text-right">{percent(tax.rate)}</td>
                                 <td><StatusBadge active={tax.active}/></td>
                                 {canEdit && <td className="text-right">
-                                    <button type="button" className="row-action" title="Editar" aria-label="Editar impuesto" onClick={() => setEditing(tax)}>
-                                        <i className="fa fa-pen"/>
-                                    </button>
+                                    {tax.systemKey
+                                        ? <i className="fa fa-lock text-xs text-[var(--text-tertiary)]" title="Los impuestos del sistema no se modifican"/>
+                                        : <button type="button" className="row-action" title="Editar" aria-label="Editar impuesto" onClick={() => setEditing(tax)}>
+                                            <i className="fa fa-pen"/>
+                                        </button>}
                                 </td>}
                             </tr>
                         ))}

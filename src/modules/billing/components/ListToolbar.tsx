@@ -1,19 +1,33 @@
 import {ReactNode} from "react";
+import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
+import {SelectOption} from "../../../components/io/output/Select.tsx";
 
-/** Barra de filtros de las listas de Finanzas: búsqueda y controles en una sola fila. */
+/** Filtro desplegable con el mismo diseño de Estudiantes. */
+export const FilterDropdown = <T extends string, >({text, value, options, onChange}: {
+    text: string;
+    value: T;
+    options: {value: T; description: string}[];
+    onChange: (value: T) => void;
+}) => (
+    <div className="w-full sm:w-[140px]">
+        <DropdownSelect text={text} hasError={false} options={options as SelectOption[]} value={value}
+                        onSelect={(selected) => onChange((selected ?? "") as T)} className="w-full"/>
+    </div>
+);
+
+/** Filtros de las listas de Finanzas: desplegables y búsqueda, como en Estudiantes. */
 export const ListToolbar = ({term, onTerm, placeholder, children}: {
     term: string;
     onTerm: (value: string) => void;
     placeholder: string;
     children?: ReactNode;
 }) => (
-    <div className="flex flex-wrap items-center gap-2 [&_select]:h-8 [&_select]:min-h-8 [&_select]:w-auto [&_select]:py-0 [&_select]:text-sm">
-        <label className="flex h-8 w-full items-center gap-2 rounded-[10px] border px-3 sm:w-56"
-               style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-            <i className="fa fa-search text-[11px]" style={{color: "var(--text-tertiary)"}}/>
-            <input className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none" value={term}
-                   onChange={(event) => onTerm(event.target.value)} placeholder={placeholder} aria-label={placeholder}/>
-        </label>
+    <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
         {children}
-    </div>
+        <label className="input input-sm w-full sm:w-56">
+            <i className="fa fa-search me-1"/>
+            <input type="text" value={term} placeholder={placeholder} aria-label={placeholder}
+                   onChange={(event) => onTerm(event.target.value)}/>
+        </label>
+    </form>
 );

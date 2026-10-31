@@ -22,6 +22,7 @@ export enum AuthorityKey {
     INVOICE_CREATE = "INVOICE_CREATE",
     INVOICE_VOID = "INVOICE_VOID",
     PAYMENT_VOID = "PAYMENT_VOID",
+    ASSISTANT_USE = "ASSISTANT_USE",
     TUITION_VIEW = "TUITION_VIEW",
     DISCOUNTS_VIEW = "DISCOUNTS_VIEW",
     ENROLLMENTS_VIEW = "ENROLLMENTS_VIEW",
@@ -97,6 +98,7 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.INVOICE_CREATE]: "Permite facturar conceptos de pago a un estudiante.",
     [AuthorityKey.INVOICE_VOID]: "Permite anular facturas que no tienen pagos.",
     [AuthorityKey.PAYMENT_VOID]: "Permite anular recibos de pago.",
+    [AuthorityKey.ASSISTANT_USE]: "Permite usar el chat del asistente de IA.",
     [AuthorityKey.TUITION_VIEW]: "Permite acceder al módulo de pendientes de cobro.",
     [AuthorityKey.DISCOUNTS_VIEW]: "Permite acceder al módulo de descuentos.",
 

@@ -12,7 +12,7 @@ import {Pager} from "../../../components/io/input/Pager.tsx";
 import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
-import {ListToolbar} from "../components/ListToolbar.tsx";
+import {FilterDropdown, ListToolbar} from "../components/ListToolbar.tsx";
 import {RegisterPaymentModal} from "./RegisterPaymentModal.tsx";
 import {ReceiptAccordionRow, ReceiptListHeader} from "./ReceiptAccordionRow.tsx";
 
@@ -52,32 +52,26 @@ export const ListReceiptPage = () => {
             />
 
             <DataTableCard
-                filtersLayout="row"
                 title="Recibos"
                 description="Los más recientes primero. Toca un pago para ver todo su detalle."
                 filters={
-                    <ListToolbar term={term} placeholder="Buscar por recibo, estudiante o referencia"
+                    <ListToolbar term={term} placeholder="Recibo, estudiante o ref."
                                  onTerm={(value) => {
                                      setTerm(value);
                                      resetPage();
                                  }}>
-                        <select className="select select-bordered select-sm" value={method} aria-label="Forma de pago"
-                                onChange={(event) => {
-                                    setMethod(event.target.value as PaymentMethod | "");
-                                    resetPage();
-                                }}>
-                            <option value="">Todas las formas</option>
-                            {Object.values(PaymentMethod).map((value) => <option key={value} value={value}>{PaymentMethodLabel[value]}</option>)}
-                        </select>
-                        <select className="select select-bordered select-sm" value={status} aria-label="Estado"
-                                onChange={(event) => {
-                                    setStatus(event.target.value as ReceiptStatus | "");
-                                    resetPage();
-                                }}>
-                            <option value={ReceiptStatus.PAID}>Cobrados</option>
-                            <option value={ReceiptStatus.VOIDED}>Anulados</option>
-                            <option value="">Todos</option>
-                        </select>
+                        <FilterDropdown text="Forma de pago" value={method}
+                                        options={[{value: "", description: "Todas las formas"}, ...Object.values(PaymentMethod).map((value) => ({value, description: PaymentMethodLabel[value]}))]}
+                                        onChange={(value) => {
+                                            setMethod(value as PaymentMethod | "");
+                                            resetPage();
+                                        }}/>
+                        <FilterDropdown text="Estado" value={status}
+                                        options={[{value: ReceiptStatus.PAID, description: "Cobrados"}, {value: ReceiptStatus.VOIDED, description: "Anulados"}, {value: "", description: "Todos"}]}
+                                        onChange={(value) => {
+                                            setStatus(value as ReceiptStatus | "");
+                                            resetPage();
+                                        }}/>
                     </ListToolbar>
                 }
                 footer={!loading ? (
@@ -91,7 +85,7 @@ export const ListReceiptPage = () => {
                                     description="Registra un pago con el botón «Registrar pago»."/>
                     ) : (
                         <div className="overflow-x-auto">
-                        <div className="min-w-[580px]">
+                        <div className="min-w-[600px]">
                         <ReceiptListHeader/>
                         <ul>
                             {receipts.content.map((receipt) => (

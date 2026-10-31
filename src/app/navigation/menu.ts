@@ -7,6 +7,8 @@ export type NavigationItem = {
     badge?: string;
     action?: "collection";
     authority?: AuthorityKey;
+    /** Solo visible si la organización tiene la función activa. */
+    feature?: "taxes";
 };
 
 /** Color de identidad de cada módulo; ver `[data-tone]` en index.css. */
@@ -94,6 +96,7 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-percent",
                 to: "/catalog/taxes",
                 authority: AuthorityKey.CATALOG_VIEW,
+                feature: "taxes",
             },
         ],
     },

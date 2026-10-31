@@ -17,6 +17,8 @@ import {
     ReceiptStatus,
 } from "../../domain/billing/Invoice.ts";
 
+export type BillingSettings = {taxesEnabled: boolean; requiresNcf: boolean};
+
 export type InvoiceFilters = {term?: string; status?: InvoiceStatus; studentId?: number; open?: boolean; from?: string; to?: string};
 export type ReceiptFilters = {term?: string; status?: ReceiptStatus; method?: PaymentMethod; studentId?: number; from?: string; to?: string};
 
@@ -112,6 +114,11 @@ export class AccountService extends BaseService<AccountBalance> {
 
     summary(): Promise<BillingSummary> {
         return this.get<BillingSummary>("/summary");
+    }
+
+    /** Ajustes de facturación que necesitan todas las pantallas de Finanzas. */
+    settings(): Promise<BillingSettings> {
+        return this.get<BillingSettings>("/settings");
     }
 
     runRecurring(): Promise<{invoices: number; overdue: number}> {

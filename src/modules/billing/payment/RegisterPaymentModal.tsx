@@ -1,8 +1,8 @@
 import {useEffect, useMemo, useState} from "react";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import ReactDOM from "react-dom";
 import clsx from "clsx";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {Link} from "react-router-dom";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {InvoiceService, ReceiptService} from "../../../services/billing/BillingService.ts";
@@ -317,7 +317,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                         <i className="fa fa-print"/>Imprimir recibo
                                     </button>
                                 ) : result.invoice && (
-                                    <Link to={`/invoices/${result.invoice.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>Ver factura</Link>
+                                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${result.invoice.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>Ver factura</PermittedLink>
                                 )}
                             </div>
                         </div>

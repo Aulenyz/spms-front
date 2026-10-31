@@ -1,4 +1,5 @@
 import {FormEvent, ReactNode, useEffect, useMemo, useState} from "react";
+import {useBillingSettings} from "../../billing/useBillingSettings.ts";
 import {useQuery} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -94,12 +95,17 @@ export const ProductForm = ({product, onDone, onSaved}: {
         queryKey: queryKeys.taxes,
         queryFn: ({signal}) => taxService.withSignal(signal).list(),
     });
+    const {taxesEnabled} = useBillingSettings();
     const activeTaxes = useMemo(() => taxes.filter((tax) => tax.active || tax.id === product?.taxCategory?.id), [taxes, product]);
 
+    // Sin impuestos activos, todo concepto va exento; con impuestos, el primero activo por defecto.
+    const exempt = activeTaxes.find((tax) => tax.systemKey === "EXEMPT");
     useEffect(() => {
-        if (!values.taxCategoryId && activeTaxes.length)
-            setValues((current) => ({...current, taxCategoryId: String(activeTaxes[0].id)}));
-    }, [activeTaxes, values.taxCategoryId]);
+        if (!taxesEnabled && exempt && values.taxCategoryId !== String(exempt.id) && !product?.taxCategory)
+            setValues((current) => ({...current, taxCategoryId: String(exempt.id)}));
+        else if (!values.taxCategoryId && activeTaxes.length)
+            setValues((current) => ({...current, taxCategoryId: String((exempt ?? activeTaxes[0]).id)}));
+    }, [activeTaxes, exempt, taxesEnabled, product, values.taxCategoryId]);
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setValues((current) => ({...current, [key]: value}));
 
@@ -188,13 +194,13 @@ export const ProductForm = ({product, onDone, onSaved}: {
                                        onChange={(event) => set("price", event.target.value)} placeholder="0.00"/>
                             </label>
                         )}
-                        <label className={editing ? "col-span-2 block" : "block"}>
+                        {taxesEnabled && <label className={editing ? "col-span-2 block" : "block"}>
                             <span className="form-label">Impuesto *</span>
                             <select className="select select-sm" value={values.taxCategoryId}
                                     onChange={(event) => set("taxCategoryId", event.target.value)}>
                                 {activeTaxes.map((tax) => <option key={tax.id} value={tax.id}>{formatTaxRate(tax)}</option>)}
                             </select>
-                        </label>
+                        </label>}
                     </div>
                     <label className="block">
                         <span className="form-label">Código</span>

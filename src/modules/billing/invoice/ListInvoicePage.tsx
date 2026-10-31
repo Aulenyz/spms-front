@@ -1,6 +1,7 @@
 import {useState} from "react";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {keepPreviousData, useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {Link, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {InvoiceService, AccountService} from "../../../services/billing/BillingService.ts";
@@ -15,7 +16,7 @@ import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {InvoiceStatusPill} from "../components/BillingPills.tsx";
-import {ListToolbar} from "../components/ListToolbar.tsx";
+import {FilterDropdown, ListToolbar} from "../components/ListToolbar.tsx";
 import {NewInvoiceModal} from "./NewInvoiceModal.tsx";
 
 const invoiceService = InvoiceService.instance;
@@ -77,33 +78,28 @@ export const ListInvoicePage = () => {
             />
 
             <DataTableCard
-                filtersLayout="row"
                 title="Facturas emitidas"
                 description="Las más recientes primero. Abre una para ver sus conceptos y pagos."
                 filters={
-                    <ListToolbar term={term} placeholder="Buscar por número, estudiante o documento"
+                    <ListToolbar term={term} placeholder="Factura o estudiante"
                                  onTerm={(value) => {
                                      setTerm(value);
                                      resetPage();
                                  }}>
-                        <select className="select select-bordered select-sm" value={status} aria-label="Estado"
-                                onChange={(event) => {
-                                    setStatus(event.target.value as InvoiceStatus | "");
-                                    resetPage();
-                                }}>
-                            <option value="">Todos los estados</option>
-                            {Object.values(InvoiceStatus).filter((value) => value !== InvoiceStatus.CANCELLED).map((value) => (
-                                <option key={value} value={value}>{InvoiceStatusLabel[value]}</option>
-                            ))}
-                        </select>
-                        <label className="flex items-center gap-2 text-sm" style={{color: "var(--text-secondary)"}}>
-                            <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={open}
-                                   onChange={(event) => {
-                                       setOpen(event.target.checked);
-                                       resetPage();
-                                   }}/>
-                            Solo con saldo
-                        </label>
+                        <FilterDropdown text="Estado" value={status}
+                                        options={[{value: "", description: "Todos"}, ...Object.values(InvoiceStatus)
+                                            .filter((value) => value !== InvoiceStatus.CANCELLED)
+                                            .map((value) => ({value, description: InvoiceStatusLabel[value]}))]}
+                                        onChange={(value) => {
+                                            setStatus(value as InvoiceStatus | "");
+                                            resetPage();
+                                        }}/>
+                        <FilterDropdown text="Saldo" value={open ? "open" : "all"}
+                                        options={[{value: "all", description: "Todas"}, {value: "open", description: "Con saldo"}]}
+                                        onChange={(value) => {
+                                            setOpen(value === "open");
+                                            resetPage();
+                                        }}/>
                     </ListToolbar>
                 }
                 footer={!loading ? (
@@ -133,14 +129,14 @@ export const ListInvoicePage = () => {
                                 {invoices.content.map((invoice) => (
                                     <tr key={invoice.id}>
                                         <td>
-                                            <Link to={`/invoices/${invoice.id}`} className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+                                            <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${invoice.id}`} className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
                                                 {invoice.description || invoice.number}
-                                            </Link>
+                                            </PermittedLink>
                                             <span className="block text-xs text-[var(--text-tertiary)]">{invoice.number}{invoice.ncf && ` · NCF ${invoice.ncf}`}</span>
                                         </td>
                                         <td>
                                             {invoice.student ? (
-                                                <Link to={`/accounts/${invoice.student.id}`} className="hover:text-[var(--accent)]">{invoice.student.name}</Link>
+                                                <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${invoice.student.id}`} className="hover:text-[var(--accent)]">{invoice.student.name}</PermittedLink>
                                             ) : "—"}
                                         </td>
                                         <td className="whitespace-nowrap">{formatDate(invoice.dueDate)}</td>
@@ -148,9 +144,9 @@ export const ListInvoicePage = () => {
                                         <td className="text-right font-semibold text-[var(--text-primary)]">{money.format(invoice.due)}</td>
                                         <td><InvoiceStatusPill status={invoice.status}/></td>
                                         <td className="text-right">
-                                            <Link to={`/invoices/${invoice.id}`} className="row-action" title="Ver factura" aria-label="Ver factura">
+                                            <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${invoice.id}`} className="row-action" title="Ver factura" aria-label="Ver factura">
                                                 <i className="fa fa-chevron-right"/>
-                                            </Link>
+                                            </PermittedLink>
                                         </td>
                                     </tr>
                                 ))}

@@ -85,20 +85,10 @@ export const ListProductPage = () => {
             <ProductActions counts={statusCounts} onExport={exportProducts}
                             onCreate={canEdit ? () => setShowForm(true) : undefined}/>
 
-            <section
-                className="rounded-[24px] border p-4 sm:p-5"
-                style={{
-                    borderColor: "var(--border-soft)",
-                    background: "var(--surface)",
-                    boxShadow: "var(--shadow-card)",
-                }}
-            >
-                <ProductFilter onFilter={handleFilters}/>
-            </section>
-
             <DataTableCard
                 title="Conceptos registrados"
                 description="Abre un concepto para ver su detalle, cambiar su precio o editar cómo se cobra."
+                filters={<ProductFilter onFilter={handleFilters}/>}
                 footer={!loading ? (
                     <Pager
                         page={products}
