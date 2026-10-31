@@ -203,10 +203,12 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         if (target === "STUDENT") return true;
         if (!student) return false;
         // Sin inscripción en el periodo, el curso se elige en el paso 1 (inscripción y pago van juntos)
-        if (standingQuery.isPending || (notEnrolled && !enrollCourse)) return false;
+        if (standingQuery.isPending) return false;
         if (target === "GUARDIAN") return true;
         if (!payer) return false;
         if (target === "CONCEPTS") return true;
+        // Sin inscripción, el curso se elige en Conceptos y la inscripción entra como primera línea
+        if (notEnrolled && !enrollCourse) return false;
         return total > 0 && !needsReference && !overpaidByCard;
     };
     const currentIndex = STEPS.findIndex((item) => item.id === step);
@@ -422,14 +424,35 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                     </p>
                                                 )}
                                                 {student && !creatingStudent && notEnrolled && (
+                                                    <p className="rounded-xl px-4 py-3 text-sm" style={{background: "var(--warning-soft)", color: "var(--text-primary)"}}>
+                                                        <i className="fa fa-user-clock me-2" style={{color: "var(--warning)"}}/>
+                                                        No está inscrito en <strong>{standing?.periodName}</strong>: en Conceptos eliges el curso y se inscribe en este mismo pago.
+                                                    </p>
+                                                )}
+                                                {student && !creatingStudent && standing?.state === "PENDING" && (
+                                                    <p className="rounded-xl px-4 py-3 text-sm" style={{background: "var(--warning-soft)", color: "var(--text-primary)"}}>
+                                                        <i className="fa fa-user-clock me-2" style={{color: "var(--warning)"}}/>
+                                                        Inscrito en {standing.courseName}, pendiente de pago: {standing.invoiceNumber} se cobra primero.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {step === "GUARDIAN" && student && (
+                                            <GuardiansStep student={student} payerId={payer?.id} onPayer={setPayer}/>
+                                        )}
+
+                                        {step === "CONCEPTS" && (
+                                            <div className="space-y-6">
+                                                {notEnrolled && (
                                                     <div className="space-y-2 rounded-2xl border p-4"
                                                          style={{borderColor: enrollCourse ? "var(--success)" : "var(--warning)", background: enrollCourse ? "var(--success-soft)" : "var(--warning-soft)"}}>
                                                         <p className="text-sm" style={{color: "var(--text-primary)"}}>
                                                             <i className={`fa ${enrollCourse ? "fa-circle-check" : "fa-user-clock"} me-2`}
                                                                style={{color: enrollCourse ? "var(--success)" : "var(--warning)"}}/>
                                                             {enrollCourse
-                                                                ? <>Se inscribirá en este pago ({standing?.periodName}).</>
-                                                                : <>No está inscrito en <strong>{standing?.periodName}</strong>. Elige el curso para inscribirlo en este mismo pago.</>}
+                                                                ? <>{standing?.conceptName} agregada: se inscribe en este pago ({standing?.periodName}) y se cobra primero.</>
+                                                                : <>No está inscrito en <strong>{standing?.periodName}</strong>. Elige el curso: la {(standing?.conceptName ?? "inscripción").toLowerCase()} se agrega sola como primer concepto.</>}
                                                         </p>
                                                         {Number(standing?.conceptPrice ?? 0) > 0 ? (
                                                             enrollCourse ? (
@@ -475,35 +498,9 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                         )}
                                                     </div>
                                                 )}
-                                                {student && !creatingStudent && standing?.state === "PENDING" && (
-                                                    <p className="rounded-xl px-4 py-3 text-sm" style={{background: "var(--warning-soft)", color: "var(--text-primary)"}}>
-                                                        <i className="fa fa-user-clock me-2" style={{color: "var(--warning)"}}/>
-                                                        Inscrito en {standing.courseName}, pendiente de pago: {standing.invoiceNumber} se cobra primero.
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {step === "GUARDIAN" && student && (
-                                            <GuardiansStep student={student} payerId={payer?.id} onPayer={setPayer}/>
-                                        )}
-
-                                        {step === "CONCEPTS" && (
-                                            <div className="space-y-6">
-                                                {notEnrolled && enrollCourse && (
-                                                    <div className="flex items-center gap-3 rounded-2xl border px-4 py-2.5"
-                                                         style={{borderColor: "var(--success)", background: "var(--success-soft)"}}>
-                                                        <i className="fa fa-lock text-xs" style={{color: "var(--success)"}} title="Se cobra primero"/>
-                                                        <span className="min-w-0 flex-1">
-                                                            <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{standing?.conceptName} · {courseLabel(enrollCourse)}</strong>
-                                                            <span className="text-xs" style={{color: "var(--text-secondary)"}}>Se inscribe y se cobra primero</span>
-                                                        </span>
-                                                        <strong className="text-sm" style={{color: "var(--text-primary)"}}>{money.format(enrollmentAmount)}</strong>
-                                                    </div>
-                                                )}
                                                 <div className={`space-y-3 ${conceptsLocked ? "pointer-events-none opacity-50" : ""}`} aria-disabled={conceptsLocked}>
                                                     <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>
-                                                        Conceptos{conceptsLocked && <span className="ms-2 text-xs font-normal" style={{color: "var(--text-tertiary)"}}>disponibles después de elegir el curso</span>}
+                                                        Conceptos{conceptsLocked && <span className="ms-2 text-xs font-normal" style={{color: "var(--text-tertiary)"}}>disponibles después de elegir el curso de la inscripción</span>}
                                                     </h3>
                                                     <div className="flex flex-wrap gap-2">
                                                         {products.filter((product) => Number(product.price) > 0).map((product) => (
