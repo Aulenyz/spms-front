@@ -30,7 +30,7 @@ export const RecoverPasswordSchema = () => {
         setLoading(true);
         recoveryService.create('', params)
             .then(() => {
-                toast.success("Contrasena actualizada.");
+                toast.success("Contraseña actualizada.");
                 navigate('/auth/login', {replace: true});
             }, (error) => {
                 const errorPath = resolveErrorPath(error as {status?: number});
@@ -38,7 +38,7 @@ export const RecoverPasswordSchema = () => {
                     navigate(errorPath, {replace: true});
                     return;
                 }
-                toast.error("No se pudo actualizar la contrasena.");
+                toast.error("No se pudo actualizar la contraseña.");
             })
 
     };
@@ -55,7 +55,7 @@ export const RecoverPasswordSchema = () => {
                        error={errors.repeated?.message}/>
             </div>
             <button className="btn btn-primary flex justify-center grow">
-                Restablecer contrasena
+                Restablecer contraseña
                 {loading && <i className="fa fa-spin fa-spinner"/>}
             </button>
         </Form>

@@ -196,7 +196,7 @@ export const GuardianStep = ({selected, onChange}: Props) => {
                                         Doc: {searchResult.document}
                                     </p>
                                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                        {searchResult.phone ? `Tel: ${searchResult.phone}` : "Sin telefono"}{" "}
+                                        {searchResult.phone ? `Tel: ${searchResult.phone}` : "Sin teléfono"}{" "}
                                         {searchResult.email ? `- ${searchResult.email}` : ""}
                                     </p>
                                 </div>
@@ -226,7 +226,7 @@ export const GuardianStep = ({selected, onChange}: Props) => {
                         <Input label="Nombre(s)*" {...register("firstname")} error={errors.firstname?.message}/>
                         <Input label="Apellido(s)*" {...register("lastname")} error={errors.lastname?.message}/>
                         <Input label="Email" {...register("email")} error={errors.email?.message}/>
-                        <Input label="Direccion" {...register("address")} error={errors.address?.message}/>
+                        <Input label="Dirección" {...register("address")} error={errors.address?.message}/>
 
                         <div className="md:col-span-2 flex items-center justify-end gap-2 pt-2">
                             <button

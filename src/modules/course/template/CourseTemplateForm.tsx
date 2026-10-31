@@ -134,7 +134,7 @@ export const CourseTemplateForm = ({
                             Nota
                         </p>
                         <p className="mt-1 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                            Estos cambios se reflejaran en el sistema para el proximo ano escolar.
+                            Estos cambios se reflejaran en el sistema para el próximo ano escolar.
                         </p>
                     </div>
                 </div>

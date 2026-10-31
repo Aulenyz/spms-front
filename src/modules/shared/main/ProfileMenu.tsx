@@ -46,7 +46,7 @@ export const ProfileMenu = memo(() => {
                                 className="profile-menu-item w-full"
                             >
                                 <i className="fa fa-key text-[var(--accent)]"/>
-                                <span>Cambiar contrasena</span>
+                                <span>Cambiar contraseña</span>
                             </button>
 
                             <button
@@ -55,7 +55,7 @@ export const ProfileMenu = memo(() => {
                                 className="profile-menu-item w-full text-[var(--danger)]"
                             >
                                 <i className="fa fa-sign-out"/>
-                                <span>Cerrar sesion</span>
+                                <span>Cerrar sesión</span>
                             </button>
                         </div>
                     </div>
@@ -63,7 +63,7 @@ export const ProfileMenu = memo(() => {
             </div>
 
             <LeftModal
-                title="Cambiar contrasena"
+                title="Cambiar contraseña"
                 isOpen={showChangePassword}
                 onClose={() => setShowChangePassword(false)}
                 className="w-[400px] h-full z-[9999]"

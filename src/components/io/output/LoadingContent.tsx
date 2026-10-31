@@ -5,7 +5,7 @@ export const LoadingContent = (props: { children?: ReactNode, loading: boolean, 
     return (
         props.loading ? (
             <div className={clsx("flex justify-center items-center", props.className)}>
-                <div className="w-16 h-16 border-4 border-blue-600 border-dotted rounded-full animate-spin"></div>
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[var(--accent-soft)] border-t-[var(--accent)]"></div>
             </div>
         ) : props.children
     );

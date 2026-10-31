@@ -29,7 +29,7 @@ export const AuthorityForm = ({onSubmit}: { onSubmit?: () => void }) => {
         if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio.";
         if (!values.key.trim()) nextErrors.key = "La llave es obligatoria.";
         else if (!/^[A-Z_]+$/.test(values.key.trim())) nextErrors.key = "Usa solo letras mayusculas y guion bajo.";
-        if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria.";
+        if (!values.description.trim()) nextErrors.description = "La descripción es obligatoria.";
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
     };
@@ -57,7 +57,7 @@ export const AuthorityForm = ({onSubmit}: { onSubmit?: () => void }) => {
             }
 
             await authorityService.create("", payload);
-            toast.success("Permiso creado con exito.");
+            toast.success("Permiso creado con éxito.");
             onSubmit?.();
         } catch {
             toast.error("Error creando el permiso.");
@@ -79,7 +79,7 @@ export const AuthorityForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     Datos principales
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Registra la llave tecnica, el nombre visible y la descripcion del permiso.
+                    Registra la llave tecnica, el nombre visible y la descripción del permiso.
                 </div>
             </div>
 

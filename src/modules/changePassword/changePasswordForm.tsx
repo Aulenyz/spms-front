@@ -43,7 +43,7 @@ export const ChangePasswordForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     Seguridad
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Actualiza tu contrasena para mantener tu cuenta protegida.
+                    Actualiza tu contraseña para mantener tu cuenta protegida.
                 </div>
             </div>
 
@@ -70,7 +70,7 @@ export const ChangePasswordForm = ({onSubmit}: { onSubmit?: () => void }) => {
 
             <div className="flex items-center justify-end gap-2 pt-2">
                 <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>
-                    {saving ? "Guardando..." : "Cambiar contrasena"}
+                    {saving ? "Guardando..." : "Cambiar contraseña"}
                     <i className="fa fa-key ms-2"/>
                 </button>
             </div>

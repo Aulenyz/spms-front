@@ -87,9 +87,9 @@ export const ListSubjectPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Gestion academica"
+                eyebrow="Gestión académica"
                 title="Materias"
-                description="Consulta materias por nombre, codigo o descripcion y controla su estado."
+                description="Consulta materias por nombre, código o descripción y controla su estado."
             />
 
             <SubjectBreadcrumb onCreate={() => setShowCreate(true)}/>
@@ -211,7 +211,7 @@ export const ListSubjectPage = () => {
 
                                     <p className="line-clamp-4 text-sm leading-6"
                                        style={{color: "var(--text-secondary)"}}>
-                                        {subject.description ?? "Sin descripcion registrada."}
+                                        {subject.description ?? "Sin descripción registrada."}
                                     </p>
                                 </div>
                             </article>

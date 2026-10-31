@@ -4,75 +4,106 @@
 
 @layer base {
     :root {
-        --app-bg: #f4f7fb;
+        --app-bg: #f5f6fa;
         --surface: #ffffff;
-        --surface-muted: #f8fbff;
-        --surface-soft: #eef4fb;
-        --text-primary: #10203d;
-        --text-secondary: #5d6b82;
-        --text-tertiary: #8592a6;
-        --border-soft: rgba(16, 32, 61, 0.10);
-        --border-strong: rgba(16, 32, 61, 0.16);
-        --accent: #0f62fe;
-        --accent-soft: rgba(15, 98, 254, 0.10);
-        --success-soft: rgba(18, 128, 92, 0.12);
-        --success: #12805c;
-        --warning-soft: rgba(196, 123, 7, 0.12);
-        --warning: #c47b07;
-        --danger: #d14f5c;
-        --shadow-card: 0 18px 40px rgba(15, 33, 61, 0.08);
-        --shadow-soft: 0 10px 28px rgba(15, 33, 61, 0.06);
+        --surface-muted: #f9fafc;
+        --surface-soft: #eef0f6;
+        --text-primary: #1b2038;
+        --text-secondary: #555c78;
+        --text-tertiary: #8a90a8;
+        --border-soft: rgba(31, 37, 68, 0.09);
+        --border-strong: rgba(31, 37, 68, 0.17);
+        --success: #059669;
+        --success-soft: #d1fae5;
+        --warning: #d97706;
+        --warning-soft: #fef3c7;
+        --danger: #e11d48;
+        --danger-soft: #ffe4e6;
+        --shadow-card: 0 1px 2px rgba(27, 32, 56, 0.05), 0 8px 24px rgba(27, 32, 56, 0.05);
+        --shadow-soft: 0 8px 22px rgba(31, 37, 68, 0.06);
+        --radius-card: 26px;
+        --font-display: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        /* Default module tone; [data-tone] below swaps it per module */
+        --tone-bright: #818cf8;
+        --accent: #4f46e5;
+        --accent-deep: #3730a3;
+        --accent-soft: #e0e7ff;
+        --tw-primary: var(--accent);
+        --tw-primary-active: var(--accent-deep);
+        --tw-primary-light: var(--accent-soft);
     }
 
+    /* Module identity colors: bright (decoration), accent (fills and text), deep (pressed edge), soft (tints) */
+    [data-tone="sky"] { --tone-bright: #38bdf8; --accent: #0284c7; --accent-deep: #075985; --accent-soft: #e0f2fe; }
+    [data-tone="violet"] { --tone-bright: #a78bfa; --accent: #7c3aed; --accent-deep: #5b21b6; --accent-soft: #ede9fe; }
+    [data-tone="emerald"] { --tone-bright: #34d399; --accent: #059669; --accent-deep: #065f46; --accent-soft: #d1fae5; }
+    [data-tone="pink"] { --tone-bright: #f472b6; --accent: #db2777; --accent-deep: #9d174d; --accent-soft: #fce7f3; }
+    [data-tone="amber"] { --tone-bright: #fbbf24; --accent: #d97706; --accent-deep: #92400e; --accent-soft: #fef3c7; }
+    [data-tone="teal"] { --tone-bright: #2dd4bf; --accent: #0d9488; --accent-deep: #115e59; --accent-soft: #ccfbf1; }
+    [data-tone="indigo"] { --tone-bright: #818cf8; --accent: #4f46e5; --accent-deep: #3730a3; --accent-soft: #e0e7ff; }
+    [data-tone] { --tw-primary: var(--accent); --tw-primary-active: var(--accent-deep); --tw-primary-light: var(--accent-soft); }
+
     .dark {
-        --app-bg: #08111d;
-        --surface: #0f1726;
-        --surface-muted: #132031;
-        --surface-soft: #162538;
-        --text-primary: #edf3ff;
-        --text-secondary: #a6b5cb;
-        --text-tertiary: #75859f;
+        --app-bg: #12142a;
+        --surface: #1b1e3a;
+        --surface-muted: #20244a;
+        --surface-soft: #272b55;
+        --text-primary: #f1f2ff;
+        --text-secondary: #b4b8d8;
+        --text-tertiary: #8186ad;
         --border-soft: rgba(255, 255, 255, 0.08);
-        --border-strong: rgba(255, 255, 255, 0.14);
-        --accent: #79a7ff;
-        --accent-soft: rgba(121, 167, 255, 0.16);
-        --success-soft: rgba(88, 214, 173, 0.16);
-        --success: #58d6ad;
-        --warning-soft: rgba(246, 188, 82, 0.16);
-        --warning: #f6bc52;
-        --danger: #ff8d96;
-        --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.34);
-        --shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.28);
+        --border-strong: rgba(255, 255, 255, 0.15);
+        --success: #34d399;
+        --success-soft: rgba(52, 211, 153, 0.16);
+        --warning: #fbbf24;
+        --warning-soft: rgba(251, 191, 36, 0.16);
+        --danger: #fb7185;
+        --danger-soft: rgba(251, 113, 133, 0.16);
+        --shadow-card: 0 16px 40px rgba(0, 0, 0, 0.35);
+        --shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.28);
+    }
+
+    .dark [data-tone], .dark[data-tone] {
+        --accent: var(--tone-bright);
+        --accent-soft: color-mix(in srgb, var(--tone-bright) 18%, transparent);
     }
 
     body {
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
         color: var(--text-primary);
-        background:
-            radial-gradient(circle at top left, rgba(15, 98, 254, 0.10), transparent 24%),
-            radial-gradient(circle at bottom right, rgba(18, 128, 92, 0.08), transparent 20%),
-            var(--app-bg);
+        background-color: var(--app-bg);
+    }
+
+    h1, h2, h3, .page-title, .surface-card-title, .metric-card-value, .auth-erp-title, .auth-erp-panel-title {
+        font-family: var(--font-display);
     }
 }
 
 @layer components {
     .page-header {
-        @apply flex flex-col gap-3 rounded-[24px] border p-4 sm:p-5 xl:flex-row xl:items-center xl:justify-between;
-        border-color: var(--border-soft);
-        background:
-            radial-gradient(circle at top right, rgba(15, 98, 254, 0.10), transparent 28%),
-            linear-gradient(180deg, color-mix(in srgb, var(--surface) 98%, transparent), color-mix(in srgb, var(--surface-muted) 92%, transparent));
+        @apply relative flex flex-col gap-4 overflow-hidden rounded-[22px] border p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between;
+        border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+        background: linear-gradient(115deg, var(--accent-soft) 0%, color-mix(in srgb, var(--accent-soft) 35%, var(--surface)) 55%, var(--surface) 100%);
         box-shadow: var(--shadow-card);
     }
 
+
+    .page-header-icon {
+        @apply inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-lg text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
+        box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+
     .page-header-eyebrow {
-        @apply inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em];
+        @apply inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em];
         width: fit-content;
         color: var(--accent);
-        background: var(--accent-soft);
+        background: var(--surface);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
     }
 
     .page-title {
-        @apply text-xl font-semibold sm:text-2xl;
+        @apply text-xl font-bold tracking-tight sm:text-2xl;
         color: var(--text-primary);
     }
 
@@ -82,14 +113,13 @@
     }
 
     .section-tabs {
-        @apply flex flex-wrap gap-3 rounded-[22px] border p-2;
+        @apply flex flex-wrap gap-1.5 rounded-[16px] border p-1.5;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 96%, transparent);
-        box-shadow: var(--shadow-soft);
+        background: var(--surface);
     }
 
     .section-tab {
-        @apply inline-flex items-center gap-2 rounded-[16px] px-3 py-2 text-sm font-medium transition;
+        @apply inline-flex items-center gap-2 rounded-[11px] px-3.5 py-2 text-sm font-semibold transition;
         color: var(--text-secondary);
         background: transparent;
     }
@@ -117,20 +147,17 @@
 
     .surface-card,
     .data-table-card {
-        @apply overflow-hidden rounded-[24px] border;
+        @apply overflow-hidden rounded-[20px] border;
         border-color: var(--border-soft);
-        background:
-            radial-gradient(circle at top right, rgba(15, 98, 254, 0.05), transparent 22%),
-            var(--surface);
+        background: var(--surface);
         box-shadow: var(--shadow-card);
     }
 
     .surface-card-header,
     .data-table-card-header {
-        @apply flex flex-col gap-3 border-b p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between;
+        @apply relative flex flex-col gap-3 border-b p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between;
         border-color: var(--border-soft);
-        background:
-            linear-gradient(180deg, color-mix(in srgb, var(--surface-muted) 98%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
+        background: var(--surface);
     }
 
     .surface-card-content {
@@ -138,7 +165,7 @@
     }
 
     .surface-card-title {
-        @apply text-base font-semibold;
+        @apply text-base font-bold;
         color: var(--text-primary);
     }
 
@@ -181,18 +208,21 @@
     }
 
     .table-shell thead tr {
-        background: color-mix(in srgb, var(--surface-muted) 90%, transparent);
+        background: transparent;
     }
 
     .table-shell th {
-        @apply px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.1em];
+        @apply px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em];
         color: var(--text-tertiary);
+        background: var(--surface-muted);
         border-bottom: 1px solid var(--border-soft);
     }
 
+
     .table-shell td {
         @apply px-4 py-3.5 align-middle;
-        border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 72%, transparent);
+        color: var(--text-secondary);
+        border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 70%, transparent);
     }
 
     .table-shell tbody tr:last-child td {
@@ -200,16 +230,16 @@
     }
 
     .table-shell tbody tr:hover {
-        background: color-mix(in srgb, var(--surface-soft) 74%, transparent);
+        background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
     }
 
     .table-link {
-        @apply inline-flex items-center gap-1 font-medium transition;
+        @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 font-semibold transition;
         color: var(--accent);
     }
 
     .table-link:hover {
-        color: color-mix(in srgb, var(--accent) 82%, black);
+        background: var(--accent-soft);
     }
 
     .pager {
@@ -260,9 +290,9 @@
     }
 
     .pager-button {
-        @apply inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border px-2 text-sm font-medium transition;
+        @apply inline-flex h-9 min-w-[36px] items-center justify-center rounded-[10px] border px-2 text-sm font-semibold transition;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 96%, transparent);
+        background: var(--surface);
         color: var(--text-secondary);
     }
 
@@ -282,41 +312,38 @@
         border-color: transparent;
         background: var(--accent);
         color: #ffffff;
-        box-shadow: 0 12px 24px rgba(15, 98, 254, 0.2);
     }
 
     .empty-state {
-        @apply flex flex-col items-center justify-center gap-4 rounded-[20px] border border-dashed px-6 py-10 text-center;
-        border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface-muted) 96%, transparent);
+        @apply flex flex-col items-center justify-center gap-4 rounded-[18px] border border-dashed px-6 py-10 text-center;
+        border-color: var(--border-strong);
+        background: var(--surface-muted);
     }
 
     .empty-state-icon {
-        @apply inline-flex h-14 w-14 items-center justify-center rounded-full text-lg;
-        color: var(--accent);
-        background: var(--accent-soft);
+        @apply inline-flex h-14 w-14 items-center justify-center rounded-[16px] text-lg text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
     }
 
     .form-label {
-        @apply mb-1.5 block text-sm font-medium;
-        color: var(--text-secondary);
+        @apply mb-1.5 block text-sm font-semibold;
+        color: var(--text-primary);
     }
 
     .input,
     .select,
     .textarea {
-        @apply w-full rounded-[16px] border px-3.5 py-2.5 text-sm outline-none transition;
+        @apply w-full rounded-[12px] border px-3.5 py-2.5 text-sm outline-none transition;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 98%, transparent);
+        background: var(--surface);
         color: var(--text-primary);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
 
     .input:focus,
     .select:focus,
     .textarea:focus {
-        border-color: color-mix(in srgb, var(--accent) 34%, transparent);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-soft);
     }
 
     .input:hover,
@@ -389,19 +416,29 @@
     }
 
     .btn {
-        @apply inline-flex min-h-[42px] items-center justify-center gap-2 rounded-[14px] border px-4 py-2.5 text-sm font-medium transition;
+        @apply inline-flex min-h-[42px] items-center justify-center gap-2 rounded-[12px] border px-4 py-2.5 text-sm font-semibold transition;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 96%, transparent);
+        background: var(--surface);
         color: var(--text-primary);
     }
 
     .btn:hover {
         border-color: var(--border-strong);
-        transform: translateY(-1px);
+        background: var(--surface-muted);
+    }
+
+    .btn:active:not(:disabled) {
+        transform: translateY(1px);
+    }
+
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+        transform: none;
     }
 
     .btn-sm {
-        @apply min-h-[42px] px-3 py-2 text-xs;
+        @apply min-h-[38px] px-3 py-1.5 text-xs;
     }
 
     /* Toolbar removed: actions/filters live inside header now. */
@@ -410,29 +447,30 @@
         border-color: transparent;
         background: var(--accent);
         color: #ffffff;
-        box-shadow: 0 10px 22px rgba(15, 98, 254, 0.2);
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 24%, transparent);
     }
 
     .btn-primary:hover {
         border-color: transparent;
-        background: color-mix(in srgb, var(--accent) 88%, black);
+        background: var(--accent-deep);
     }
 
     .btn-success {
         border-color: transparent;
-        background: var(--success);
+        background: #059669;
         color: #ffffff;
-        box-shadow: 0 10px 22px rgba(18, 128, 92, 0.18);
+        box-shadow: 0 6px 16px rgba(5, 150, 105, 0.22);
     }
 
     .btn-success:hover {
         border-color: transparent;
-        background: color-mix(in srgb, var(--success) 86%, black);
+        background: #047857;
     }
 
     .btn-light {
-        background: var(--surface-muted);
-        color: var(--text-primary);
+        background: var(--accent-soft);
+        border-color: transparent;
+        color: var(--accent);
     }
 
     .btn-outline {
@@ -461,8 +499,8 @@
         @apply sticky top-0 z-30 border-b;
         height: 76px;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 90%, transparent);
-        backdrop-filter: blur(18px);
+        background: color-mix(in srgb, var(--surface) 88%, transparent);
+        backdrop-filter: blur(16px);
     }
 
     .app-topbar-inner {
@@ -470,8 +508,8 @@
     }
 
     .icon-button {
-        @apply inline-flex h-10 w-10 items-center justify-center rounded-xl border transition;
-        background: var(--surface-muted);
+        @apply inline-flex h-10 w-10 items-center justify-center rounded-[12px] border transition;
+        background: var(--surface);
         border-color: var(--border-soft);
         color: var(--text-secondary);
     }
@@ -520,10 +558,10 @@
     }
 
     .floating-panel {
-        @apply absolute overflow-hidden rounded-[22px] border shadow-2xl;
+        @apply absolute overflow-hidden rounded-[18px] border;
         border-color: var(--border-soft);
         background: var(--surface);
-        box-shadow: var(--shadow-card);
+        box-shadow: 0 20px 44px rgba(27, 32, 56, 0.14);
     }
 
     .floating-panel-header {
@@ -549,9 +587,9 @@
     }
 
     .profile-button {
-        @apply inline-flex items-center gap-2 rounded-[18px] border p-1.5 transition;
+        @apply inline-flex items-center gap-2 rounded-[14px] border p-1 pr-2 transition;
         border-color: var(--border-soft);
-        background: var(--surface-muted);
+        background: var(--surface);
     }
 
     .profile-button:hover {
@@ -585,10 +623,7 @@
     .app-sidebar-panel {
         @apply relative flex h-full flex-col border-r p-3;
         border-color: var(--border-soft);
-        background:
-            linear-gradient(180deg, color-mix(in srgb, var(--surface) 98%, transparent), color-mix(in srgb, var(--surface-muted) 94%, transparent));
-        backdrop-filter: blur(24px);
-        box-shadow: var(--shadow-soft);
+        background: var(--surface);
     }
 
     .app-sidebar-collapsed {
@@ -611,9 +646,9 @@
     }
 
     .app-sidebar-header {
-        @apply flex items-center gap-3 rounded-[20px] border px-3 py-2.5;
+        @apply flex items-center gap-3 rounded-[16px] border px-3 py-2.5;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
+        background: var(--surface-muted);
     }
 
     .app-brand {
@@ -625,9 +660,8 @@
     }
 
     .app-brand-mark {
-        @apply inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] text-sm font-semibold text-white;
-        background: linear-gradient(135deg, #0f62fe, #12805c);
-        box-shadow: 0 12px 26px rgba(15, 98, 254, 0.24);
+        @apply inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white text-sm font-semibold;
+        box-shadow: inset 0 0 0 1px var(--border-soft);
     }
 
     .app-brand-mark-image {
@@ -636,13 +670,13 @@
     }
 
     .app-brand strong {
-        @apply block text-sm font-semibold;
+        @apply block text-sm font-bold;
         color: var(--text-primary);
         line-height: 1.1;
     }
 
     .app-brand small {
-        @apply block truncate text-[10px] uppercase tracking-[0.18em];
+        @apply block truncate text-[10px] font-semibold uppercase tracking-[0.12em];
         color: var(--text-tertiary);
         line-height: 1.1;
     }
@@ -652,9 +686,8 @@
     }
 
     .sidebar-section {
-        @apply rounded-[18px] border p-2.5;
-        border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 94%, transparent);
+        @apply rounded-[20px] p-1.5;
+        background: transparent;
     }
 
     .sidebar-section-title {
@@ -672,15 +705,15 @@
     }
 
     .sidebar-search-input {
-        @apply w-full rounded-xl border py-2 pl-9 pr-3 text-sm outline-none transition;
+        @apply w-full rounded-[12px] border py-2 pl-9 pr-3 text-sm outline-none transition;
         border-color: var(--border-soft);
         background: var(--surface-muted);
         color: var(--text-primary);
     }
 
     .sidebar-search-input:focus {
-        border-color: rgba(15, 98, 254, 0.34);
-        box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.10);
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px #e0e7ff;
     }
 
     .sidebar-accordion {
@@ -688,25 +721,45 @@
     }
 
     .sidebar-accordion-trigger {
-        @apply flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-[0.14em] transition;
-        color: var(--text-tertiary);
+        @apply flex w-full items-center justify-between rounded-[10px] px-2.5 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.1em] transition;
+        color: var(--accent);
     }
 
     .sidebar-accordion-trigger:hover,
     .sidebar-accordion-trigger-active {
-        background: var(--surface-muted);
-        color: var(--text-primary);
+        background: var(--accent-soft);
+    }
+
+    .sidebar-accordion-title {
+        @apply inline-flex items-center gap-2;
+    }
+
+    .sidebar-tone-dot {
+        @apply inline-block h-2.5 w-2.5 rounded-full;
+        background: var(--tone-bright);
+        box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
     .sidebar-nav-item {
-        @apply relative flex items-center gap-3 rounded-[14px] px-2.5 py-2 transition;
+        @apply relative flex items-center gap-3 rounded-[12px] px-2 py-1.5 font-medium transition;
         color: var(--text-secondary);
     }
 
-    .sidebar-nav-item:hover,
-    .sidebar-nav-item-active {
-        background: linear-gradient(135deg, var(--accent-soft), rgba(18, 128, 92, 0.08));
+    .sidebar-nav-item:hover {
+        background: var(--accent-soft);
         color: var(--text-primary);
+    }
+
+    .sidebar-nav-item-active {
+        background: var(--accent);
+        color: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+
+    .sidebar-nav-item-active .sidebar-nav-icon {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
     }
 
     .sidebar-nav-item-collapsed {
@@ -714,10 +767,9 @@
     }
 
     .sidebar-nav-icon {
-        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs;
-        background: color-mix(in srgb, var(--surface) 94%, transparent);
-        color: inherit;
-        box-shadow: inset 0 0 0 1px var(--border-soft);
+        @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-[13px];
+        background: var(--accent-soft);
+        color: var(--accent);
     }
 
     .sidebar-collapsed-tooltip {
@@ -749,7 +801,7 @@
     }
 
     .sidebar-nav-label {
-        @apply block truncate text-sm font-medium;
+        @apply block truncate text-sm;
     }
 
     .sidebar-badge {
@@ -759,11 +811,9 @@
     }
 
     .sidebar-promo {
-        @apply rounded-[18px] border p-2.5;
+        @apply rounded-[16px] border p-2.5;
         border-color: var(--border-soft);
-        background:
-            radial-gradient(circle at top right, rgba(15, 98, 254, 0.10), transparent 38%),
-            color-mix(in srgb, var(--surface) 96%, transparent);
+        background: var(--surface-muted);
     }
 
     .sidebar-quick-link {
@@ -782,7 +832,7 @@
     }
 
     .app-user-card {
-        @apply flex items-center gap-3 rounded-[18px] border p-2.5;
+        @apply flex items-center gap-3 rounded-[16px] border p-2.5;
         border-color: var(--border-soft);
         background: var(--surface-muted);
     }
@@ -804,47 +854,169 @@
     }
 
     .metric-card {
-        @apply flex items-center justify-between gap-3 rounded-[18px] border p-4;
-        border-color: var(--border-soft);
-        background:
-            linear-gradient(180deg, color-mix(in srgb, var(--surface) 98%, transparent), color-mix(in srgb, var(--surface-muted) 94%, transparent));
+        @apply relative flex items-center justify-between gap-3 overflow-hidden rounded-[20px] border p-5;
+        --accent: #4f46e5; --accent-soft: #e0e7ff; --accent-deep: #3730a3; --tone-bright: #818cf8;
+        border-color: color-mix(in srgb, var(--accent) 16%, transparent);
+        background: linear-gradient(135deg, var(--accent-soft), var(--surface) 85%);
         box-shadow: var(--shadow-card);
     }
 
     .metric-card-label {
-        @apply text-xs font-medium;
+        @apply text-xs font-semibold uppercase tracking-[0.06em];
         color: var(--text-secondary);
     }
 
     .metric-card-value {
-        @apply block text-xl font-semibold sm:text-2xl;
+        @apply block text-2xl font-bold tracking-tight sm:text-[1.7rem];
         color: var(--text-primary);
     }
 
     .metric-card-delta {
-        @apply text-[10px] font-medium uppercase tracking-[0.08em];
-        color: var(--text-tertiary);
-    }
-
-    .metric-card-icon {
-        @apply inline-flex h-11 w-11 items-center justify-center rounded-[14px] text-sm;
-        background: var(--accent-soft);
+        @apply text-[11px] font-semibold;
         color: var(--accent);
     }
 
-    .metric-card-success .metric-card-icon {
-        background: var(--success-soft);
+    .metric-card-icon {
+        @apply inline-flex h-12 w-12 items-center justify-center rounded-[14px] text-base text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
+        box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+
+    .metric-card-success {
+        --accent: #059669; --accent-soft: #d1fae5; --accent-deep: #065f46; --tone-bright: #34d399;
+    }
+
+    .metric-card-warning {
+        --accent: #d97706; --accent-soft: #fef3c7; --accent-deep: #92400e; --tone-bright: #fbbf24;
+    }
+
+    .metric-card-danger {
+        --accent: #db2777; --accent-soft: #fce7f3; --accent-deep: #9d174d; --tone-bright: #f472b6;
+    }
+
+    /* ---------- Detail pages ---------- */
+    .detail-header {
+        @apply flex flex-col gap-4 rounded-[20px] border p-5 sm:flex-row sm:items-center sm:justify-between;
+        border-color: var(--border-soft);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+    }
+
+    .detail-avatar {
+        @apply inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] text-lg font-bold;
+        color: var(--accent);
+        background: var(--accent-soft);
+    }
+
+    .detail-back {
+        @apply inline-flex items-center gap-1.5 text-xs font-semibold;
+        color: var(--text-tertiary);
+    }
+
+    .detail-back:hover {
+        color: var(--accent);
+    }
+
+    .detail-title {
+        @apply truncate text-xl font-bold tracking-tight;
+        color: var(--text-primary);
+    }
+
+    .detail-subtitle {
+        @apply text-sm;
+        color: var(--text-secondary);
+    }
+
+    .detail-badge {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+        color: var(--text-secondary);
+        background: var(--surface-soft);
+    }
+
+    .detail-badge-dot {
+        @apply h-1.5 w-1.5 rounded-full;
+        background: currentColor;
+    }
+
+    .detail-badge:not(.detail-badge-success):not(.detail-badge-muted) .detail-badge-dot {
+        display: none;
+    }
+
+    .detail-badge-success {
         color: var(--success);
+        background: var(--success-soft);
     }
 
-    .metric-card-warning .metric-card-icon {
-        background: var(--warning-soft);
-        color: var(--warning);
+    .detail-badge-muted {
+        color: var(--text-tertiary);
+        background: var(--surface-soft);
     }
 
-    .metric-card-danger .metric-card-icon {
-        background: rgba(209, 79, 92, 0.12);
+    .detail-section {
+        @apply overflow-hidden rounded-[20px] border;
+        border-color: var(--border-soft);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+    }
+
+    .detail-section-head {
+        @apply flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5;
+        border-color: var(--border-soft);
+    }
+
+    .detail-section-title {
+        @apply text-[15px] font-bold;
+        color: var(--text-primary);
+    }
+
+    .detail-section-description {
+        @apply mt-0.5 text-xs;
+        color: var(--text-tertiary);
+    }
+
+    .detail-section .table-shell th {
+        background: var(--surface-muted);
+    }
+
+    .info-list {
+        @apply grid gap-x-6 gap-y-4;
+    }
+
+    .info-list-2 {
+        @apply sm:grid-cols-2;
+    }
+
+    .info-list-3 {
+        @apply sm:grid-cols-2 lg:grid-cols-3;
+    }
+
+    .info-item dt {
+        @apply text-[11px] font-semibold uppercase tracking-[0.06em];
+        color: var(--text-tertiary);
+    }
+
+    .info-item dd {
+        @apply mt-1 break-words text-sm font-medium;
+        color: var(--text-primary);
+    }
+
+    .info-item-full {
+        grid-column: 1 / -1;
+    }
+
+    .row-action {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-[10px] text-[13px] transition;
+        color: var(--text-tertiary);
+    }
+
+    .row-action:hover {
+        color: var(--accent);
+        background: var(--accent-soft);
+    }
+
+    .row-action-danger:hover {
         color: var(--danger);
+        background: var(--danger-soft);
     }
 
     .auth-screen {
@@ -919,8 +1091,10 @@
     .auth-erp-visual {
         @apply relative hidden overflow-hidden lg:block;
         background:
-            linear-gradient(145deg, color-mix(in srgb, var(--auth-accent) 82%, #07111e), color-mix(in srgb, var(--auth-secondary) 58%, #09111b));
-        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
+            radial-gradient(circle at 15% 20%, rgba(253, 230, 138, 0.35) 0 10%, transparent 10.5%),
+            radial-gradient(circle at 85% 80%, rgba(249, 168, 212, 0.35) 0 13%, transparent 13.5%),
+            radial-gradient(circle at 80% 15%, rgba(147, 197, 253, 0.4) 0 7%, transparent 7.5%),
+            linear-gradient(140deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
     }
 
     .auth-erp-visual::after {
@@ -987,6 +1161,7 @@
         pointer-events: none;
     }
 
+
     .auth-erp-visual-body {
         @apply relative z-10 flex h-full flex-col items-center justify-center gap-7 px-8 py-6 text-center xl:px-10 xl:py-8;
         transform: translateY(-18px);
@@ -1024,7 +1199,7 @@
     }
 
     .auth-erp-title {
-        @apply text-center text-4xl font-semibold leading-tight xl:text-[3.3rem];
+        @apply text-center text-4xl font-bold leading-tight tracking-tight xl:text-[3rem];
         color: #ffffff;
     }
 
@@ -1068,11 +1243,8 @@
     }
 
     .auth-erp-panel {
-        @apply relative z-10 flex h-full flex-col justify-center px-5 py-8 sm:px-7 sm:py-10 xl:px-10 xl:py-10;
-        background:
-            linear-gradient(180deg, color-mix(in srgb, var(--surface) 46%, transparent), color-mix(in srgb, var(--surface-muted) 56%, transparent));
-        box-shadow: inset 1px 0 0 color-mix(in srgb, var(--border-soft) 76%, transparent);
-        backdrop-filter: blur(8px);
+        @apply relative z-10 flex h-full flex-col justify-center px-5 py-8 sm:px-7 sm:py-10 xl:px-12 xl:py-10;
+        background: var(--surface);
     }
 
     .auth-erp-panel-head {
@@ -1095,7 +1267,7 @@
     }
 
     .auth-erp-panel-title {
-        @apply text-[1.95rem] font-semibold tracking-tight;
+        @apply text-[1.9rem] font-bold tracking-tight;
         color: var(--text-primary);
     }
 
@@ -1173,16 +1345,15 @@
     }
 
     .auth-space-card {
-        @apply flex h-full min-h-[210px] flex-col justify-between rounded-[24px] border p-5 text-left transition;
+        @apply flex h-full min-h-[210px] flex-col justify-between rounded-[20px] border p-5 text-left transition;
         border-color: var(--border-soft);
-        background: color-mix(in srgb, var(--surface) 97%, transparent);
+        background: var(--surface);
         box-shadow: var(--shadow-card);
     }
 
     .auth-space-card:hover {
         transform: translateY(-2px);
-        border-color: color-mix(in srgb, var(--accent) 26%, transparent);
-        box-shadow: 0 20px 36px rgba(15, 33, 61, 0.12);
+        border-color: color-mix(in srgb, var(--accent) 35%, transparent);
     }
 
     @media (max-width: 1023px) {

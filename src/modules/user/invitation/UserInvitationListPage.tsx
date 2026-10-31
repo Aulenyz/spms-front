@@ -68,7 +68,7 @@ export const UserInvitationListPage = () => {
                             <td colSpan={4}>
                                 <EmptyState
                                     title="No hay invitaciones registradas"
-                                    description="Crea una nueva invitacion o cambia los filtros para continuar."
+                                    description="Crea una nueva invitación o cambia los filtros para continuar."
                                     icon="fa-paper-plane"
                                 />
                             </td>

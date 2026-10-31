@@ -30,7 +30,7 @@ const PRICE_TEMPLATES = [
     {
         id: 3,
         title: "Servicios complementarios",
-        subtitle: "Configuracion base para talleres, laboratorios y cargos opcionales.",
+        subtitle: "Configuración base para talleres, laboratorios y cargos opcionales.",
         badge: "Borrador",
         accent: "linear-gradient(135deg, #7c3aed, #9333ea)",
         details: [
@@ -45,14 +45,14 @@ export const ListPriceTemplatePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Configuracion"
+                eyebrow="Configuración"
                 title="Plantillas de precios"
                 description="Agrupa estructuras de cobro reutilizables para mensualidades, reinscripciones y servicios adicionales."
             />
 
             <DataTableCard
                 title="Plantillas"
-                description="Administra plantillas de cobro por categoria y aplica configuraciones base."
+                description="Administra plantillas de cobro por categoría y aplica configuraciones base."
             >
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {PRICE_TEMPLATES.map((template) => (

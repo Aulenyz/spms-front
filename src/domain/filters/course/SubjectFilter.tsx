@@ -41,7 +41,7 @@ export const SubjectFilter = ({onFilter}: { onFilter: (value: Record<string, any
                     <i className="fa fa-magnifying-glass text-xs"/>
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, codigo o descripcion..."
+                        placeholder="Buscar por nombre, código o descripción..."
                         {...register("term")}
                     />
                 </label>

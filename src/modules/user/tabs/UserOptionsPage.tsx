@@ -15,7 +15,7 @@ export const UserOptionsPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Gestion de usuarios"
+                title="Gestión de usuarios"
                 description="Gestiona cuentas, invitaciones, roles y permisos desde pantallas separadas y ordenadas."
             />
             <SectionTabs tabs={[

@@ -19,8 +19,10 @@ const incomeData = {
         {
             label: "Ingresos",
             data: [14, 18, 17, 22, 25, 27, 29, 31],
-            backgroundColor: "#0f62fe",
-            borderRadius: 10,
+            backgroundColor: "#0284c7",
+            hoverBackgroundColor: "#075985",
+            borderRadius: 8,
+            borderSkipped: false,
             maxBarThickness: 28,
         },
     ],
@@ -31,7 +33,7 @@ const statusData = {
     datasets: [
         {
             data: [790, 42, 18],
-            backgroundColor: ["#12805c", "#c47b07", "#d14f5c"],
+            backgroundColor: ["#059669", "#d97706", "#e11d48"],
             borderColor: "#ffffff",
             borderWidth: 4,
         },
@@ -43,13 +45,13 @@ export const Dashboard = () => {
         <div className="space-y-6">
             <PageHeader
                 title="Panel general"
-                description="Resumen corto del estado academico y financiero del dia."
+                description="Resumen corto del estado académico y financiero del día."
             />
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard title="Estudiantes activos" value={dashboardStats.activeStudents.toString()} delta="Actualizado hoy" icon="fa-user-graduate" tone="success"/>
                 <MetricCard title="Cuentas vencidas" value={dashboardStats.overdueAccounts.toString()} delta="Requieren seguimiento" icon="fa-triangle-exclamation" tone="warning"/>
-                <MetricCard title="Pagos registrados" value={dashboardStats.paymentsToday.toString()} delta="Movimientos del dia" icon="fa-wallet" tone="brand"/>
+                <MetricCard title="Pagos registrados" value={dashboardStats.paymentsToday.toString()} delta="Movimientos del día" icon="fa-wallet" tone="brand"/>
                 <MetricCard title="Ingreso mensual" value={`$${dashboardStats.monthlyIncome.toLocaleString()}`} delta="Corte del periodo" icon="fa-chart-column" tone="danger"/>
             </div>
 
@@ -64,11 +66,11 @@ export const Dashboard = () => {
                                 scales: {
                                     y: {
                                         beginAtZero: true,
-                                        ticks: {color: "#7b8799", font: {size: 11}},
+                                        ticks: {color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
                                         grid: {color: "rgba(16, 32, 61, 0.08)"},
                                     },
                                     x: {
-                                        ticks: {color: "#7b8799", font: {size: 11}},
+                                        ticks: {color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
                                         grid: {display: false},
                                     },
                                 },
@@ -77,7 +79,7 @@ export const Dashboard = () => {
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard title="Estado estudiantil" description="Distribucion actual de la cartera academica.">
+                <SurfaceCard title="Estado estudiantil" description="Distribucion actual de la cartera académica.">
                     <div className="flex h-[280px] items-center justify-center">
                         <div className="w-full max-w-[260px]">
                             <Doughnut
@@ -88,7 +90,7 @@ export const Dashboard = () => {
                                     plugins: {
                                         legend: {
                                             position: "bottom",
-                                            labels: {boxWidth: 10, color: "#7b8799", font: {size: 11}},
+                                            labels: {boxWidth: 10, color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
                                         },
                                     },
                                 }}
@@ -120,7 +122,7 @@ export const Dashboard = () => {
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard title="Cierre rapido" description="Resumen corto para supervisar el turno.">
+                <SurfaceCard title="Cierre rápido" description="Resumen corto para supervisar el turno.">
                     <div className="space-y-3">
                         <div className="rounded-[18px] border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
                             <p className="text-xs uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>Cobros conciliados</p>

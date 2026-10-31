@@ -77,7 +77,7 @@ export const ListPaymentPage = () => {
         <div className="space-y-6">
             <PageHeader
                 title="Pagos"
-                description="Consulta ventas, metodo de pago y estado de cada transaccion desde una vista ordenada."
+                description="Consulta ventas, método de pago y estado de cada transaccion desde una vista ordenada."
             />
 
             <PaymentBreadcrumb selectedPeriodId={selectedPeriodId || 0}/>
@@ -96,7 +96,7 @@ export const ListPaymentPage = () => {
                     <tr>
                         <th scope="col">Identificador</th>
                         <th scope="col">Monto</th>
-                        <th scope="col">Metodo</th>
+                        <th scope="col">Método</th>
                         <th scope="col">Estado</th>
                         <th scope="col">Usuario</th>
                         <th scope="col"></th>
