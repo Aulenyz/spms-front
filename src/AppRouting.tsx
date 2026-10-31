@@ -1,5 +1,7 @@
 import {Suspense} from "react";
 import {Navigate, Route, Routes, useLocation} from "react-router-dom";
+import {RequireAuthority} from "./components/auth/RequireAuthority.tsx";
+import {AuthorityKey} from "./domain/model/user/authorities.ts";
 import {lazyPage} from "./app/routing/lazyPage.ts";
 import {RouteErrorBoundary} from "./app/routing/RouteErrorBoundary.tsx";
 import {LoadingPage} from "./components/io/output/LoadingPage.tsx";
@@ -47,16 +49,16 @@ export const AppRouting = () => {
         <Routes>
             <Route path="/" element={<MainLayout/>}>
                 <Route path="home/*" element={<HomeRouting/>}/>
-                <Route path="students/*" element={<StudentRouting/>}/>
-                <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
-                <Route path="payments/*" element={<ReceiptRouting/>}/>
-                <Route path="invoices/*" element={<InvoiceRouting/>}/>
-                <Route path="accounts/*" element={<AccountRouting/>}/>
+                <Route path="students/*" element={<RequireAuthority authority={AuthorityKey.STUDENTS_VIEW}><StudentRouting/></RequireAuthority>}/>
+                <Route path="enrollments/*" element={<RequireAuthority authority={AuthorityKey.ENROLLMENTS_VIEW}><EnrollmentRouting/></RequireAuthority>}/>
+                <Route path="payments/*" element={<RequireAuthority authority={AuthorityKey.PAYMENTS_VIEW}><ReceiptRouting/></RequireAuthority>}/>
+                <Route path="invoices/*" element={<RequireAuthority authority={AuthorityKey.INVOICES_VIEW}><InvoiceRouting/></RequireAuthority>}/>
+                <Route path="accounts/*" element={<RequireAuthority authority={AuthorityKey.INVOICES_VIEW}><AccountRouting/></RequireAuthority>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
                 <Route path="help" element={<HelpCenterPage/>}/>
-                <Route path="catalog/*" element={<CatalogRouting/>}/>
-                <Route path="guardians/*" element={<GuardianRouting/>}/>
+                <Route path="catalog/*" element={<RequireAuthority authority={AuthorityKey.CATALOG_VIEW}><CatalogRouting/></RequireAuthority>}/>
+                <Route path="guardians/*" element={<RequireAuthority authority={AuthorityKey.GUARDIANS_VIEW}><GuardianRouting/></RequireAuthority>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
                 <Route path="specializations/create" element={<SpecializationForm/>}/>
                 <Route path="/users" element={<UserOptionsPage/>}>
@@ -65,10 +67,10 @@ export const AppRouting = () => {
                     <Route path="authorities" element={<AuthorityListPage/>}/>
                     <Route path="invitations" element={<UserInvitationListPage/>}/>
                 </Route>
-                <Route path="/users/:id" element={<UserDetailsPage/>}/>
+                <Route path="/users/:id" element={<RequireAuthority authority={AuthorityKey.USER_DETAILS_VIEW}><UserDetailsPage/></RequireAuthority>}/>
                 <Route path="/users/roles/:id" element={<RoleDetailsPage/>}/>
-                <Route path="/organizations" element={<OrganizationListPage/>}/>
-                <Route path="/organizations/:id" element={<OrganizationDetailsPage/>}/>
+                <Route path="/organizations" element={<RequireAuthority authority={AuthorityKey.ORGANIZATIONS_VIEW}><OrganizationListPage/></RequireAuthority>}/>
+                <Route path="/organizations/:id" element={<RequireAuthority authority={AuthorityKey.ORGANIZATIONS_VIEW}><OrganizationDetailsPage/></RequireAuthority>}/>
 
                 {/* Full details screen (outside templates tabs) */}
                 <Route path="/courses/templates/:id" element={<CourseTemplateDetailsPage/>}/>

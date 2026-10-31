@@ -1,5 +1,5 @@
 import {ReactNode, useState} from "react";
-import {Link} from "react-router-dom";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -12,7 +12,7 @@ import {VoidDialog} from "../components/VoidDialog.tsx";
 import {printHtml, receiptHtml} from "../print/printDocuments.ts";
 
 /** Columnas compartidas por el encabezado y las filas: flecha, recibo, fecha, total, estado, acción. */
-export const RECEIPT_COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7rem_5.5rem_6rem] items-center gap-3";
+export const RECEIPT_COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7rem_6rem_6rem] items-center gap-x-3";
 
 export const ReceiptListHeader = () => (
     <div className={`${RECEIPT_COLUMNS} border-b px-3 py-3 text-xs font-semibold uppercase tracking-[0.06em]`}
@@ -21,7 +21,7 @@ export const ReceiptListHeader = () => (
         <span>Recibo</span>
         <span>Fecha</span>
         <span className="text-right">Total</span>
-        <span>Estado</span>
+        <span className="ps-3">Estado</span>
         <span className="text-right">Acción</span>
     </div>
 );
@@ -88,10 +88,10 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                     <button type="button" onClick={onToggle} className="block whitespace-nowrap text-left font-semibold hover:underline" style={{color: "var(--success)"}}>
                         {receipt.number}
                     </button>
-                    <Link to={`/accounts/${receipt.student.id}`} title="Ver estado de cuenta del estudiante"
+                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${receipt.student.id}`} title="Ver estado de cuenta del estudiante"
                           className="block truncate text-sm hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-secondary)"}}>
                         {receipt.student.name}
-                    </Link>
+                    </PermittedLink>
                 </span>
                 <span className="min-w-0">
                     <span className="block whitespace-nowrap text-sm" style={{color: "var(--text-primary)"}}>{formatDate(receipt.date)}</span>
@@ -99,7 +99,7 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                 </span>
                 <span className={`whitespace-nowrap text-right font-bold ${voided ? "line-through" : ""}`}
                       style={{color: voided ? "var(--text-tertiary)" : "var(--text-primary)"}}>{money.format(receipt.amount)}</span>
-                <span><ReceiptStatusPill status={receipt.status}/></span>
+                <span className="ps-3"><ReceiptStatusPill status={receipt.status}/></span>
                 <span className="text-right">
                     <button type="button" className="btn btn-sm px-3" disabled={printing} onClick={() => void printReceipt()}
                             aria-label={`Imprimir recibo ${receipt.number}`}>
@@ -117,28 +117,65 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
                                 <Field label="Estudiante">{receipt.student.name}</Field>
                                 <Field label="Documento">{receipt.student.document}</Field>
-                                <Field label="Pagado por">{receipt.guardian?.name}</Field>
+                                <Field label="Pagado por">
+                                    {receipt.guardian
+                                        ? <PermittedLink authority={AuthorityKey.GUARDIANS_VIEW} to={`/guardians/${receipt.guardian.id}`}
+                                                         className="hover:text-[var(--accent)] hover:underline">{receipt.guardian.name}</PermittedLink>
+                                        : null}
+                                </Field>
                                 <Field label="Forma de pago">{PaymentMethodLabel[receipt.method]}</Field>
                                 <Field label="Referencia">{receipt.reference}</Field>
                                 <Field label="Total recibido">{money.format(receipt.amount)}</Field>
-                                <Field label="Recibido por">{details.receivedBy}</Field>
-                                <Field label="Fecha de registro">{formatDate(receipt.createdAt)}</Field>
-                                <Field label={details.payments.length === 1 ? "Factura pagada" : "Facturas pagadas"} wide>
-                                    <span className="flex flex-col gap-0.5">
-                                        {details.payments.map((payment) => (
-                                            <span key={payment.id}>
-                                                <Link to={`/invoices/${payment.invoiceId}`} className="hover:text-[var(--accent)] hover:underline">{payment.invoiceNumber}</Link>
-                                                <span className="font-normal" style={{color: "var(--text-secondary)"}}> · {payment.description ?? "—"} · {money.format(payment.amount)}</span>
-                                            </span>
-                                        ))}
-                                    </span>
+                                <Field label="Recibido por">
+                                    {details.receivedById
+                                        ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${details.receivedById}`}
+                                                         className="hover:text-[var(--accent)] hover:underline">{details.receivedBy}</PermittedLink>
+                                        : details.receivedBy}
                                 </Field>
+                                <Field label="Fecha de registro">{formatDate(receipt.createdAt)}</Field>
+                                <div className="sm:col-span-3 xl:col-span-4">
+                                    <dt className="mb-1 text-xs" style={{color: "var(--text-tertiary)"}}>Conceptos pagados</dt>
+                                    <dd className="overflow-hidden rounded-xl border" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                            <tr className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                                                <th className="px-3 py-2 text-left font-semibold">Concepto</th>
+                                                <th className="px-3 py-2 text-left font-semibold">Factura</th>
+                                                <th className="px-3 py-2 text-right font-semibold">Cant.</th>
+                                                <th className="px-3 py-2 text-right font-semibold">Precio</th>
+                                                <th className="px-3 py-2 text-right font-semibold">Importe</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {details.concepts.map((concept, index) => (
+                                                <tr key={`${concept.invoiceId}-${index}`} className="border-t" style={{borderColor: "var(--border-soft)"}}>
+                                                    <td className="px-3 py-1.5 font-semibold" style={{color: "var(--text-primary)"}}>{concept.description}</td>
+                                                    <td className="px-3 py-1.5">
+                                                        <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/invoices/${concept.invoiceId}`}
+                                                                       className="hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-secondary)"}}>
+                                                            {concept.invoiceNumber}
+                                                        </PermittedLink>
+                                                    </td>
+                                                    <td className="px-3 py-1.5 text-right">{Number(concept.quantity)}</td>
+                                                    <td className="whitespace-nowrap px-3 py-1.5 text-right">{money.format(concept.unitPrice)}</td>
+                                                    <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold" style={{color: "var(--text-primary)"}}>{money.format(concept.amount)}</td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="flex flex-wrap justify-end gap-x-5 gap-y-1 border-t px-3 py-2 text-xs" style={{borderColor: "var(--border-soft)", color: "var(--text-secondary)"}}>
+                                            {details.payments.map((payment) => (
+                                                <span key={payment.id}>Abonado a {payment.invoiceNumber}: <strong style={{color: "var(--text-primary)"}}>{money.format(payment.amount)}</strong></span>
+                                            ))}
+                                        </div>
+                                    </dd>
+                                </div>
                                 {details.voidReason ? (
-                                    <Field label="Anulado">
+                                    <Field label="Anulado" wide>
                                         <span style={{color: "var(--danger)"}}>{formatDate(details.voidedAt)} · {details.voidReason}</span>
                                     </Field>
                                 ) : (
-                                    <Field label="Nota">{details.notes}</Field>
+                                    <Field label="Nota" wide>{details.notes}</Field>
                                 )}
                                 {!voided && hasAuthority(AuthorityKey.PAYMENT_VOID) && (
                                     <div className="flex items-end justify-end sm:col-span-3 xl:col-span-4">

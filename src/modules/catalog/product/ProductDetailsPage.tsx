@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {useBillingSettings} from "../../billing/useBillingSettings.ts";
 import {useQueryClient} from "@tanstack/react-query";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {useParams} from "react-router-dom";
@@ -69,6 +70,7 @@ export const ProductDetailsPage = () => {
     const [showEditForm, setShowEditForm] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const {hasAuthority} = useAuthContext();
+    const {taxesEnabled} = useBillingSettings();
     const canEdit = hasAuthority(AuthorityKey.CATALOG_EDIT);
 
     const reload = async (productId: number) => {
@@ -186,7 +188,7 @@ export const ProductDetailsPage = () => {
                     {label: "Precio actual", value: currency.format(product.price ?? 0)},
                     {label: "Categoría", value: product.category?.name},
                     {label: "Tipo", value: ProductTypeLabel[product.type] ?? product.type},
-                    {label: "Impuesto", value: formatTaxRate(product.taxCategory)},
+                    ...(taxesEnabled ? [{label: "Impuesto", value: formatTaxRate(product.taxCategory)}] : []),
                     {label: "Descripción", value: product.description, full: true},
                 ]}/>
             </DetailSection>

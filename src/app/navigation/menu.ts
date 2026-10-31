@@ -7,6 +7,8 @@ export type NavigationItem = {
     badge?: string;
     action?: "collection";
     authority?: AuthorityKey;
+    /** Solo visible si la organización tiene la función activa. */
+    feature?: "taxes";
 };
 
 /** Color de identidad de cada módulo; ver `[data-tone]` en index.css. */
@@ -66,7 +68,7 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.PAYMENTS_VIEW,
             },
             {
-                label: "Facturas",
+                label: "Facturas emitidas",
                 icon: "fa-file-invoice-dollar",
                 to: "/invoices/list",
                 authority: AuthorityKey.INVOICES_VIEW,
@@ -94,6 +96,7 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-percent",
                 to: "/catalog/taxes",
                 authority: AuthorityKey.CATALOG_VIEW,
+                feature: "taxes",
             },
         ],
     },

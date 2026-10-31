@@ -16,9 +16,9 @@ type SettingsCategory = "schoolYear" | "courses" | "billing";
 
 const SETTINGS_ORDER = [
     "AUTO_CREATE_SCHOOL_YEAR", "SCHOOL_YEAR_START_DATE", "SCHOOL_YEAR_END_DATE", "AUTO_CREATE_COURSES",
-    "ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX",
+    "ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_DUE_DAYS", "TAXES_ENABLED", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX",
 ];
-const BILLING_SETTINGS = ["ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX"];
+const BILLING_SETTINGS = ["ENROLLMENT_REQUIRES_PAYMENT", "INVOICE_DUE_DAYS", "TAXES_ENABLED", "INVOICE_REQUIRES_NCF", "INVOICE_PREFIX"];
 
 const CATEGORIES: {key: SettingsCategory; label: string; icon: string; description: string}[] = [
     {key: "schoolYear", label: "Año académico", icon: "fa-calendar-days", description: "Define el inicio y la finalización del próximo período académico."},
@@ -45,6 +45,12 @@ const settingPresentation = (configuration: OrganizationConfiguration) => {
     if (configuration.name === "ENROLLMENT_REQUIRES_PAYMENT") {
         return {label: "La inscripción requiere pago", icon: "fa-user-check", help: "Si está activo, el estudiante queda pendiente hasta pagar la factura de inscripción. Si no, queda inscrito de inmediato y la factura queda por cobrar."};
     }
+    if (configuration.name === "INVOICE_DUE_DAYS") {
+        return {label: "Días para pagar antes de que venza", icon: "fa-hourglass-half", help: "Las facturas (inscripción, cobros automáticos, ventas) se generan el día del cobro y vencen esta cantidad de días después. Entre 0 y 120."};
+    }
+    if (configuration.name === "TAXES_ENABLED") {
+        return {label: "Cobrar impuestos (ITBIS)", icon: "fa-percent", help: "Si está apagado, los conceptos se facturan sin impuestos y se ocultan las opciones de impuestos."};
+    }
     if (configuration.name === "INVOICE_REQUIRES_NCF") {
         return {label: "Facturas con comprobante fiscal (NCF)", icon: "fa-receipt", help: "Por ahora las facturas se emiten sin NCF. La integración con la DGII llegará más adelante."};
     }
@@ -68,6 +74,7 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
     const [settingsSearch, setSettingsSearch] = useState("");
     const [settingsCategory, setSettingsCategory] = useState<SettingsCategory>("schoolYear");
     const [prefixDraft, setPrefixDraft] = useState<string | null>(null);
+    const [daysDraft, setDaysDraft] = useState<string | null>(null);
     const {refetch} = configurationQuery;
 
     // Al abrir se recarga la configuración (los datos en caché se muestran mientras tanto).
@@ -88,6 +95,7 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                 (current) => current?.map((item) => item.name === saved.name ? saved : item),
             );
             void queryClient.invalidateQueries({queryKey: queryKeys.organizationConfiguration.all});
+            void queryClient.invalidateQueries({queryKey: ["billing", "settings"]});
             toast.success(successMessage);
         } catch (error) {
             toast.error((error as { message?: string })?.message ?? errorMessage);
@@ -102,6 +110,17 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
     const updateDateSetting = async (configuration: OrganizationConfiguration, value: string) => {
         if (!value || value === configuration.value) return;
         await saveSetting(configuration, value, "Fecha del año escolar actualizada.", "No se pudo guardar la fecha.");
+    };
+
+    const updateIntegerSetting = async (configuration: OrganizationConfiguration, value: string) => {
+        setDaysDraft(null);
+        const days = Number(value);
+        if (value.trim() === "" || !Number.isInteger(days) || String(days) === configuration.value) return;
+        if (days < 0 || days > 120) {
+            toast.error("Los días para pagar deben estar entre 0 y 120.");
+            return;
+        }
+        await saveSetting(configuration, String(days), "Plazo de pago actualizado.", "No se pudo guardar el plazo.");
     };
 
     const updateTextSetting = async (configuration: OrganizationConfiguration, value: string) => {
@@ -155,6 +174,20 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
                     disabled={settingsLoading || !canConfigure}
                     onChange={(value) => void updateDateSetting(configuration, value)}
                 />
+            )}
+            {configuration.dataType === "INTEGER" && (
+                <label className="input input-bordered input-sm w-28 shrink-0">
+                    <input type="number" min={0} max={120} className="text-center font-semibold"
+                           value={daysDraft ?? configuration.value ?? ""}
+                           disabled={settingsLoading || !canConfigure}
+                           onChange={(event) => setDaysDraft(event.target.value)}
+                           onBlur={(event) => void updateIntegerSetting(configuration, event.target.value)}
+                           onKeyDown={(event) => {
+                               if (event.key === "Enter") event.currentTarget.blur();
+                           }}
+                           aria-label={settingPresentation(configuration).label}/>
+                    <span className="text-xs" style={{color: "var(--text-tertiary)"}}>días</span>
+                </label>
             )}
             {configuration.dataType === "TEXT" && (
                 <input
