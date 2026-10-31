@@ -1,25 +1,33 @@
 import {SpecializationService} from "../../../services/specialization/SpecializationService.ts";
 import {NavigateFunction, useNavigate} from "react-router-dom";
 import {UseForm} from "../../../domain/types/steoreotype.ts";
-import {GradeType, GradeTypeLabel, SpecializationFormValues} from "../../../domain/model/course/Course.ts";
+import {GradeType, GradeTypeLabel, Specialization, SpecializationFormValues} from "../../../domain/model/course/Course.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {SpecializationSchema} from "../../../schemas/SpecializationSchema.ts";
 import {toast} from "react-toastify";
 import {Form} from "../../../components/io/Form.tsx";
 import {useForm, useWatch} from "react-hook-form";
-import {useCallback, useEffect, useState} from "react";
+import {useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {AssistantService} from "../../../services/assistant/AssistantService.ts";
-import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
 import {Input} from "../../../components/io/Input.tsx";
 import {TextareaInput} from "../../../components/io/TextareaInput.tsx";
 import {SelectInput} from "../../../components/io/SelectInput.tsx";
+import {SimpleCheckbox} from "../../../components/io/Checkbox.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
 const specializationService: SpecializationService = SpecializationService.instance;
 
-export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
+/** Crea un área o, con `specialization`, la edita; al editar también se activa o inactiva. */
+export const SpecializationForm = ({specialization, onSubmit}: { specialization?: Specialization; onSubmit?: () => void }) => {
 
     const navigate: NavigateFunction = useNavigate();
+    const {hasAuthority} = useAuthContext();
+    const editing = Boolean(specialization?.id);
+    const canChangeStatus = editing && hasAuthority(AuthorityKey.SPECIALIZATION_STATUS_UPDATE);
+    const [active, setActive] = useState(specialization?.active ?? true);
+    const [saving, setSaving] = useState(false);
 
     const {
         register,
@@ -29,11 +37,13 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
         formState: {errors}
     }: UseForm<SpecializationFormValues> = useForm<SpecializationFormValues>({
         resolver: yupResolver(SpecializationSchema),
-        defaultValues: {},
+        defaultValues: specialization
+            ? {name: specialization.name ?? "", description: specialization.description ?? "", type: specialization.type}
+            : {},
         reValidateMode: 'onChange'
     });
 
-    // La IA propone la descripción a partir del nombre, hasta que el usuario la escriba a mano.
+    // La IA escribe la descripción a partir del nombre solo cuando se pulsa el botón.
     const {data: assistant} = useQuery({
         queryKey: ["assistant", "status"],
         queryFn: ({signal}) => AssistantService.instance.withSignal(signal).status(),
@@ -41,18 +51,18 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
         meta: {silent: true},
     });
     const [name, type] = useWatch({control, name: ["name", "type"]});
-    const debouncedName = useDebouncedValue((name ?? "").trim(), 900);
+    const trimmedName = (name ?? "").trim();
     const [manual, setManual] = useState(false);
     const [suggesting, setSuggesting] = useState(false);
     const [suggested, setSuggested] = useState(false);
-    const canSuggest = Boolean(assistant?.enabled) && debouncedName.length >= 4;
+    const canSuggest = Boolean(assistant?.enabled) && trimmedName.length >= 4;
 
-    const suggest = useCallback(async (force = false) => {
-        if (!canSuggest || (manual && !force)) return;
+    const suggest = async () => {
+        if (!canSuggest) return;
         setSuggesting(true);
         try {
             const {description} = await AssistantService.instance
-                .describe("specialization", debouncedName, type ? GradeTypeLabel[type as GradeType] : undefined);
+                .describe("specialization", trimmedName, type ? GradeTypeLabel[type as GradeType] : undefined);
             setValue("description", description, {shouldValidate: true, shouldDirty: true});
             setManual(false);
             setSuggested(true);
@@ -61,13 +71,7 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
         } finally {
             setSuggesting(false);
         }
-    }, [canSuggest, manual, debouncedName, type, setValue]);
-
-    useEffect(() => {
-        void suggest();
-        // Solo cuando cambia el nombre ya escrito (no al cambiar `manual`).
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedName]);
+    };
 
     const descriptionField = register("description", {onChange: () => setManual(true)});
 
@@ -82,35 +86,50 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
             })
     }
 
+    const doUpdateSpecialization = async (params: SpecializationFormValues) => {
+        if (!specialization?.id) return;
+        setSaving(true);
+        try {
+            await specializationService.update(specialization.id, params);
+            if (canChangeStatus && active !== specialization.active) await specializationService.updateStatus(specialization.id);
+            toast.success('Área actualizada');
+            onSubmit?.();
+        } catch (error) {
+            toast.error((error as {message?: string})?.message ?? 'No se pudo actualizar el área');
+        } finally {
+            setSaving(false);
+        }
+    }
+
     return (
-        <Form className="py-4" name="Specialization Form" submit={handleSubmit(doCreateSpecialization)}>
+        <Form className="py-4" name="Specialization Form" submit={handleSubmit(editing ? doUpdateSpecialization : doCreateSpecialization)}>
             <Input label="Nombre*"
                    placeholder="Nombre de la especialidad"
                    error={errors.name?.message}
                    {...register("name")}
             />
             {/* Descripción */}
-            <TextareaInput className="mt-4"
-                           label="Descripción*"
-                           placeholder={assistant?.enabled ? "Escribe el nombre y la IA sugiere la descripción" : "Descripción de la especialidad"}
-                           error={errors.description?.message}
-                           {...descriptionField}
-            />
-            <div className="mt-1 min-h-[1.5rem]">{assistant?.enabled && (
-                <div className="flex items-center justify-between gap-3 text-xs" style={{color: "var(--text-tertiary)"}}>
-                    <span>
-                        {suggesting
-                            ? <><i className="fa fa-spinner fa-spin me-1"/>La IA está escribiendo la descripción…</>
-                            : suggested && !manual
-                                ? <><i className="fa fa-wand-magic-sparkles me-1" style={{color: "var(--accent)"}}/>Sugerida por IA; puedes editarla.</>
-                                : null}
-                    </span>
-                    <button type="button" className="btn btn-ghost btn-xs" disabled={!canSuggest || suggesting}
-                            onClick={() => void suggest(true)}>
-                        <i className="fa fa-wand-magic-sparkles"/>{suggested ? "Otra sugerencia" : "Sugerir con IA"}
+            <div className="mt-4 flex items-start gap-2">
+                <TextareaInput className="min-w-0 flex-1"
+                               label="Descripción*"
+                               rows={4}
+                               placeholder={assistant?.enabled ? "Escríbela o pulsa el botón para que la IA la sugiera" : "Descripción de la especialidad"}
+                               error={errors.description?.message}
+                               {...descriptionField}
+                />
+                {assistant?.enabled ? (
+                    <button type="button" className="btn btn-sm btn-square mt-8 shrink-0" disabled={!canSuggest || suggesting}
+                            title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir descripción con IA"
+                            onClick={() => void suggest()}>
+                        <i className={`fa ${suggesting ? "fa-spinner fa-spin" : "fa-wand-magic-sparkles"}`} style={{color: "var(--accent)"}}/>
                     </button>
-                </div>
-            )}</div>
+                ) : <span/>}
+            </div>
+            <p className="mt-1 min-h-[1.25rem] text-xs" style={{color: "var(--text-tertiary)"}}>
+                {suggesting
+                    ? "La IA está escribiendo la descripción…"
+                    : suggested && !manual ? "Sugerida por IA; puedes editarla." : ""}
+            </p>
             {/* Tipo */}
             <SelectInput className="mt-4" label="Tipo*" error={errors.type?.message}{...register("type")}>
                 <option value="">Seleccione un tipo</option>
@@ -120,10 +139,16 @@ export const SpecializationForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     </option>
                 ))}
             </SelectInput>
+            {/* Estado: solo al editar */}
+            <div className="mt-5">
+                {canChangeStatus ? (
+                    <SimpleCheckbox label={active ? "Activa" : "Inactiva"} checked={active} onChange={setActive}/>
+                ) : <span/>}
+            </div>
             {/* Botón */}
             <div className="flex justify-end absolute bottom-5 right-5">
-                <button className="px-4 py-2 h-10 bg-blue-600 btn-sm text-white rounded hover:bg-blue-700">
-                    Agregar <i className="fa fa-save ms-2"/>
+                <button className="px-4 py-2 h-10 bg-blue-600 btn-sm text-white rounded hover:bg-blue-700" disabled={saving}>
+                    {editing ? "Guardar" : "Agregar"} <i className={`fa ${saving ? "fa-spinner fa-spin" : "fa-save"} ms-2`}/>
                 </button>
             </div>
         </Form>
