@@ -1,9 +1,11 @@
-import {useMemo, useState} from "react";
+import {Suspense, useMemo, useState} from "react";
 import {Navigate, Outlet, useLocation, useNavigate} from "react-router-dom";
 import {MainSidebar} from "./MainSidebar.tsx";
 import {MainNavbar} from "./MainNavbar.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {LoadingPage} from "../../../components/io/output/LoadingPage.tsx";
+import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
+import {RouteErrorBoundary} from "../../../app/routing/RouteErrorBoundary.tsx";
 import {resolveRouteAuthority} from "../../../app/security/routeAuthorities.ts";
 import {resolveFirstAuthorizedPath} from "../../../app/navigation/menu.ts";
 
@@ -212,7 +214,11 @@ export const MainLayout = () => {
 
                 <main id="content" role="main" className="app-shell-content">
                     <div className="app-shell-content-inner">
-                        <Outlet/>
+                        <RouteErrorBoundary resetKey={location.pathname}>
+                            <Suspense fallback={<LoadingContent loading className="min-h-[50vh]"/>}>
+                                <Outlet/>
+                            </Suspense>
+                        </RouteErrorBoundary>
                     </div>
                 </main>
             </div>

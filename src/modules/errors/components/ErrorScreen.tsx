@@ -1,6 +1,6 @@
 import {ReactNode} from "react";
 import {Link} from "react-router-dom";
-import logo from "../../../assets/images/logo.png";
+import logo from "../../../assets/images/logo.webp";
 import {APP_DESCRIPTOR, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 
 type ErrorAction = {

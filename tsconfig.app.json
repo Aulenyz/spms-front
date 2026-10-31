@@ -22,8 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "exclude": [
-    "src/assets/theme/**/*"
-  ],
   "include": ["src"]
 }

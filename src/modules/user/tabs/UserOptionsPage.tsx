@@ -1,4 +1,6 @@
+import {Suspense} from "react";
 import {Outlet, useLocation} from "react-router-dom";
+import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {SectionTabs} from "../../../components/ui/layout/SectionTabs.tsx";
 
@@ -22,7 +24,9 @@ export const UserOptionsPage = () => {
                 {to: "/users/roles", label: "Roles", icon: "fa-user-shield", active: isRoles},
                 {to: "/users/authorities", label: "Permisos", icon: "fa-sliders", active: isAuthorities},
             ]}/>
-            <Outlet/>
+            <Suspense fallback={<LoadingContent loading className="min-h-[30vh]"/>}>
+                <Outlet/>
+            </Suspense>
         </div>
     );
 };

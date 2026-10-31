@@ -3,17 +3,10 @@ const defaultTheme = require('tailwindcss/defaultTheme');
 export default {
     content: [
         "./index.html",
-        "./src/**/*.{js,jsx,ts,tsx}", // Include all the paths to your source files
-        "./node_modules/react-tailwindcss-datepicker/dist/index.esm.{js,ts}",
+        "./src/**/*.{ts,tsx}", // Solo código de la app (los plugins en src/assets/plugins/*.js no deben escanearse)
     ],
     safelist: [
         'hidden',
-        'ki-filled',
-        'ki-outline',
-        'ki-duotone',
-        'ki-solid',
-        {pattern: /^apexcharts-.*$/},
-        {pattern: /^leaflet-.*$/}
     ],
     darkMode: 'class',
     theme: {
@@ -620,7 +613,6 @@ export default {
     plugins: [
         require('./src/assets/plugins/plugin'),
         require('./src/assets/plugins/components/theme'),
-        require('./src/assets/plugins/components/breakpoints'),
         require('./src/assets/plugins/components/typography'),
         require('./src/assets/plugins/components/menu'),
         require('./src/assets/plugins/components/dropdown'),
@@ -629,13 +621,9 @@ export default {
         require('./src/assets/plugins/components/input-group'),
         require('./src/assets/plugins/components/select'),
         require('./src/assets/plugins/components/textarea'),
-        require('./src/assets/plugins/components/file-input'),
         require('./src/assets/plugins/components/switch'),
         require('./src/assets/plugins/components/checkbox'),
         require('./src/assets/plugins/components/radio'),
-        require('./src/assets/plugins/components/range'),
-        require('./src/assets/plugins/components/container'),
-        require('./src/assets/plugins/components/image-input'),
         require('./src/assets/plugins/components/modal'),
         require('./src/assets/plugins/components/drawer'),
         require('./src/assets/plugins/components/tooltip'),
@@ -648,9 +636,6 @@ export default {
         require('./src/assets/plugins/components/table'),
         require('./src/assets/plugins/components/badge'),
         require('./src/assets/plugins/components/rating'),
-        require('./src/assets/plugins/components/scrollable'),
-        require('./src/assets/plugins/components/progress'),
-        require('./src/assets/plugins/components/apexcharts'),
-        require('./src/assets/plugins/components/leaflet')
+        require('./src/assets/plugins/components/scrollable')
     ]
 };

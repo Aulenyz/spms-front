@@ -1,5 +1,6 @@
-import {useEffect} from "react";
-import {useForm} from "react-hook-form";
+import {useMemo} from "react";
+import {useForm, useWatch} from "react-hook-form";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 type ProductCategoryFilterValues = {
@@ -8,23 +9,17 @@ type ProductCategoryFilterValues = {
 };
 
 export const ProductCategoryFilter = ({onFilter}: {onFilter: (filters: Record<string, string>) => void}) => {
-    const {register, setValue, watch} = useForm<ProductCategoryFilterValues>({
+    const {register, setValue, control} = useForm<ProductCategoryFilterValues>({
         defaultValues: {
             term: "",
             active: "true",
         },
     });
 
-    const term = watch("term");
-    const active = watch("active");
+    const [term, active] = useWatch({control, name: ["term", "active"]});
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            onFilter({term, active});
-        }, 250);
-
-        return () => window.clearTimeout(timeout);
-    }, [active, onFilter, term]);
+    const filters = useMemo(() => ({term, active}), [term, active]);
+    useFilterEmitter(filters, onFilter);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">

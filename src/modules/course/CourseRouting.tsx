@@ -1,6 +1,8 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {ListCoursePage} from "./ListCoursePage.tsx";
-import {CourseDetailsPage} from "./CourseDetailsPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const ListCoursePage = lazyPage(() => import("./ListCoursePage.tsx"), "ListCoursePage");
+const CourseDetailsPage = lazyPage(() => import("./CourseDetailsPage.tsx"), "CourseDetailsPage");
 
 export const CourseRouting = () => {
     return (

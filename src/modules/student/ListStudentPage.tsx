@@ -1,4 +1,5 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 import {StudentService} from "../../services/student/StudentService.ts";
@@ -14,21 +15,24 @@ import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
 import {StudentForm} from "./StudentForm.tsx";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 
 const studentService: StudentService = StudentService.instance;
+const EMPTY_PAGE: Page<Student> = Pagination.empty<Student>();
 
 export const ListStudentPage = () => {
+    const queryClient = useQueryClient();
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [students, setStudents]: State<Page<Student>> = useState(Pagination.empty<Student>());
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
     const [showCreate, setShowCreate] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
 
-    useEffect(() => {
-        studentService.getAll(filters, pagination).then(setStudents);
-    }, [pagination, filters, refreshKey]);
+    const {data: students = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.students.list({filters, pagination}),
+        queryFn: ({signal}) => studentService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -38,10 +42,10 @@ export const ListStudentPage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleUpdateFilter = (nextFilters: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((nextFilters: KeyValueOf<string>) => {
         setFilters({...nextFilters});
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -50,7 +54,7 @@ export const ListStudentPage = () => {
                 description="Consulta registro, genero y estado academico desde una sola vista."
             />
 
-            <StudentBreadcrumb onCreate={() => setShowCreate(true)} refreshKey={refreshKey}/>
+            <StudentBreadcrumb onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
                 title="Estudiantes"
@@ -83,8 +87,8 @@ export const ListStudentPage = () => {
                         </tr>
                     )}
 
-                    {students.content.map((student: Student, index: number) => (
-                        <tr key={index}>
+                    {students.content.map((student: Student) => (
+                        <tr key={student.id}>
                             <td><strong>{student.document}</strong></td>
                             <td>{student.firstname}</td>
                             <td>{student.lastname}</td>
@@ -107,7 +111,7 @@ export const ListStudentPage = () => {
             >
                 <StudentForm
                     onDone={() => setShowCreate(false)}
-                    onSaved={() => setRefreshKey((current) => current + 1)}
+                    onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.students.all})}
                 />
             </LeftModal>
         </div>

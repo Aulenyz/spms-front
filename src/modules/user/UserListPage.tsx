@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {UserService} from "../../services/user/UserService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
@@ -15,18 +17,21 @@ import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {UserBreadcrumb} from "../breadcrumb/UserBreadcrumb.tsx";
 
 const userService: UserService = UserService.instance;
+const EMPTY_PAGE: Page<User> = Pagination.empty<User>();
 
 export const UserListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [users, setUsers]: State<Page<User>> = useState(Pagination.empty<User>());
     const [showInvitationModal, setShowInvitationModal]: State<boolean> = useState(false);
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
 
-    useEffect(() => {
-        userService.getAll(filters, pagination).then(setUsers);
-    }, [pagination, filters]);
+    const queryClient = useQueryClient();
+    const {data: users = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.users.list({filters, pagination}),
+        queryFn: ({signal}) => userService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -36,10 +41,10 @@ export const UserListPage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleUpdateFilter = (nextFilters: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((nextFilters: KeyValueOf<string>) => {
         setFilters({...nextFilters});
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -76,8 +81,8 @@ export const UserListPage = () => {
                         </tr>
                     )}
 
-                    {users.content.map((user: User, index: number) => (
-                        <tr key={index}>
+                    {users.content.map((user: User) => (
+                        <tr key={user.id}>
                             <td><strong>{user.info.firstname} {user.info.lastname}</strong></td>
                             <td>{user.document}</td>
                             <td>{user.role.name.charAt(0).toUpperCase() + user.role.name.slice(1).toLowerCase()}</td>
@@ -98,7 +103,10 @@ export const UserListPage = () => {
                 onClose={() => setShowInvitationModal(false)}
                 className="w-[400px] h-full z-[9999]"
             >
-                <UserInvitationForm onSubmit={() => setShowInvitationModal(false)}/>
+                <UserInvitationForm onSubmit={() => {
+                    setShowInvitationModal(false);
+                    void queryClient.invalidateQueries({queryKey: queryKeys.invitations.all});
+                }}/>
             </LeftModal>
         </div>
     );

@@ -1,39 +1,48 @@
-import {Navigate, Route, Routes} from "react-router-dom";
-import {AuthPage} from "./modules/auth/AuthPage";
-import {HomeRouting} from "./modules/home/HomeRouting";
-import {Error500} from "./modules/errors/components/Error500.tsx";
+import {Suspense} from "react";
+import {Navigate, Route, Routes, useLocation} from "react-router-dom";
+import {lazyPage} from "./app/routing/lazyPage.ts";
+import {RouteErrorBoundary} from "./app/routing/RouteErrorBoundary.tsx";
+import {LoadingPage} from "./components/io/output/LoadingPage.tsx";
 import {ErrorsLayout} from "./modules/errors/ErrorsLayout.tsx";
-import {Error404} from "./modules/errors/components/Error404.tsx";
-import {Error403} from "./modules/errors/components/Error403.tsx";
-import {Error503} from "./modules/errors/components/Error503.tsx";
-import {MainLayout} from "./modules/shared/main/MainLayout.tsx";
-import {StudentRouting} from "./modules/student/StudentRouting.tsx";
-import {EnrollmentRouting} from "./modules/student/enrollment/EnrollmentRouting.tsx";
-import {PaymentRouting} from "./modules/payment/PaymentRouting.tsx";
-import {SpecializationRouting} from "./modules/specialization/SpecializationRouting.tsx";
-import {UserListPage} from "./modules/user/UserListPage.tsx";
-import {UserOptionsPage} from "./modules/user/tabs/UserOptionsPage.tsx";
-import {RoleListPage} from "./modules/user/role/RoleListPage.tsx";
-import {AuthorityListPage} from "./modules/user/authority/AuthorityListPage.tsx";
-import {ListCourseTemplatePage} from "./modules/course/template/ListCourseTemplatePage.tsx";
-import {ListPriceTemplatePage} from "./modules/course/template/ListPriceTemplatePage.tsx";
-import {ListMaterialTemplatePage} from "./modules/course/template/ListMaterialTemplatePage.tsx";
-import {CourseTemplateDetailsPage} from "./modules/course/template/CourseTemplateDetailsPage.tsx";
-import {SpecializationForm} from "./modules/specialization/create/SpecializationForm.tsx";
-import {UserInvitationListPage} from "./modules/user/invitation/UserInvitationListPage.tsx";
-import {UserDetailsPage} from "./modules/user/details/UserDetailsPage.tsx";
-import {RoleDetailsPage} from "./modules/user/role/details/RoleDetailsPage.tsx";
-import {CourseRouting} from "./modules/course/CourseRouting.tsx";
-import {GuardianRouting} from "./modules/guardian/GuardianRouting.tsx";
-import {SubjectRouting} from "./modules/subject/SubjectRouting.tsx";
-import {HelpCenterPage} from "./modules/help/HelpCenterPage.tsx";
-import {CatalogRouting} from "./modules/catalog/CatalogRouting.tsx";
-import {TeacherRouting} from "./modules/teacher/TeacherRouting.tsx";
-import {OrganizationListPage} from "./modules/organization/OrganizationListPage.tsx";
-import {OrganizationDetailsPage} from "./modules/organization/OrganizationDetailsPage.tsx";
+
+// Cada pantalla se descarga bajo demanda (code splitting por ruta).
+const MainLayout = lazyPage(() => import("./modules/shared/main/MainLayout.tsx"), "MainLayout");
+const AuthPage = lazyPage(() => import("./modules/auth/AuthPage"), "AuthPage");
+const HomeRouting = lazyPage(() => import("./modules/home/HomeRouting"), "HomeRouting");
+const Error500 = lazyPage(() => import("./modules/errors/components/Error500.tsx"), "Error500");
+const Error404 = lazyPage(() => import("./modules/errors/components/Error404.tsx"), "Error404");
+const Error403 = lazyPage(() => import("./modules/errors/components/Error403.tsx"), "Error403");
+const Error503 = lazyPage(() => import("./modules/errors/components/Error503.tsx"), "Error503");
+const StudentRouting = lazyPage(() => import("./modules/student/StudentRouting.tsx"), "StudentRouting");
+const EnrollmentRouting = lazyPage(() => import("./modules/student/enrollment/EnrollmentRouting.tsx"), "EnrollmentRouting");
+const PaymentRouting = lazyPage(() => import("./modules/payment/PaymentRouting.tsx"), "PaymentRouting");
+const SpecializationRouting = lazyPage(() => import("./modules/specialization/SpecializationRouting.tsx"), "SpecializationRouting");
+const UserListPage = lazyPage(() => import("./modules/user/UserListPage.tsx"), "UserListPage");
+const UserOptionsPage = lazyPage(() => import("./modules/user/tabs/UserOptionsPage.tsx"), "UserOptionsPage");
+const RoleListPage = lazyPage(() => import("./modules/user/role/RoleListPage.tsx"), "RoleListPage");
+const AuthorityListPage = lazyPage(() => import("./modules/user/authority/AuthorityListPage.tsx"), "AuthorityListPage");
+const ListCourseTemplatePage = lazyPage(() => import("./modules/course/template/ListCourseTemplatePage.tsx"), "ListCourseTemplatePage");
+const ListPriceTemplatePage = lazyPage(() => import("./modules/course/template/ListPriceTemplatePage.tsx"), "ListPriceTemplatePage");
+const ListMaterialTemplatePage = lazyPage(() => import("./modules/course/template/ListMaterialTemplatePage.tsx"), "ListMaterialTemplatePage");
+const CourseTemplateDetailsPage = lazyPage(() => import("./modules/course/template/CourseTemplateDetailsPage.tsx"), "CourseTemplateDetailsPage");
+const SpecializationForm = lazyPage(() => import("./modules/specialization/create/SpecializationForm.tsx"), "SpecializationForm");
+const UserInvitationListPage = lazyPage(() => import("./modules/user/invitation/UserInvitationListPage.tsx"), "UserInvitationListPage");
+const UserDetailsPage = lazyPage(() => import("./modules/user/details/UserDetailsPage.tsx"), "UserDetailsPage");
+const RoleDetailsPage = lazyPage(() => import("./modules/user/role/details/RoleDetailsPage.tsx"), "RoleDetailsPage");
+const CourseRouting = lazyPage(() => import("./modules/course/CourseRouting.tsx"), "CourseRouting");
+const GuardianRouting = lazyPage(() => import("./modules/guardian/GuardianRouting.tsx"), "GuardianRouting");
+const SubjectRouting = lazyPage(() => import("./modules/subject/SubjectRouting.tsx"), "SubjectRouting");
+const HelpCenterPage = lazyPage(() => import("./modules/help/HelpCenterPage.tsx"), "HelpCenterPage");
+const CatalogRouting = lazyPage(() => import("./modules/catalog/CatalogRouting.tsx"), "CatalogRouting");
+const TeacherRouting = lazyPage(() => import("./modules/teacher/TeacherRouting.tsx"), "TeacherRouting");
+const OrganizationListPage = lazyPage(() => import("./modules/organization/OrganizationListPage.tsx"), "OrganizationListPage");
+const OrganizationDetailsPage = lazyPage(() => import("./modules/organization/OrganizationDetailsPage.tsx"), "OrganizationDetailsPage");
 
 export const AppRouting = () => {
+    const {pathname} = useLocation();
     return (
+        <RouteErrorBoundary resetKey={pathname}>
+        <Suspense fallback={<LoadingPage/>}>
         <Routes>
             <Route path="/" element={<MainLayout/>}>
                 <Route path="home/*" element={<HomeRouting/>}/>
@@ -80,5 +89,7 @@ export const AppRouting = () => {
 
             <Route path="*" element={<Navigate to="/errors/404" replace/>}/>
         </Routes>
+        </Suspense>
+        </RouteErrorBoundary>
     );
 }

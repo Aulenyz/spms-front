@@ -1,4 +1,4 @@
-import {isNil, omitBy} from 'lodash';
+import {isNil, omitBy} from "./lang.ts";
 import {KeyValue, Optional, PlainValue} from "../domain/types/steoreotype.ts";
 
 const routeSeparator: string = '/';

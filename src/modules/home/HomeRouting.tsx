@@ -1,5 +1,7 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {HomePage} from "./HomePage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const HomePage = lazyPage(() => import("./HomePage.tsx"), "HomePage");
 
 export const HomeRouting = () => {
     return (

@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {useNavigate} from "react-router-dom";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -14,21 +16,22 @@ import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
 
 const courseTemplateService: CourseTemplateService = CourseTemplateService.instance;
+const EMPTY_PAGE: Page<CourseTemplate> = Pagination.empty<CourseTemplate>();
 
 export const ListCourseTemplatePage = () => {
     const navigate = useNavigate();
     const [pagination, setPagination] = useState(Pagination.first);
-    const [refreshKey, setRefreshKey] = useState(0);
     const [showCreate, setShowCreate] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
         type: "",
     });
-    const [courseTemplates, setCourseTemplates] = useState<Page<CourseTemplate>>(Pagination.empty<CourseTemplate>());
-
-    useEffect(() => {
-        courseTemplateService.getAll(filters, pagination).then(setCourseTemplates);
-    }, [pagination, filters, refreshKey]);
+    const queryClient = useQueryClient();
+    const {data: courseTemplates = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.courseTemplates.list({filters, pagination}),
+        queryFn: ({signal}) => courseTemplateService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -38,10 +41,10 @@ export const ListCourseTemplatePage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleFilters = (nextFilters: Record<string, any>) => {
+    const handleFilters = useCallback((nextFilters: Record<string, any>) => {
         setFilters(nextFilters);
         setPagination((prev) => ({...prev, page: 0}));
-    };
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -107,7 +110,7 @@ export const ListCourseTemplatePage = () => {
             >
                 <CourseTemplateForm
                     onDone={() => setShowCreate(false)}
-                    onSaved={() => setRefreshKey((v) => v + 1)}
+                    onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.courseTemplates.all})}
                 />
             </LeftModal>
         </div>

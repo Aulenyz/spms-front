@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {TableDetailAction} from "../../components/ui/data/TableDetailAction.tsx";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
@@ -12,28 +14,30 @@ import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {GuardianFilter} from "../../domain/filters/student/GuardianFilter.tsx";
 
 const guardianService = GuardianService.instance;
+const EMPTY_PAGE: Page<Guardian> = Pagination.empty<Guardian>();
 
 export const ListGuardianPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [guardians, setGuardians]: State<Page<Guardian>> = useState(Pagination.empty<Guardian>());
     const [filters, setFilters] = useState<KeyValueOf<string>>({});
 
-    useEffect(() => {
-        guardianService.getAll(filters as any, pagination).then(setGuardians);
-    }, [pagination, filters]);
+    const {data: guardians = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.guardians.list({filters, pagination}),
+        queryFn: ({signal}) => guardianService.withSignal(signal).getAll(filters as any, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => setPagination((prev) => ({...prev, page}));
 
     const handlePageSizeChange = (size: number) => setPagination((prev) => ({...prev, page: 0, size}));
 
-    const handleUpdateFilter = (incoming: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((incoming: KeyValueOf<string>) => {
         const next = {...incoming};
         if (!incoming.document) delete next.document;
         if (!incoming.firstname) delete next.firstname;
         if (!incoming.lastname) delete next.lastname;
         setFilters(next);
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -72,8 +76,8 @@ export const ListGuardianPage = () => {
                         </tr>
                     )}
 
-                    {guardians.content.map((guardian, index) => (
-                        <tr key={index}>
+                    {guardians.content.map((guardian) => (
+                        <tr key={guardian.id}>
                             <td><strong>{guardian.document ?? "-"}</strong></td>
                             <td>{guardian.firstname ?? "-"}</td>
                             <td>{guardian.lastname ?? "-"}</td>

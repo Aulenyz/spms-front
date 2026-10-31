@@ -1,6 +1,8 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {ListGuardianPage} from "./ListGuardianPage.tsx";
-import {GuardianDetailsPage} from "./GuardianDetailsPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const ListGuardianPage = lazyPage(() => import("./ListGuardianPage.tsx"), "ListGuardianPage");
+const GuardianDetailsPage = lazyPage(() => import("./GuardianDetailsPage.tsx"), "GuardianDetailsPage");
 
 export const GuardianRouting = () => {
     return (

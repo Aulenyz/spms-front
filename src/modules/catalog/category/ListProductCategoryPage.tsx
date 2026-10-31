@@ -1,4 +1,6 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {toast} from "react-toastify";
 import {ProductCategoryFilter} from "../../../domain/filters/product/ProductCategoryFilter.tsx";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -15,6 +17,8 @@ import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {ProductCategoryForm} from "./ProductCategoryForm.tsx";
 
 const productCategoryService = ProductCategoryService.instance;
+const EMPTY_PAGE: Page<ProductCategory> = Pagination.empty<ProductCategory>();
+const EMPTY_COUNTS: Record<string, number> = {};
 
 const getApiErrorMessage = (error: unknown) => {
     if (typeof error !== "object" || error === null) return null;
@@ -25,43 +29,26 @@ const getApiErrorMessage = (error: unknown) => {
 export const ListProductCategoryPage = () => {
     const [pagination, setPagination] = useState(Pagination.ofSize(6));
     const [filters, setFilters] = useState<ProductCategorySearchFilters>({term: "", active: true});
-    const [categories, setCategories] = useState<Page<ProductCategory>>(Pagination.empty<ProductCategory>());
-    const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [editing, setEditing] = useState<ProductCategory | null>(null);
     const [loadingEdit, setLoadingEdit] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
-    const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+    const queryClient = useQueryClient();
+    const {data: statusCounts = EMPTY_COUNTS} = useQuery({
+        queryKey: queryKeys.categories.totals,
+        queryFn: ({signal}) => productCategoryService.withSignal(signal).grouped(),
+        meta: {silent: true},
+    });
 
-    useEffect(() => {
-        productCategoryService
-            .grouped()
-            .then(setStatusCounts)
-            .catch(() => setStatusCounts({}));
-    }, [refreshKey]);
-
-    useEffect(() => {
-        let activeRequest = true;
-        setLoading(true);
-
-        productCategoryService
-            .search(filters, pagination)
-            .then((page) => {
-                if (activeRequest) setCategories(page);
-            })
-            .catch((error) => {
-                if (!activeRequest) return;
-                setCategories(Pagination.empty<ProductCategory>());
-                toast.error(getApiErrorMessage(error) ?? "No se pudieron cargar las categorías de recursos.");
-            })
-            .finally(() => {
-                if (activeRequest) setLoading(false);
-            });
-
-        return () => {
-            activeRequest = false;
-        };
-    }, [filters, pagination, refreshKey]);
+    const categoriesQuery = useQuery({
+        queryKey: queryKeys.categories.list({filters, pagination}),
+        queryFn: ({signal}) => productCategoryService.withSignal(signal).search(filters, pagination),
+        placeholderData: keepPreviousData,
+        meta: {errorMessage: "No se pudieron cargar las categorías de recursos."},
+    });
+    const categories: Page<ProductCategory> = categoriesQuery.data ?? EMPTY_PAGE;
+    // Spinner en la carga inicial y al cambiar filtros/página (no en refrescos en segundo plano).
+    const loading: boolean = categoriesQuery.isPending || (categoriesQuery.isFetching && categoriesQuery.isPlaceholderData);
+    const refresh = () => void queryClient.invalidateQueries({queryKey: queryKeys.categories.all});
 
     const handleFilters = useCallback((nextFilters: Record<string, string>) => {
         setFilters({
@@ -134,7 +121,7 @@ export const ListProductCategoryPage = () => {
             >
                 <ProductCategoryForm
                     onDone={() => setShowCreate(false)}
-                    onSaved={() => setRefreshKey((current) => current + 1)}
+                    onSaved={refresh}
                 />
             </LeftModal>
 
@@ -147,7 +134,7 @@ export const ListProductCategoryPage = () => {
                 <ProductCategoryForm
                     initial={editing}
                     onDone={() => setEditing(null)}
-                    onSaved={() => setRefreshKey((current) => current + 1)}
+                    onSaved={refresh}
                 />
             </LeftModal>
         </div>

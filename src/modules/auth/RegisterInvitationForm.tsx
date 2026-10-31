@@ -120,7 +120,7 @@ export const RegisterInvitationForm = ({token, existingUser}: {
         setPreview(localPreview);
 
         try {
-            const uploaded = await publicFileService.upload(file);
+            const uploaded = await publicFileService.upload(file, token);
             setField("image", uploaded);
             toast.success("Imagen cargada.");
         } catch (error) {

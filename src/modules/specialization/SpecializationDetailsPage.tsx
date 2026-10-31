@@ -1,4 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {useParams} from "react-router-dom";
 import clsx from "clsx";
 import {toast} from "react-toastify";
@@ -49,6 +51,7 @@ const typeOptions: SelectOption[] = Object.values(GradeType).map((type) => ({
 
 export const SpecializationDetailsPage = () => {
     const {hasAuthority} = useAuthContext();
+    const queryClient = useQueryClient();
     const {id} = useParams<{id: string}>();
     const [loading, setLoading] = useState(false);
     const [entity, setEntity] = useState<Specialization | null>(null);
@@ -84,6 +87,12 @@ export const SpecializationDetailsPage = () => {
     useEffect(() => {
         void refresh();
     }, [id]);
+
+    // Tras modificar el área se refresca el detalle y se invalida el listado en caché.
+    const refreshAfterChange = async () => {
+        void queryClient.invalidateQueries({queryKey: queryKeys.specializations.all});
+        await refresh();
+    };
 
     useEffect(() => {
         if (!entity) return;
@@ -287,7 +296,7 @@ export const SpecializationDetailsPage = () => {
                                                     .then(() => {
                                                         toast.success("Estado actualizado.");
                                                         setShowMenu(false);
-                                                        void refresh();
+                                                        void refreshAfterChange();
                                                     })
                                                     .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar el estado."))
                                                     .finally(() => setTogglingStatus(false));
@@ -350,7 +359,7 @@ export const SpecializationDetailsPage = () => {
                                     .then(() => {
                                         toast.success("Area actualizada.");
                                         setShowEdit(false);
-                                        void refresh();
+                                        void refreshAfterChange();
                                     })
                                     .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar."))
                                     .finally(() => setSaving(false));

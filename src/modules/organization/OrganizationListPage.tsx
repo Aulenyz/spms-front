@@ -1,4 +1,6 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {Link} from "react-router-dom";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Organization} from "../../domain/model/organization/Organization.ts";
@@ -13,14 +15,18 @@ import {OrganizationBreadcrumb} from "./OrganizationBreadcrumb.tsx";
 import {OrganizationFilter} from "../../domain/filters/organization/OrganizationFilter.tsx";
 
 const service = OrganizationAdminService.instance;
+const EMPTY_PAGE: Page<Organization> = Pagination.empty<Organization>();
 export const OrganizationListPage = () => {
     const [pagination, setPagination] = useState(Pagination.first);
-    const [organizations, setOrganizations] = useState<Page<Organization>>(Pagination.empty<Organization>());
+    const queryClient = useQueryClient();
     const [showModal, setShowModal] = useState(false);
     const [filters, setFilters] = useState<Record<string, string>>({});
-    const load = () => service.getAll(filters, pagination).then(setOrganizations);
-    useEffect(() => { void load(); }, [pagination, filters]);
-    const refresh = () => { setShowModal(false); void load(); };
+    const {data: organizations = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.organizations.list({filters, pagination}),
+        queryFn: ({signal}) => service.withSignal(signal).getAll(filters, pagination) as Promise<Page<Organization>>,
+        placeholderData: keepPreviousData,
+    });
+    const refresh = () => { setShowModal(false); void queryClient.invalidateQueries({queryKey: queryKeys.organizations.all}); };
     const handleFilter = useCallback((nextFilters: Record<string, string>) => { setFilters(nextFilters); setPagination((current) => ({...current, page: 0})); }, []);
     return <div className="space-y-6">
         <OrganizationBreadcrumb onCreate={() => setShowModal(true)}/>

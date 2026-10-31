@@ -2,7 +2,7 @@ import {useEffect, useMemo, useRef, useState} from "react";
 import React from "react";
 import {useNavigate} from "react-router-dom";
 import {toast} from "react-toastify";
-import logo from "../../../assets/images/logo.png";
+import logo from "../../../assets/images/logo.webp";
 import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 import {APPVersion} from "../../../components/io/output/shared/APPVersion.tsx";
 import {UserOrganizationDTO} from "../../../domain/model/user/UserOrganizationDTO.tsx";
@@ -72,7 +72,11 @@ export const SelectOrganizationPage = () => {
         return total === 1 ? "1 espacio" : `${total} espacios`;
     }, [organizations.length]);
 
+    // Se ejecuta una sola vez: la selección automática (un único espacio) no debe repetirse en cada render.
+    const loadStarted = useRef(false);
     useEffect(() => {
+        if (loadStarted.current) return;
+        loadStarted.current = true;
         const loadOrganizations = async () => {
             try {
                 const response = await UserOrganizationService.instance.current();

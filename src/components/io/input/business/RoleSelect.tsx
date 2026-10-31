@@ -1,11 +1,12 @@
-import {toast} from "react-toastify";
-import {Optional, PlainValue, SelectOption, State} from "../../../../domain/types/steoreotype.ts";
+import {useQuery} from "@tanstack/react-query";
+import {PlainValue, SelectOption} from "../../../../domain/types/steoreotype.ts";
 import {Control, ControllerRenderProps} from "react-hook-form";
 import clsx from "clsx";
-import {Page, Pagination} from "../../../../domain/filters/Page.ts";
+import {Pagination} from "../../../../domain/filters/Page.ts";
+import {queryKeys} from "../../../../app/query/queryKeys.ts";
 import {BusinessSelector} from "./BusinessSelector.tsx";
 import {SearchSelect} from "../SearchSelect.tsx";
-import {forwardRef, useEffect, useState} from "react";
+import {forwardRef, useMemo, useState} from "react";
 import {RoleService} from "../../../../services/user/RoleService.ts";
 import {UserRole} from "../../../../domain/model/user/user.ts";
 
@@ -25,25 +26,23 @@ export type RoleSelectParams = {
 
 export const RoleSelect = forwardRef<HTMLDivElement, RoleSelectParams>(
     ({text, name, label, labelClassName, control, ...props}: RoleSelectParams, ref) => {
-        const [options, setOptions]: State<Array<SelectOption>> = useState<Array<SelectOption>>([]);
+        const [term, setTerm] = useState<string>('');
+        const {data: rolePage} = useQuery({
+            queryKey: queryKeys.roles.search({term}),
+            queryFn: ({signal}) => roleService.withSignal(signal).search({term}, Pagination.unsorted()),
+            meta: {errorMessage: 'Problemas cargando los roles.'},
+        });
+        const options: Array<SelectOption> = useMemo(
+            () => (rolePage?.content ?? []).map(({id: value, name}: UserRole) => ({value, description: name ?? ""})),
+            [rolePage],
+        );
 
         const labelClass: string = clsx('form-label text-md mb-1', {
             'text-red-500': Boolean(props.error),
         });
 
-        const handleLoadRoles = (term: string = '') => {
-            const filters: Record<string, Optional<PlainValue>> = {term};
-            roleService.search(filters, Pagination.unsorted()).then((rolePage: Page<UserRole>) => {
-                setOptions(rolePage.content.map(({id: value, name}: UserRole) => ({value, description: name ?? ""})));
-            }, () => toast.error('Problemas cargando los roles.'));
-        };
-
-        useEffect(() => {
-            handleLoadRoles();
-        }, []);
-
-        const handleOnSearch = (term: string) => {
-            handleLoadRoles(term);
+        const handleOnSearch = (nextTerm: string) => {
+            setTerm(nextTerm);
         };
 
         return (

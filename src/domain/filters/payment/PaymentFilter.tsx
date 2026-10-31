@@ -1,11 +1,12 @@
 import { PaymentMethod, PaymentMethodLabel, PaymentStatus, PaymentStatusLabel } from "../../model/payment/Payment.ts";
 import { PeriodSelect } from "../../../components/io/input/business/PeriodSelect.tsx";
-import { Controller, useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { useEffect, useMemo } from "react";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
 export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filters: Record<string, any>) => void; selectedPeriodId: string | number | null; }) => {
-    const { control, setValue, watch } = useForm({
+    const { control, setValue } = useForm({
         defaultValues: {
             periodId: selectedPeriodId || "",
             identifier: "",
@@ -24,17 +25,17 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
         }
     }, [selectedPeriodId, setValue]);
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            onFilter({
-                periodId: watch("periodId"),
-                status: watch("status"),
-                method: watch("method"),
-                identifier: watch("identifier"),
-            });
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("periodId"), watch("status"), watch("method"), watch("identifier")]);
+    const [periodId, status, method, identifier] = useWatch({control, name: ["periodId", "status", "method", "identifier"]});
+
+    // Valores vacíos (método "Todos", identificador vacío) no se envían.
+    const filters = useMemo(() => {
+        const value: Record<string, string | number> = {periodId, status};
+        if (method) value.method = method;
+        if (identifier) value.identifier = identifier;
+        return value;
+    }, [periodId, status, method, identifier]);
+
+    useFilterEmitter(filters, onFilter);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -59,7 +60,7 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                 <DropdownSelect
                     text="Estado"
                     hasError={false}
-                    value={watch("status")}
+                    value={status}
                     onSelect={(value) => handleChange("status", String(value ?? PaymentStatus.PAID))}
                     className="w-full"
                     options={Object.keys(PaymentStatus).map((statusKey) => {
@@ -76,7 +77,7 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                 <DropdownSelect
                     text="Metodo"
                     hasError={false}
-                    value={watch("method")}
+                    value={method}
                     onSelect={(value) => handleChange("method", String(value ?? ""))}
                     className="w-full"
                     options={[
@@ -93,7 +94,7 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
                 <input
                     className="input input-sm w-full"
                     type="text"
-                    value={watch("identifier")}
+                    value={identifier}
                     onChange={(e) => handleChange("identifier", e.target.value)}
                     placeholder="Identificador"
                 />

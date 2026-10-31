@@ -1,4 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {useParams} from "react-router-dom";
 import {toast} from "react-toastify";
 import {CourseTemplate, GradeTypeLabel} from "../../../domain/model/course/Course.ts";
@@ -48,6 +50,7 @@ type FormMode = "subject" | "teacher";
 export const CourseTemplateDetailsPage = () => {
     const {id} = useParams<{ id: string }>();
     const {hasAuthority} = useAuthContext();
+    const queryClient = useQueryClient();
     const [template, setTemplate] = useState<CourseTemplate | null>(null);
     const [assignments, setAssignments] = useState<AcademicAssignment[]>([]);
     const [teacherAssignments, setTeacherAssignments] = useState<TeacherAssignment[]>([]);
@@ -255,6 +258,7 @@ export const CourseTemplateDetailsPage = () => {
         setGenerating(true);
         try {
             const generated = await service.generateCourses(id);
+            void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
             toast.success(generated.length ? `${generated.length} cursos actualizados con sus materias y horarios.`
                 : "Los cursos existentes fueron sincronizados con sus materias y horarios.");
         } catch (error) {

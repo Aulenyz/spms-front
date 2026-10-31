@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {RoleService} from "../../../services/user/RoleService.ts";
 import {UserRole} from "../../../domain/model/user/user.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -13,18 +15,21 @@ import {RoleBreadcrumb} from "../../breadcrumb/RoleBreadcrumb.tsx";
 import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
 
 const roleService: RoleService = RoleService.instance;
+const EMPTY_PAGE: Page<UserRole> = Pagination.empty<UserRole>();
 
 export const RoleListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [roles, setRoles]: State<Page<UserRole>> = useState(Pagination.empty<UserRole>());
     const [showModal, setShowModal]: State<boolean> = useState(false);
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({
         status: "ACTIVE",
     });
 
-    useEffect(() => {
-        roleService.getAll(filters, pagination).then(setRoles);
-    }, [pagination, filters]);
+    const queryClient = useQueryClient();
+    const {data: roles = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.roles.list({filters, pagination}),
+        queryFn: ({signal}) => roleService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -34,10 +39,10 @@ export const RoleListPage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleUpdateFilter = (nextFilters: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((nextFilters: KeyValueOf<string>) => {
         setFilters({...nextFilters});
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -71,8 +76,8 @@ export const RoleListPage = () => {
                         </tr>
                     )}
 
-                    {roles.content.map((role: UserRole, index: number) => (
-                        <tr key={index}>
+                    {roles.content.map((role: UserRole) => (
+                        <tr key={role.id}>
                             <td><strong>{role.name}</strong></td>
                             <td>{role.description}</td>
                             <td>{role.countAuthorities}</td>
@@ -91,7 +96,10 @@ export const RoleListPage = () => {
                 onClose={() => setShowModal(false)}
                 className="w-[400px] h-full z-[9999]"
             >
-                <RoleForm onSubmit={() => setShowModal(false)}/>
+                <RoleForm onSubmit={() => {
+                    setShowModal(false);
+                    void queryClient.invalidateQueries({queryKey: queryKeys.roles.all});
+                }}/>
             </LeftModal>
         </div>
     );

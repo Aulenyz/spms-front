@@ -1,5 +1,5 @@
 import {Optional} from "../domain/types/steoreotype.ts";
-import {isEmpty, isNil} from "lodash";
+import {isEmpty, isNil} from "./lang.ts";
 import {Messages} from "../domain/types/Messages.ts";
 
 const SPACE = ' ';

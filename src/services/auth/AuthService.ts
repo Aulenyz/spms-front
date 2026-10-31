@@ -65,9 +65,8 @@ export class AuthService extends BaseService {
     }
 
     logout(): void {
-        const rnc: string = localStorage.getItem(StorageItem.CompanyRNC)!;
+        // Se limpia todo, incluida la organización activa, para que el siguiente usuario no la herede.
         localStorage.clear();
-        localStorage.setItem(StorageItem.CompanyRNC, rnc);
     }
 
     private saveToken(token: string): TokenInfo {

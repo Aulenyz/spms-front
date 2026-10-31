@@ -1,4 +1,7 @@
 import {type ReactNode, useEffect, useMemo, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
+import {useDebouncedValue} from "../../hooks/useDebouncedValue.ts";
 import {useLocation, useParams} from "react-router-dom";
 import clsx from "clsx";
 import {toast} from "react-toastify";
@@ -33,6 +36,7 @@ const TABS: TabConfig[] = [
 
 const courseService = CourseService.instance;
 const enrollmentService = EnrollmentService.instance;
+const EMPTY_ENROLLMENTS: Page<Enrollment> = Pagination.empty<Enrollment>();
 
 const getApiErrorMessage = (error: unknown) => {
     if (!error) return null;
@@ -53,11 +57,9 @@ export const CourseDetailsPage = () => {
     const stateCourse = (location.state as { course?: Course } | null)?.course;
 
     const [loading, setLoading] = useState(false);
-    const [studentLoading, setStudentLoading] = useState(false);
     const [course, setCourse] = useState<Course | null>(stateCourse ?? null);
     const [studentTerm, setStudentTerm] = useState("");
     const [studentPagination, setStudentPagination] = useState<Pagination>(Pagination.ofSize(10));
-    const [enrollments, setEnrollments] = useState<Page<Enrollment>>(Pagination.empty<Enrollment>());
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [assignmentToEdit, setAssignmentToEdit] = useState<CourseAcademicAssignment | null>(null);
     const [tab, setTab] = useState<TabKey>(() => {
@@ -83,19 +85,17 @@ export const CourseDetailsPage = () => {
             .finally(() => setLoading(false));
     }, [id]);
 
-    useEffect(() => {
-        if (!id) return;
-        const timeout = window.setTimeout(() => {
-            setStudentLoading(true);
-            enrollmentService
-                .byCourse(id, studentTerm.trim(), studentPagination)
-                .then(setEnrollments)
-                .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudieron cargar los estudiantes."))
-                .finally(() => setStudentLoading(false));
-        }, 250);
-
-        return () => window.clearTimeout(timeout);
-    }, [id, studentTerm, studentPagination]);
+    const queryClient = useQueryClient();
+    const debouncedStudentTerm: string = useDebouncedValue(studentTerm.trim(), 250);
+    const enrollmentsQuery = useQuery({
+        queryKey: [...queryKeys.enrollments.all, 'by-course', id, debouncedStudentTerm, studentPagination],
+        queryFn: ({signal}) => enrollmentService.withSignal(signal).byCourse(id as string, debouncedStudentTerm, studentPagination),
+        enabled: Boolean(id),
+        placeholderData: keepPreviousData,
+        meta: {errorMessage: "No se pudieron cargar los estudiantes."},
+    });
+    const enrollments: Page<Enrollment> = enrollmentsQuery.data ?? EMPTY_ENROLLMENTS;
+    const studentLoading: boolean = enrollmentsQuery.isFetching;
 
     const title = course?.name ?? course?.division ?? "Curso";
     const division = course?.division ?? "-";
@@ -104,6 +104,7 @@ export const CourseDetailsPage = () => {
 
     const reloadCourse = () => {
         if (!id) return;
+        void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
         courseService.getOne(id).then((res) => setCourse(res ?? null))
             .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo recargar el curso."));
     };

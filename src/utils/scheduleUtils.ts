@@ -1,4 +1,4 @@
-import {isNil} from "lodash";
+import {isNil} from "./lang.ts";
 
 export const calculateEndTime = (startTime: string, duration: string): string | null => {
     if (isNil(startTime) || isNil(duration)) {

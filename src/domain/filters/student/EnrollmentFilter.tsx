@@ -1,5 +1,6 @@
-import {Controller, useForm} from "react-hook-form";
-import {useEffect} from "react";
+import {Controller, useForm, useWatch} from "react-hook-form";
+import {useEffect, useMemo, useRef} from "react";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 import {PlainValue} from "../../types/steoreotype.ts";
 import {PeriodSelect} from "../../../components/io/input/business/PeriodSelect.tsx";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
@@ -17,7 +18,7 @@ export type EnrollmentFilterFormValues = {
 };
 
 export const EnrollmentFilter = (props: { onFilter: (value: Record<string, PlainValue>) => void, selectedPeriodId: string | number }) => {
-    const {control, watch, setValue} = useForm<EnrollmentFilterFormValues>({
+    const {control, setValue} = useForm<EnrollmentFilterFormValues>({
         defaultValues: {
             searchBy: "status",
             periodId: props.selectedPeriodId || "",
@@ -26,9 +27,15 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
         reValidateMode: "onChange",
     });
 
-    const searchBy = watch("searchBy");
+    const [searchBy, criteria, periodId, status] = useWatch({control, name: ["searchBy", "criteria", "periodId", "status"]});
 
+    // Al cambiar el campo de búsqueda se limpia el criterio (no en el montaje).
+    const mounted = useRef(false);
     useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
         setValue("criteria", "");
     }, [searchBy, setValue]);
 
@@ -36,33 +43,24 @@ export const EnrollmentFilter = (props: { onFilter: (value: Record<string, Plain
         setValue("periodId", props.selectedPeriodId);
     }, [props.selectedPeriodId, setValue]);
 
-    const handleFilter = ({searchBy, criteria, periodId, status}: EnrollmentFilterFormValues) => {
+    const filters = useMemo(() => {
         const backendKey = backendKeys[searchBy];
-        const filters: Record<string, PlainValue> = {};
+        const value: Record<string, PlainValue> = {};
 
         if (periodId) {
-            filters["periodId"] = periodId;
+            value["periodId"] = periodId;
         }
         if (backendKey && criteria) {
-            filters[backendKey] = criteria;
+            value[backendKey] = criteria;
         }
         if (status) {
-            filters["status"] = status;
+            value["status"] = status;
         }
-        props.onFilter(filters);
-    };
+        return value;
+    }, [searchBy, criteria, periodId, status]);
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            handleFilter({
-                searchBy: watch("searchBy"),
-                criteria: watch("criteria"),
-                periodId: watch("periodId"),
-                status: watch("status"),
-            });
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("searchBy"), watch("criteria"), watch("periodId"), watch("status")]);
+    useFilterEmitter(filters, props.onFilter);
+
 
     return (
         <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">

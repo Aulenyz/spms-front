@@ -1,6 +1,7 @@
-import {useEffect} from "react";
-import {useForm} from "react-hook-form";
+import {useMemo} from "react";
+import {useForm, useWatch} from "react-hook-form";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 
 type FormValues = {
     term: string;
@@ -8,20 +9,14 @@ type FormValues = {
 };
 
 export const SubjectFilter = ({onFilter}: { onFilter: (value: Record<string, any>) => void }) => {
-    const {register, watch, setValue} = useForm<FormValues>({
+    const {register, control, setValue} = useForm<FormValues>({
         defaultValues: {term: "", active: "true"},
         reValidateMode: "onChange",
     });
+    const [term, active] = useWatch({control, name: ["term", "active"]});
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            onFilter({
-                term: watch("term"),
-                active: watch("active"),
-            });
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("term"), watch("active")]);
+    const filters = useMemo(() => ({term, active}), [term, active]);
+    useFilterEmitter(filters, onFilter);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -29,7 +24,7 @@ export const SubjectFilter = ({onFilter}: { onFilter: (value: Record<string, any
                 <DropdownSelect
                     text="Estado"
                     hasError={false}
-                    value={watch("active")}
+                    value={active}
                     onSelect={(value) => setValue("active", (value ?? "true") as any)}
                     className="w-full"
                     options={[

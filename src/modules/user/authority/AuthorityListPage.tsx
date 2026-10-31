@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {UserAuthority} from "../../../domain/model/user/user.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {KeyValueOf, State} from "../../../domain/types/steoreotype.ts";
@@ -12,16 +14,19 @@ import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {AuthorityBreadcrumb} from "../../breadcrumb/AuthorityBreadcrumb.tsx";
 
 const authorityService: AuthorityService = AuthorityService.instance;
+const EMPTY_PAGE: Page<UserAuthority> = Pagination.empty<UserAuthority>();
 
 export const AuthorityListPage = () => {
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
-    const [authorities, setAuthorities]: State<Page<UserAuthority>> = useState(Pagination.empty<UserAuthority>());
     const [showModal, setShowModal]: State<boolean> = useState(false);
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({});
 
-    useEffect(() => {
-        authorityService.getAll(filters, pagination).then(setAuthorities);
-    }, [pagination, filters]);
+    const queryClient = useQueryClient();
+    const {data: authorities = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.authorities.list({filters, pagination}),
+        queryFn: ({signal}) => authorityService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -31,10 +36,10 @@ export const AuthorityListPage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleUpdateFilter = (nextFilters: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((nextFilters: KeyValueOf<string>) => {
         setFilters({...nextFilters});
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -66,8 +71,8 @@ export const AuthorityListPage = () => {
                             </td>
                         </tr>
                     )}
-                    {authorities.content.map((authority: UserAuthority, index: number) => (
-                        <tr key={index}>
+                    {authorities.content.map((authority: UserAuthority) => (
+                        <tr key={authority.id}>
                             <td><strong>{authority.key}</strong></td>
                             <td>{authority.name}</td>
                             <td>{authority.description}</td>
@@ -83,7 +88,10 @@ export const AuthorityListPage = () => {
                 onClose={() => setShowModal(false)}
                 className="w-[400px] h-full z-[9999]"
             >
-                <AuthorityForm onSubmit={() => setShowModal(false)}/>
+                <AuthorityForm onSubmit={() => {
+                    setShowModal(false);
+                    void queryClient.invalidateQueries({queryKey: queryKeys.authorities.all});
+                }}/>
             </LeftModal>
         </div>
     );
