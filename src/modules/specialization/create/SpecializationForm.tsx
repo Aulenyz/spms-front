@@ -13,20 +13,14 @@ import {AssistantService} from "../../../services/assistant/AssistantService.ts"
 import {Input} from "../../../components/io/Input.tsx";
 import {TextareaInput} from "../../../components/io/TextareaInput.tsx";
 import {SelectInput} from "../../../components/io/SelectInput.tsx";
-import {SimpleCheckbox} from "../../../components/io/Checkbox.tsx";
-import {useAuthContext} from "../../../contexts/AuthContext.tsx";
-import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
 const specializationService: SpecializationService = SpecializationService.instance;
 
-/** Crea un área o, con `specialization`, la edita; al editar también se activa o inactiva. */
-export const SpecializationForm = ({specialization, onSubmit}: { specialization?: Specialization; onSubmit?: () => void }) => {
+/** Crea un área o, con `specialization`, la edita. */
+export const SpecializationForm = ({specialization, onSubmit, onCancel}: { specialization?: Specialization; onSubmit?: () => void; onCancel?: () => void }) => {
 
     const navigate: NavigateFunction = useNavigate();
-    const {hasAuthority} = useAuthContext();
     const editing = Boolean(specialization?.id);
-    const canChangeStatus = editing && hasAuthority(AuthorityKey.SPECIALIZATION_STATUS_UPDATE);
-    const [active, setActive] = useState(specialization?.active ?? true);
     const [saving, setSaving] = useState(false);
 
     const {
@@ -91,7 +85,6 @@ export const SpecializationForm = ({specialization, onSubmit}: { specialization?
         setSaving(true);
         try {
             await specializationService.update(specialization.id, params);
-            if (canChangeStatus && active !== specialization.active) await specializationService.updateStatus(specialization.id);
             toast.success('Área actualizada');
             onSubmit?.();
         } catch (error) {
@@ -139,16 +132,14 @@ export const SpecializationForm = ({specialization, onSubmit}: { specialization?
                     </option>
                 ))}
             </SelectInput>
-            {/* Estado: solo al editar */}
-            <div className="mt-5">
-                {canChangeStatus ? (
-                    <SimpleCheckbox label={active ? "Activa" : "Inactiva"} checked={active} onChange={setActive}/>
-                ) : <span/>}
-            </div>
             {/* Botón */}
-            <div className="flex justify-end absolute bottom-5 right-5">
-                <button className="px-4 py-2 h-10 bg-blue-600 btn-sm text-white rounded hover:bg-blue-700" disabled={saving}>
-                    {editing ? "Guardar" : "Agregar"} <i className={`fa ${saving ? "fa-spinner fa-spin" : "fa-save"} ms-2`}/>
+            <div className="absolute bottom-5 left-5 right-5 flex items-center justify-end gap-2">
+                {onCancel ? (
+                    <button type="button" className="btn btn-sm" onClick={onCancel} disabled={saving}>Cancelar</button>
+                ) : <span/>}
+                <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>
+                    {saving ? "Guardando..." : "Guardar"}
+                    <i className={`fa ${saving ? "fa-spinner fa-spin" : "fa-save"} ms-2`}/>
                 </button>
             </div>
         </Form>
