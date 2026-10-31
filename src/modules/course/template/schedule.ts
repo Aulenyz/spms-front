@@ -1,10 +1,6 @@
 export type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
 
 export const DAYS: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
-export const DayLabel: Record<DayOfWeek, string> = {
-    MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves",
-    FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo",
-};
 export const DayShort: Record<DayOfWeek, string> = {
     MONDAY: "Lun", TUESDAY: "Mar", WEDNESDAY: "Mié", THURSDAY: "Jue", FRIDAY: "Vie", SATURDAY: "Sáb", SUNDAY: "Dom",
 };
@@ -21,15 +17,6 @@ export const hhmm = (time: string) => time.slice(0, 5);
 const minutesOf = (time: string) => {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
-};
-
-export const slotMinutes = (slot: TemplateSlot) => minutesOf(slot.endsAt) - minutesOf(slot.startsAt);
-
-/** "6 h" o "4 h 30 min" */
-export const formatHours = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return rest ? `${hours} h ${rest} min` : `${hours} h`;
 };
 
 export const sortSlots = <T extends TemplateSlot>(slots: T[]) => [...slots].sort((a, b) =>
