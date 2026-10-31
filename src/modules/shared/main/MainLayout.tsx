@@ -15,7 +15,7 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/payments")) {
-        return {title: "Pagos", subtitle: "Cobros y transacciones"};
+        return {title: "Pagos recibidos", subtitle: "Finanzas"};
     }
 
     if (pathname.startsWith("/students")) {
@@ -31,10 +31,10 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/catalog")) {
-        if (/^\/catalog\/products\/\d+/.test(pathname)) return {title: "Detalles", subtitle: "Recursos"};
-        if (pathname.startsWith("/catalog/categories")) return {title: "Categorías", subtitle: "Recursos educativos"};
-        if (pathname.startsWith("/catalog/collections")) return {title: "Kits y colecciones", subtitle: "Recursos educativos"};
-        return {title: "Recursos", subtitle: "Recursos educativos"};
+        if (/^\/catalog\/products\/\d+/.test(pathname)) return {title: "Detalles", subtitle: "Conceptos de pago"};
+        if (pathname.startsWith("/catalog/categories")) return {title: "Categorías de pago", subtitle: "Finanzas"};
+        if (pathname.startsWith("/catalog/taxes")) return {title: "Impuestos", subtitle: "Finanzas"};
+        return {title: "Conceptos de pago", subtitle: "Finanzas"};
     }
 
     if (pathname.startsWith("/courses")) {
@@ -135,14 +135,13 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (pathname.startsWith("/subjects")) return [{label: "Materias", to: pathname}];
     if (pathname.startsWith("/help")) return [{label: "Ayuda", to: "/help"}];
     if (pathname.startsWith("/catalog")) {
-        const section = {label: "Recursos educativos", to: "/catalog/products"};
-        if (/^\/catalog\/products\/\d+/.test(pathname)) return [section, {label: "Recursos", to: "/catalog/products"}, {label: "Detalles", to: pathname}];
-        if (pathname.startsWith("/catalog/categories")) return [section, {label: "Categorías", to: pathname}];
-        if (pathname.startsWith("/catalog/collections")) return [section, {label: "Kits y colecciones", to: pathname}];
-        return [section, {label: "Recursos", to: pathname}];
+        if (/^\/catalog\/products\/\d+/.test(pathname)) return [{label: "Conceptos de pago", to: "/catalog/products"}, {label: "Detalles", to: pathname}];
+        if (pathname.startsWith("/catalog/categories")) return [{label: "Categorías de pago", to: pathname}];
+        if (pathname.startsWith("/catalog/taxes")) return [{label: "Impuestos", to: pathname}];
+        return [{label: "Conceptos de pago", to: pathname}];
     }
 
-    if (pathname.startsWith("/payments")) return [{label: "Pagos", to: pathname}];
+    if (pathname.startsWith("/payments")) return [{label: "Pagos recibidos", to: pathname}];
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
     if (pathname.startsWith("/students")) return [{label: "Estudiantes", to: pathname}];
     if (pathname.startsWith("/guardians")) {

@@ -3,6 +3,7 @@ import {
     ChangePriceRequest,
     Product,
     ProductDetails,
+    ProductFormValues,
     ProductStatus,
     ProductType,
     RecurrenceType,
@@ -51,6 +52,18 @@ export class ProductService extends BaseService<Product> {
         return this.get<ProductDetails>(`/${id}`);
     }
 
+    createProduct(payload: ProductFormValues): Promise<Product> {
+        return this.post<Product>("", payload);
+    }
+
+    updateProduct(id: number | string, payload: ProductFormValues): Promise<Product> {
+        return this.put<Product>(`/${id}`, payload);
+    }
+
+    updateStatus(id: number | string, status: ProductStatus): Promise<Product> {
+        return this.put<Product>(`/${id}/status`, {status});
+    }
+
     updatePrice(id: number | string, payload: ChangePriceRequest): Promise<Product> {
         return this.put<Product>(`/${id}/price`, payload);
     }
@@ -66,7 +79,7 @@ export class ProductService extends BaseService<Product> {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "recursos.xlsx";
+        link.download = "conceptos-de-pago.xlsx";
         link.click();
         URL.revokeObjectURL(url);
     }

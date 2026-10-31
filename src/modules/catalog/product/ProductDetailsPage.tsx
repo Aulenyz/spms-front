@@ -4,13 +4,20 @@ import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {useParams} from "react-router-dom";
 import {toast} from "react-toastify";
 import {
+    dateRangeLabel,
+    formatTaxRate,
+    frequencyLabel,
+    limitLabel,
     ProductDetails,
     ProductPriceHistory,
     ProductStatus,
     ProductStatusLabel,
     ProductTypeLabel,
-    RecurrenceTypeLabel,
+    RecurrenceType,
 } from "../../../domain/model/product/Product.ts";
+import {ProductForm} from "./ProductForm.tsx";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {ProductService} from "../../../services/product/ProductService.ts";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {RightModal} from "../../../components/shared/RightModal.tsx";
@@ -59,6 +66,30 @@ export const ProductDetailsPage = () => {
     const [changeReason, setChangeReason] = useState("");
     const [savingPrice, setSavingPrice] = useState(false);
     const [showPriceForm, setShowPriceForm] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+    const {hasAuthority} = useAuthContext();
+    const canEdit = hasAuthority(AuthorityKey.CATALOG_EDIT);
+
+    const reload = async (productId: number) => {
+        setProduct(await productService.getProduct(productId));
+        void queryClient.invalidateQueries({queryKey: queryKeys.products.all});
+    };
+
+    const toggleStatus = async () => {
+        if (!product) return;
+        const next = product.status === ProductStatus.ACTIVE ? ProductStatus.INACTIVE : ProductStatus.ACTIVE;
+        setUpdatingStatus(true);
+        try {
+            await productService.updateStatus(product.id, next);
+            await reload(product.id);
+            toast.success(next === ProductStatus.ACTIVE ? "Concepto activado." : "Concepto inactivado.");
+        } catch (error) {
+            toast.error(getApiErrorMessage(error) ?? "No se pudo cambiar el estado.");
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -68,7 +99,7 @@ export const ProductDetailsPage = () => {
             .then(setProduct)
             .catch((error) => {
                 setProduct(null);
-                toast.error(getApiErrorMessage(error) ?? "No se pudo cargar el detalle del recurso.");
+                toast.error(getApiErrorMessage(error) ?? "No se pudo cargar el detalle del concepto.");
             })
             .finally(() => setLoading(false));
     }, [id]);
@@ -103,8 +134,7 @@ export const ProductDetailsPage = () => {
                 ...(reason ? {reason} : {}),
             });
             setProduct((current) => current ? {...current, ...updated} : current);
-            setProduct(await productService.getProduct(product.id));
-            void queryClient.invalidateQueries({queryKey: queryKeys.products.all});
+            await reload(product.id);
             setShowPriceForm(false);
             toast.success("Precio actualizado correctamente.");
         } catch (error) {
@@ -117,7 +147,7 @@ export const ProductDetailsPage = () => {
     if (loading) return <LoadingContent loading className="py-16"/>;
 
     if (!product) {
-        return <EmptyState title="Recurso no encontrado" description="Vuelve al listado e intenta nuevamente." icon="fa-box-open"/>;
+        return <EmptyState title="Concepto no encontrado" description="Vuelve al listado e intenta nuevamente." icon="fa-box-open"/>;
     }
 
     const prices = sortPriceHistory(product.prices);
@@ -132,29 +162,43 @@ export const ProductDetailsPage = () => {
                     <StatusBadge active={product.status === ProductStatus.ACTIVE}
                                  activeLabel={ProductStatusLabel[ProductStatus.ACTIVE]}
                                  inactiveLabel={ProductStatusLabel[product.status] ?? product.status}/>
-                    {product.isSystem && <Badge><i className="fa fa-lock"/>Protegido</Badge>}
+                    {product.systemKey && <Badge><i className="fa fa-lock"/>Del sistema</Badge>}
+                    {!(Number(product.price) > 0) && <Badge><i className="fa fa-triangle-exclamation text-[var(--warning)]"/>Sin precio</Badge>}
                 </>}
-                actions={
+                actions={canEdit && <>
+                    {!product.systemKey && (
+                        <button type="button" className="btn btn-sm" disabled={updatingStatus} onClick={() => void toggleStatus()}>
+                            <i className={product.status === ProductStatus.ACTIVE ? "fa fa-circle-pause" : "fa fa-circle-check"}/>
+                            {product.status === ProductStatus.ACTIVE ? "Inactivar" : "Activar"}
+                        </button>
+                    )}
+                    <button type="button" className="btn btn-sm" onClick={() => setShowEditForm(true)}>
+                        <i className="fa fa-pen"/>Editar
+                    </button>
                     <button type="button" className="btn btn-sm btn-primary" onClick={openPriceForm}>
                         <i className="fa fa-tag"/>Cambiar precio
                     </button>
-                }
+                </>}
             />
 
             <DetailSection title="Información">
                 <InfoList columns={3} items={[
                     {label: "Precio actual", value: currency.format(product.price ?? 0)},
-                    {label: "Tipo", value: ProductTypeLabel[product.type] ?? product.type},
-                    {label: "Modalidad de cobro", value: RecurrenceTypeLabel[product.chargeMode] ?? product.chargeMode},
                     {label: "Categoría", value: product.category?.name},
-                    {
-                        label: "Impuesto",
-                        value: product.taxCategory
-                            ? `${product.taxCategory.name} (${product.taxCategory.rate ?? 0}%)`
-                            : "Sin impuesto",
-                    },
-                    {label: "Origen", value: product.isSystem ? "Definido por el sistema" : "Creado por la institución"},
+                    {label: "Tipo", value: ProductTypeLabel[product.type] ?? product.type},
+                    {label: "Impuesto", value: formatTaxRate(product.taxCategory)},
                     {label: "Descripción", value: product.description, full: true},
+                ]}/>
+            </DetailSection>
+
+            <DetailSection title="Cómo se cobra">
+                <InfoList columns={3} items={[
+                    {label: "Frecuencia", value: frequencyLabel(product)},
+                    ...(product.chargeMode !== RecurrenceType.NONE
+                        ? [{label: "Día de pago", value: product.rule?.billingDay ? `Día ${product.rule.billingDay} de cada mes` : undefined}]
+                        : []),
+                    {label: "Periodo de cobro", value: dateRangeLabel(product.rule)},
+                    {label: "Límite por estudiante", value: limitLabel(product.rule)},
                 ]}/>
             </DetailSection>
 
@@ -162,7 +206,7 @@ export const ProductDetailsPage = () => {
                 {prices.length === 0 ? (
                     <div className="p-5">
                         <EmptyState title="Sin cambios de precio" icon="fa-clock-rotate-left"
-                                    description="Aquí aparecerán los cambios de precio de este recurso."/>
+                                    description="Aquí aparecerán los cambios de precio de este concepto."/>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -191,6 +235,12 @@ export const ProductDetailsPage = () => {
                     </div>
                 )}
             </DetailSection>
+
+            <RightModal title="Editar concepto" isOpen={showEditForm} onClose={() => setShowEditForm(false)}
+                        className="h-full w-[460px] z-[9999]">
+                <ProductForm product={product} onDone={() => setShowEditForm(false)}
+                             onSaved={() => void reload(product.id)}/>
+            </RightModal>
 
             <RightModal
                 title="Cambiar precio"

@@ -64,6 +64,7 @@ export const queryKeys = {
         list: (params: unknown) => ['products', 'list', params] as const,
         totals: ['products', 'totals'] as const,
     },
+    taxes: ['tax-categories'] as const,
     categories: {
         all: ['product-categories'] as const,
         list: (params: unknown) => ['product-categories', 'list', params] as const,

@@ -43,6 +43,8 @@ export enum AuthorityKey {
 
     TEACHERS_VIEW = "TEACHERS_VIEW",
     TEACHER = "TEACHER",
+    CATALOG_VIEW = "CATALOG_VIEW",
+    CATALOG_EDIT = "CATALOG_EDIT",
 
     COURSE_TEMPLATES_VIEW = "COURSE_TEMPLATES_VIEW",
     COURSE_TEMPLATE_CREATE = "COURSE_TEMPLATE_CREATE",
@@ -117,6 +119,8 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
 
     [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al módulo de profesores.",
     [AuthorityKey.TEACHER]: "Identifica usuarios elegibles para impartir clases.",
+    [AuthorityKey.CATALOG_VIEW]: "Permite ver los conceptos de pago, sus categorías e impuestos.",
+    [AuthorityKey.CATALOG_EDIT]: "Permite crear y editar conceptos de pago, categorías, impuestos y precios.",
 
     [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de plantillas de cursos.",
     [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevas plantillas de cursos.",

@@ -21,9 +21,12 @@ const statusStyle: Record<ProductStatus, {bg: string; color: string; border: str
 export const ProductActions = ({
     counts,
     onExport,
+    onCreate,
 }: {
     counts: Record<string, number>;
     onExport: () => void;
+    /** Ausente cuando el usuario no puede crear conceptos. */
+    onCreate?: () => void;
 }) => {
     return (
         <section
@@ -50,10 +53,18 @@ export const ProductActions = ({
                 })}
             </div>
 
-            <button type="button" className="btn btn-sm btn-success" onClick={onExport}>
-                <i className="fa fa-file-excel"/>
-                Exportar
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className="btn btn-sm" onClick={onExport}>
+                    <i className="fa fa-file-excel"/>
+                    Exportar
+                </button>
+                {onCreate && (
+                    <button type="button" className="btn btn-sm btn-primary" onClick={onCreate}>
+                        <i className="fa fa-plus"/>
+                        Nuevo concepto
+                    </button>
+                )}
+            </div>
         </section>
     );
 };

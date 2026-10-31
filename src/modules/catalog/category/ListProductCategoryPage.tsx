@@ -43,7 +43,7 @@ export const ListProductCategoryPage = () => {
         queryKey: queryKeys.categories.list({filters, pagination}),
         queryFn: ({signal}) => productCategoryService.withSignal(signal).search(filters, pagination),
         placeholderData: keepPreviousData,
-        meta: {errorMessage: "No se pudieron cargar las categorías de recursos."},
+        meta: {errorMessage: "No se pudieron cargar las categorías."},
     });
     const categories: Page<ProductCategory> = categoriesQuery.data ?? EMPTY_PAGE;
     // Spinner en la carga inicial y al cambiar filtros/página (no en refrescos en segundo plano).
@@ -73,15 +73,15 @@ export const ListProductCategoryPage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Categorías"
-                description="Clasifica los recursos escolares y distingue las categorías protegidas definidas por el sistema."
+                title="Categorías de pago"
+                description="Agrupa los conceptos de pago: inscripciones, mensualidades, materiales y otros cargos."
             />
 
             <ProductCategoryActions counts={statusCounts} onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
-                title="Categorías del catálogo"
-                description="Consulta y organiza las agrupaciones disponibles para los recursos de la institución."
+                title="Categorías"
+                description="Las categorías con candado son del sistema y siempre están activas."
                 filters={<ProductCategoryFilter onFilter={handleFilters}/>}
                 footer={!loading ? (
                     <Pager
@@ -96,7 +96,7 @@ export const ListProductCategoryPage = () => {
                     {categories.content.length === 0 ? (
                         <EmptyState
                             title="No hay categorías para mostrar"
-                            description="Ajusta los filtros para encontrar otras categorías de recursos."
+                            description="Ajusta los filtros para encontrar otras categorías."
                             icon="fa-folder-open"
                         />
                     ) : (
@@ -137,6 +137,7 @@ export const ListProductCategoryPage = () => {
                     onSaved={refresh}
                 />
             </LeftModal>
+
         </div>
     );
 };
