@@ -260,7 +260,23 @@ export interface CheckoutValues {
     discount?: number;
     items: {productId: number; quantity: number; unitPrice?: number}[];
     invoiceIds: number[];
+    /** Inscribe al estudiante en este curso y cobra la inscripción primero. */
+    enrollCourseId?: number;
     received: number;
+}
+
+/** Situación del estudiante en el periodo actual: la caja exige la inscripción antes de otros conceptos. */
+export interface EnrollmentStanding {
+    state: "NO_PERIOD" | "NOT_ENROLLED" | "PENDING" | "ENROLLED";
+    periodName?: string;
+    enrollmentId?: number;
+    courseName?: string;
+    invoiceId?: number;
+    invoiceNumber?: string;
+    invoiceDue?: number;
+    conceptKey?: string;
+    conceptName?: string;
+    conceptPrice?: number;
 }
 
 export interface CheckoutResult {

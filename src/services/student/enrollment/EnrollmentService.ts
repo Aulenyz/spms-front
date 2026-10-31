@@ -1,7 +1,7 @@
 import {BaseService} from "../../BaseService.ts";
 import {Enrollment, EnrollmentStatus} from "../../../domain/student/Enrollment.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {EnrollmentPreview, EnrollmentResult} from "../../../domain/billing/Invoice.ts";
+import {EnrollmentPreview, EnrollmentResult, EnrollmentStanding} from "../../../domain/billing/Invoice.ts";
 
 export class EnrollmentService extends BaseService<Enrollment> {
 
@@ -18,6 +18,11 @@ export class EnrollmentService extends BaseService<Enrollment> {
     async getTotalByStatus(periodId: number): Promise<Record<EnrollmentStatus, number>> {
         const url = `/grouped?periodId=${periodId}`;
         return super.get<Record<EnrollmentStatus, number>>(url);
+    }
+
+    /** Si el estudiante está inscrito en el periodo actual (la caja lo exige antes de otros conceptos). */
+    standing(studentId: number): Promise<EnrollmentStanding> {
+        return this.get<EnrollmentStanding>("/standing", {studentId});
     }
 
     preview(studentId: number, courseId: number): Promise<EnrollmentPreview> {

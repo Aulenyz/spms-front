@@ -25,7 +25,8 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
     const {taxesEnabled} = useBillingSettings();
     const [student, setStudent] = useState<PersonRef | null>(initialStudent ?? null);
     const [lines, setLines] = useState<Line[]>([{key: 1, quantity: "1", unitPrice: ""}]);
-    const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
+    // Vacío: vence según los días para pagar de Configuración → Facturación.
+    const [dueDate, setDueDate] = useState("");
     const [notes, setNotes] = useState("");
 
     const productsQuery = useQuery({
@@ -43,7 +44,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
 
     const create = useMutation({
         mutationFn: () => InvoiceService.instance.createInvoice({
-            studentId: student!.id, dueDate, notes: notes.trim() || undefined,
+            studentId: student!.id, dueDate: dueDate || undefined, notes: notes.trim() || undefined,
             items: lines.map((line) => ({productId: line.productId!, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice)})),
         }),
         onSuccess: (saved) => {
@@ -63,6 +64,7 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
         setStudent(initialStudent ?? null);
         setLines([{key: 1, quantity: "1", unitPrice: ""}]);
         setNotes("");
+        setDueDate("");
         onClose();
     };
 
@@ -110,6 +112,9 @@ export const NewInvoiceModal = ({isOpen, onClose, onCreated, student: initialStu
                         <span className="form-label mb-1 block text-sm font-semibold">Vence</span>
                         <input type="date" className="input input-bordered input-sm w-full" value={dueDate}
                                onChange={(event) => setDueDate(event.target.value)}/>
+                        <span className="mt-1 block text-xs" style={{color: "var(--text-tertiary)"}}>
+                            Vacío: según los días para pagar de Configuración.
+                        </span>
                     </label>
                     <label className="block">
                         <span className="form-label mb-1 block text-sm font-semibold">Descripción</span>
