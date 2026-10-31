@@ -5,7 +5,7 @@ import {toast} from "react-toastify";
 import logo from "../../../assets/images/logo.webp";
 import {navigationSections, secondaryQuickLinks} from "../../../app/navigation/menu.ts";
 import {APP_DESCRIPTOR, APP_SHORT_NAME} from "../../../app/config/branding.ts";
-import {CommercialCollectionModal} from "../../student/enrollment/modal/EnrollmentInscriptionModal.tsx";
+import {RegisterPaymentModal} from "../../billing/payment/RegisterPaymentModal.tsx";
 import {AuthContextValue, useAuthContext} from "../../../contexts/AuthContext.tsx";
 
 type MainSidebarProps = {
@@ -273,7 +273,7 @@ export const MainSidebar = ({
                 </div>
             </aside>
 
-            <CommercialCollectionModal isOpen={showCollectionModal} onClose={() => setShowCollectionModal(false)}/>
+            <RegisterPaymentModal isOpen={showCollectionModal} onClose={() => setShowCollectionModal(false)}/>
         </>
     );
 };

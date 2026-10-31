@@ -2,8 +2,8 @@ import {KeyboardEvent, useEffect, useMemo, useRef, useState} from "react";
 import clsx from "clsx";
 import {toast} from "react-toastify";
 
-import {Course} from "../../../domain/model/course/Course.ts";
-import {CourseService} from "../../../services/course/CourseService.ts";
+import {Course} from "../../../../domain/model/course/Course.ts";
+import {CourseService} from "../../../../services/course/CourseService.ts";
 
 interface Props {
     value: Course | null;

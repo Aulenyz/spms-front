@@ -19,6 +19,9 @@ export enum AuthorityKey {
     COLLECTION_CREATE = "COLLECTION_CREATE",
     PAYMENTS_VIEW = "PAYMENTS_VIEW",
     INVOICES_VIEW = "INVOICES_VIEW",
+    INVOICE_CREATE = "INVOICE_CREATE",
+    INVOICE_VOID = "INVOICE_VOID",
+    PAYMENT_VOID = "PAYMENT_VOID",
     TUITION_VIEW = "TUITION_VIEW",
     DISCOUNTS_VIEW = "DISCOUNTS_VIEW",
     ENROLLMENTS_VIEW = "ENROLLMENTS_VIEW",
@@ -88,9 +91,12 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.SPECIALIZATION_STATUS_UPDATE]: "Permite activar o inactivar áreas especializadas.",
 
 
-    [AuthorityKey.COLLECTION_CREATE]: "Permite iniciar una nueva cobranza escolar.",
+    [AuthorityKey.COLLECTION_CREATE]: "Permite registrar pagos de las familias.",
     [AuthorityKey.PAYMENTS_VIEW]: "Permite ver el listado de pagos y cobros registrados.",
-    [AuthorityKey.INVOICES_VIEW]: "Permite acceder al módulo de facturas.",
+    [AuthorityKey.INVOICES_VIEW]: "Permite ver facturas y estados de cuenta.",
+    [AuthorityKey.INVOICE_CREATE]: "Permite facturar conceptos de pago a un estudiante.",
+    [AuthorityKey.INVOICE_VOID]: "Permite anular facturas que no tienen pagos.",
+    [AuthorityKey.PAYMENT_VOID]: "Permite anular recibos de pago.",
     [AuthorityKey.TUITION_VIEW]: "Permite acceder al módulo de pendientes de cobro.",
     [AuthorityKey.DISCOUNTS_VIEW]: "Permite acceder al módulo de descuentos.",
 

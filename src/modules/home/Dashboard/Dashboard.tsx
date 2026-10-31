@@ -1,140 +1,166 @@
+import {Link} from "react-router-dom";
+import {useQuery} from "@tanstack/react-query";
 import {Bar, Doughnut} from "react-chartjs-2";
 import {ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip} from "chart.js";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {MetricCard} from "../../../components/ui/metrics/MetricCard.tsx";
 import {SurfaceCard} from "../../../components/ui/surfaces/SurfaceCard.tsx";
+import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {AccountService} from "../../../services/billing/BillingService.ts";
+import {formatDate, money, PaymentMethodLabel} from "../../../domain/billing/Invoice.ts";
+import {useAuthContext} from "../../../contexts/AuthContext.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 
 ChartJS.register(ArcElement, Legend, Tooltip, CategoryScale, LinearScale, BarElement);
 
-const dashboardStats = {
-    activeStudents: 790,
-    overdueAccounts: 42,
-    paymentsToday: 14,
-    monthlyIncome: 152340,
-};
+const AXIS = {color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600 as const}};
+const METHOD_COLORS = ["#059669", "#0284c7", "#7c3aed", "#d97706", "#64748b"];
+const compact = new Intl.NumberFormat("es-DO", {notation: "compact", maximumFractionDigits: 1});
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+const monthName = (value: string) =>
+    new Date(`${value}-01T00:00:00`).toLocaleDateString("es-DO", {month: "short"}).replace(".", "");
 
-const incomeData = {
-    labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"],
-    datasets: [
-        {
-            label: "Ingresos",
-            data: [14, 18, 17, 22, 25, 27, 29, 31],
-            backgroundColor: "#0284c7",
-            hoverBackgroundColor: "#075985",
-            borderRadius: 8,
-            borderSkipped: false,
-            maxBarThickness: 28,
-        },
-    ],
-};
-
-const statusData = {
-    labels: ["Activos", "Pendientes", "Inactivos"],
-    datasets: [
-        {
-            data: [790, 42, 18],
-            backgroundColor: ["#059669", "#d97706", "#e11d48"],
-            borderColor: "#ffffff",
-            borderWidth: 4,
-        },
-    ],
-};
-
+/** Panel general: cobros, deudas y movimientos recientes de la organización. */
 export const Dashboard = () => {
+    const {hasAuthority} = useAuthContext();
+    const canSeeFinance = hasAuthority(AuthorityKey.PAYMENTS_VIEW);
+    const summaryQuery = useQuery({
+        queryKey: queryKeys.accounts.summary,
+        queryFn: ({signal}) => AccountService.instance.withSignal(signal).summary(),
+        enabled: canSeeFinance,
+        meta: {errorMessage: "No se pudo cargar el resumen financiero."},
+    });
+    const summary = summaryQuery.data;
+
+    if (!canSeeFinance) {
+        return (
+            <div className="space-y-6">
+                <PageHeader title="Panel general" description="Bienvenido. Usa el menú para ir a tus módulos."/>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Panel general"
-                description="Resumen corto del estado académico y financiero del día."
-            />
+            <PageHeader title="Panel general" description="Cómo van los cobros del colegio y quién tiene pagos pendientes."/>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard title="Estudiantes activos" value={dashboardStats.activeStudents.toString()} delta="Actualizado hoy" icon="fa-user-graduate" tone="success"/>
-                <MetricCard title="Cuentas vencidas" value={dashboardStats.overdueAccounts.toString()} delta="Requieren seguimiento" icon="fa-triangle-exclamation" tone="warning"/>
-                <MetricCard title="Pagos registrados" value={dashboardStats.paymentsToday.toString()} delta="Movimientos del día" icon="fa-wallet" tone="brand"/>
-                <MetricCard title="Ingreso mensual" value={`$${dashboardStats.monthlyIncome.toLocaleString()}`} delta="Corte del periodo" icon="fa-chart-column" tone="danger"/>
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
-                <SurfaceCard title="Ingresos por mes" description="Comportamiento reciente de cobros registrados.">
-                    <div className="h-[280px]">
-                        <Bar
-                            data={incomeData}
-                            options={{
-                                maintainAspectRatio: false,
-                                plugins: {legend: {display: false}},
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
-                                        grid: {color: "rgba(16, 32, 61, 0.08)"},
-                                    },
-                                    x: {
-                                        ticks: {color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
-                                        grid: {display: false},
-                                    },
-                                },
-                            }}
-                        />
-                    </div>
-                </SurfaceCard>
-
-                <SurfaceCard title="Estado estudiantil" description="Distribucion actual de la cartera académica.">
-                    <div className="flex h-[280px] items-center justify-center">
-                        <div className="w-full max-w-[260px]">
-                            <Doughnut
-                                data={statusData}
-                                options={{
-                                    maintainAspectRatio: false,
-                                    cutout: "68%",
-                                    plugins: {
-                                        legend: {
-                                            position: "bottom",
-                                            labels: {boxWidth: 10, color: "#575d7c", font: {size: 12, family: "Plus Jakarta Sans", weight: 600}},
-                                        },
-                                    },
-                                }}
-                            />
+            <LoadingContent loading={summaryQuery.isPending} className="min-h-[320px]">
+                {summary && (
+                    <>
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <MetricCard title="Cobrado este mes" value={money.format(summary.collectedThisMonth)}
+                                        delta={`Hoy: ${money.format(summary.collectedToday)}`} icon="fa-wallet" tone="success"/>
+                            <MetricCard title="Por cobrar" value={money.format(summary.outstanding)}
+                                        delta={plural(summary.openInvoices, "factura con saldo", "facturas con saldo")} icon="fa-file-invoice-dollar" tone="brand"/>
+                            <MetricCard title="Vencido" value={money.format(summary.overdue)}
+                                        delta={plural(summary.overdueInvoices, "factura vencida", "facturas vencidas")} icon="fa-triangle-exclamation" tone="danger"/>
+                            <MetricCard title="Cobrado en el periodo" value={money.format(summary.collectedThisPeriod)}
+                                        delta={`de ${money.format(summary.billedThisPeriod)} facturado`} icon="fa-chart-column" tone="warning"/>
                         </div>
-                    </div>
-                </SurfaceCard>
-            </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                <SurfaceCard title="Pendientes de hoy" description="Tareas operativas que conviene revisar antes del cierre.">
-                    <div className="grid gap-3">
-                        {[
-                            "Validar dos pagos manuales pendientes.",
-                            "Revisar cuarenta y dos cuentas con atraso.",
-                            "Confirmar nuevas inscripciones del periodo actual.",
-                        ].map((item) => (
-                            <div
-                                key={item}
-                                className="flex items-center gap-3 rounded-[18px] border px-4 py-3"
-                                style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}
-                            >
-                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full" style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
-                                    <i className="fa fa-check"/>
-                                </span>
-                                <p className="text-sm" style={{color: "var(--text-secondary)"}}>{item}</p>
-                            </div>
-                        ))}
-                    </div>
-                </SurfaceCard>
+                        {summary.pendingEnrollments > 0 && (
+                            <Link to="/enrollments/list" className="flex items-center gap-3 rounded-[18px] border px-4 py-3 text-sm"
+                                  style={{borderColor: "var(--border-soft)", background: "var(--warning-soft)", color: "var(--warning)"}}>
+                                <i className="fa fa-user-clock"/>
+                                <span><strong>{summary.pendingEnrollments}</strong> {summary.pendingEnrollments === 1 ? "inscripción espera" : "inscripciones esperan"} el pago para confirmarse.</span>
+                                <i className="fa fa-chevron-right ms-auto text-xs"/>
+                            </Link>
+                        )}
 
-                <SurfaceCard title="Cierre rápido" description="Resumen corto para supervisar el turno.">
-                    <div className="space-y-3">
-                        <div className="rounded-[18px] border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                            <p className="text-xs uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>Cobros conciliados</p>
-                            <strong className="mt-1 block text-xl" style={{color: "var(--text-primary)"}}>$94,500</strong>
+                        <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+                            <SurfaceCard title="Facturado y cobrado" description="Últimos seis meses.">
+                                <div className="h-[280px]">
+                                    <Bar
+                                        data={{
+                                            labels: summary.months.map((item) => monthName(item.month)),
+                                            datasets: [
+                                                {label: "Facturado", data: summary.months.map((item) => Number(item.billed)), backgroundColor: "#cbd5e1", borderRadius: 8, maxBarThickness: 26},
+                                                {label: "Cobrado", data: summary.months.map((item) => Number(item.collected)), backgroundColor: "#059669", borderRadius: 8, maxBarThickness: 26},
+                                            ],
+                                        }}
+                                        options={{
+                                            maintainAspectRatio: false,
+                                            plugins: {legend: {position: "bottom", labels: {boxWidth: 10, ...AXIS}}},
+                                            scales: {
+                                                y: {beginAtZero: true, ticks: {...AXIS, callback: (value) => compact.format(Number(value))}, grid: {color: "rgba(16, 32, 61, 0.08)"}},
+                                                x: {ticks: AXIS, grid: {display: false}},
+                                            },
+                                        }}
+                                    />
+                                </div>
+                            </SurfaceCard>
+
+                            <SurfaceCard title="Formas de pago" description="Cobros del periodo escolar.">
+                                {summary.methods.length === 0 ? (
+                                    <p className="flex h-[280px] items-center justify-center text-sm" style={{color: "var(--text-tertiary)"}}>Aún no hay cobros en el periodo.</p>
+                                ) : (
+                                    <div className="flex h-[280px] items-center justify-center">
+                                        <div className="h-full w-full max-w-[280px]">
+                                            <Doughnut
+                                                data={{
+                                                    labels: summary.methods.map((item) => PaymentMethodLabel[item.method]),
+                                                    datasets: [{data: summary.methods.map((item) => Number(item.amount)), backgroundColor: METHOD_COLORS, borderColor: "#ffffff", borderWidth: 4}],
+                                                }}
+                                                options={{maintainAspectRatio: false, cutout: "68%", plugins: {legend: {position: "bottom", labels: {boxWidth: 10, ...AXIS}}}}}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </SurfaceCard>
                         </div>
-                        <div className="rounded-[18px] border px-4 py-3" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                            <p className="text-xs uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>Alertas</p>
-                            <strong className="mt-1 block text-xl" style={{color: "var(--text-primary)"}}>3 abiertas</strong>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <SurfaceCard title="Mayores saldos pendientes" description="Estudiantes que más deben.">
+                                {summary.topDebtors.length === 0 ? (
+                                    <p className="text-sm" style={{color: "var(--text-tertiary)"}}>Nadie tiene saldo pendiente.</p>
+                                ) : (
+                                    <ul className="divide-y" style={{borderColor: "var(--border-soft)"}}>
+                                        {summary.topDebtors.map((account) => (
+                                            <li key={account.studentId}>
+                                                <Link to={`/accounts/${account.studentId}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
+                                                    <span>
+                                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{account.firstname} {account.lastname}</strong>
+                                                        <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                                                            {account.oldestDueDate ? `Debe desde ${formatDate(account.oldestDueDate)}` : ""}
+                                                        </span>
+                                                    </span>
+                                                    <span className="text-right">
+                                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{money.format(account.due)}</strong>
+                                                        {Number(account.overdue) > 0 && <span className="text-xs" style={{color: "var(--danger)"}}>{money.format(account.overdue)} vencido</span>}
+                                                    </span>
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SurfaceCard>
+
+                            <SurfaceCard title="Últimos pagos" description="Recibos registrados más recientes.">
+                                {summary.latestReceipts.length === 0 ? (
+                                    <p className="text-sm" style={{color: "var(--text-tertiary)"}}>Aún no se han registrado pagos.</p>
+                                ) : (
+                                    <ul className="divide-y" style={{borderColor: "var(--border-soft)"}}>
+                                        {summary.latestReceipts.map((receipt) => (
+                                            <li key={receipt.id}>
+                                                <Link to={`/payments/${receipt.id}`} className="flex items-center justify-between gap-3 py-3 hover:text-[var(--accent)]">
+                                                    <span>
+                                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{receipt.student.name}</strong>
+                                                        <span className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                                                            {receipt.number} · {formatDate(receipt.date)} · {PaymentMethodLabel[receipt.method]}
+                                                        </span>
+                                                    </span>
+                                                    <strong className="text-sm" style={{color: "var(--success)"}}>{money.format(receipt.amount)}</strong>
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SurfaceCard>
                         </div>
-                    </div>
-                </SurfaceCard>
-            </div>
+                    </>
+                )}
+            </LoadingContent>
         </div>
     );
 };
