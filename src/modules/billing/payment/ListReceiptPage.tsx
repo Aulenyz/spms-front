@@ -14,7 +14,7 @@ import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {ListToolbar} from "../components/ListToolbar.tsx";
 import {RegisterPaymentModal} from "./RegisterPaymentModal.tsx";
-import {ReceiptAccordionRow} from "./ReceiptAccordionRow.tsx";
+import {ReceiptAccordionRow, ReceiptListHeader} from "./ReceiptAccordionRow.tsx";
 
 const EMPTY_PAGE: Page<Receipt> = Pagination.empty<Receipt>();
 
@@ -90,12 +90,17 @@ export const ListReceiptPage = () => {
                         <EmptyState title="No hay pagos para mostrar" icon="fa-hand-holding-dollar"
                                     description="Registra un pago con el botón «Registrar pago»."/>
                     ) : (
+                        <div className="overflow-x-auto">
+                        <div className="min-w-[580px]">
+                        <ReceiptListHeader/>
                         <ul>
                             {receipts.content.map((receipt) => (
                                 <ReceiptAccordionRow key={receipt.id} receipt={receipt} open={openId === receipt.id}
                                                      onToggle={() => setOpenId((current) => current === receipt.id ? null : receipt.id)}/>
                             ))}
                         </ul>
+                        </div>
+                        </div>
                     )}
                 </LoadingContent>
             </DataTableCard>
