@@ -4,7 +4,7 @@ import {Link} from "react-router-dom";
 import {toast} from "react-toastify";
 import {CenterModal} from "../../../../components/shared/CenterModal.tsx";
 import {SearchSelect} from "../../../../components/io/input/SearchSelect.tsx";
-import {CourseSelect} from "../../../payment/components/CourseSelect.tsx";
+import {CourseSelect} from "../../../../components/io/input/business/CourseSelect.tsx";
 import {StudentService} from "../../../../services/student/StudentService.ts";
 import {EnrollmentService} from "../../../../services/student/enrollment/EnrollmentService.ts";
 import {queryKeys} from "../../../../app/query/queryKeys.ts";
@@ -104,8 +104,8 @@ export const EnrollStudentModal = ({isOpen, onClose}: Props) => {
                         }}>
                             Inscribir otro
                         </button>
-                        <Link to={`/enrollments/${result.enrollment.id}`} className="btn btn-sm btn-primary" onClick={close}>
-                            Ver inscripción
+                        <Link to={`/invoices/${result.invoice.id}`} className="btn btn-sm btn-primary" onClick={close}>
+                            Ver factura
                         </Link>
                     </div>
                 </div>

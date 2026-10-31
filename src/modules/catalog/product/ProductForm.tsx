@@ -37,6 +37,7 @@ type FormState = {
     endDate: string;
     limitMode: LimitMode;
     maxPerStudent: string;
+    autoCharge: boolean;
     categoryId: string;
     taxCategoryId: string;
 };
@@ -56,6 +57,7 @@ const fromProduct = (product?: ProductDetails | null): FormState => {
         endDate: product?.rule?.endDate ?? "",
         limitMode: !max ? "unlimited" : max === 1 ? "once" : "custom",
         maxPerStudent: max && max > 1 ? String(max) : "2",
+        autoCharge: Boolean(product?.rule?.autoCharge),
         categoryId: product?.category?.id?.toString() ?? "",
         taxCategoryId: product?.taxCategory?.id?.toString() ?? "",
     };
@@ -126,6 +128,7 @@ export const ProductForm = ({product, onDone, onSaved}: {
             startDate: values.startDate || undefined,
             endDate: values.endDate || undefined,
             maxPerStudent: values.limitMode === "unlimited" ? undefined : values.limitMode === "once" ? 1 : max,
+            autoCharge: values.recurring && values.autoCharge,
             categoryId: Number(values.categoryId),
             taxCategoryId: Number(values.taxCategoryId),
         };
@@ -220,6 +223,16 @@ export const ProductForm = ({product, onDone, onSaved}: {
                                 <span className="form-label">Día de pago *</span>
                                 <input className="input input-sm" type="number" min={1} max={28} value={values.billingDay}
                                        onChange={(event) => set("billingDay", event.target.value)}/>
+                            </label>
+                            <label className="col-span-2 flex items-start gap-3 rounded-xl border p-3" style={{borderColor: "var(--border-soft)"}}>
+                                <input type="checkbox" className="checkbox checkbox-sm checkbox-primary mt-0.5" checked={values.autoCharge}
+                                       onChange={(event) => set("autoCharge", event.target.checked)}/>
+                                <span>
+                                    <strong className="block text-sm" style={{color: "var(--text-primary)"}}>Cobro automático</strong>
+                                    <span className="text-xs" style={{color: "var(--text-secondary)"}}>
+                                        Cada día de pago se factura solo a todos los estudiantes inscritos del periodo actual.
+                                    </span>
+                                </span>
                             </label>
                         </div>
                     )}

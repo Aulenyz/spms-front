@@ -952,6 +952,31 @@
         background: var(--surface-soft);
     }
 
+    /* Estados de facturas y recibos */
+    .billing-pill {
+        @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    }
+
+    .billing-pill::before {
+        @apply h-1.5 w-1.5 rounded-full;
+        content: "";
+        background: currentColor;
+    }
+
+    .billing-pill-success { color: var(--success); background: var(--success-soft); }
+    .billing-pill-warning { color: var(--warning); background: var(--warning-soft); }
+    .billing-pill-danger { color: var(--danger); background: var(--danger-soft); }
+    .billing-pill-info { color: var(--accent); background: var(--accent-soft); }
+    .billing-pill-muted { color: var(--text-tertiary); background: var(--surface-soft); }
+
+    /* Recibo imprimible: al imprimir solo se ve el recibo */
+    @media print {
+        body * { visibility: hidden; }
+        .printable, .printable * { visibility: visible; }
+        .printable { position: absolute; inset: 0; padding: 24px; box-shadow: none !important; border: 0 !important; }
+        .no-print { display: none !important; }
+    }
+
     .detail-section {
         @apply overflow-hidden rounded-[20px] border;
         border-color: var(--border-soft);

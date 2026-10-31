@@ -60,6 +60,12 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.COLLECTION_CREATE,
             },
             {
+                label: "Pagos recibidos",
+                icon: "fa-hand-holding-dollar",
+                to: "/payments/list",
+                authority: AuthorityKey.PAYMENTS_VIEW,
+            },
+            {
                 label: "Facturas",
                 icon: "fa-file-invoice-dollar",
                 to: "/invoices/list",
@@ -67,9 +73,9 @@ export const navigationSections: NavigationSection[] = [
             },
             {
                 label: "Estados de cuenta",
-                icon: "fa-calendar-check",
-                to: "/tuition/list",
-                authority: AuthorityKey.TUITION_VIEW,
+                icon: "fa-scale-balanced",
+                to: "/accounts/list",
+                authority: AuthorityKey.INVOICES_VIEW,
             },
             {
                 label: "Conceptos de pago",

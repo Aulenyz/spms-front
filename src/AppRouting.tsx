@@ -15,7 +15,9 @@ const Error403 = lazyPage(() => import("./modules/errors/components/Error403.tsx
 const Error503 = lazyPage(() => import("./modules/errors/components/Error503.tsx"), "Error503");
 const StudentRouting = lazyPage(() => import("./modules/student/StudentRouting.tsx"), "StudentRouting");
 const EnrollmentRouting = lazyPage(() => import("./modules/student/enrollment/EnrollmentRouting.tsx"), "EnrollmentRouting");
-const PaymentRouting = lazyPage(() => import("./modules/payment/PaymentRouting.tsx"), "PaymentRouting");
+const ReceiptRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "ReceiptRouting");
+const InvoiceRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "InvoiceRouting");
+const AccountRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "AccountRouting");
 const SpecializationRouting = lazyPage(() => import("./modules/specialization/SpecializationRouting.tsx"), "SpecializationRouting");
 const UserListPage = lazyPage(() => import("./modules/user/UserListPage.tsx"), "UserListPage");
 const UserOptionsPage = lazyPage(() => import("./modules/user/tabs/UserOptionsPage.tsx"), "UserOptionsPage");
@@ -47,7 +49,9 @@ export const AppRouting = () => {
                 <Route path="home/*" element={<HomeRouting/>}/>
                 <Route path="students/*" element={<StudentRouting/>}/>
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
-                <Route path="payments/*" element={<PaymentRouting/>}/>
+                <Route path="payments/*" element={<ReceiptRouting/>}/>
+                <Route path="invoices/*" element={<InvoiceRouting/>}/>
+                <Route path="accounts/*" element={<AccountRouting/>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
                 <Route path="help" element={<HelpCenterPage/>}/>

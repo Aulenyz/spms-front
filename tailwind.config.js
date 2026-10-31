@@ -11,6 +11,8 @@ export default {
         'metric-card-brand', 'metric-card-success', 'metric-card-warning', 'metric-card-danger',
         // Built at runtime as `info-list-${columns}`
         'info-list-1', 'info-list-2', 'info-list-3',
+        // Built at runtime as `billing-pill-${tone}`
+        'billing-pill-success', 'billing-pill-warning', 'billing-pill-danger', 'billing-pill-info', 'billing-pill-muted',
     ],
     darkMode: 'class',
     theme: {

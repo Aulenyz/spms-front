@@ -195,7 +195,8 @@ export const ProductDetailsPage = () => {
                 <InfoList columns={3} items={[
                     {label: "Frecuencia", value: frequencyLabel(product)},
                     ...(product.chargeMode !== RecurrenceType.NONE
-                        ? [{label: "Día de pago", value: product.rule?.billingDay ? `Día ${product.rule.billingDay} de cada mes` : undefined}]
+                        ? [{label: "Día de pago", value: product.rule?.billingDay ? `Día ${product.rule.billingDay} de cada mes` : undefined},
+                            {label: "Facturación", value: product.rule?.autoCharge ? "Automática a todos los inscritos" : "Manual"}]
                         : []),
                     {label: "Periodo de cobro", value: dateRangeLabel(product.rule)},
                     {label: "Límite por estudiante", value: limitLabel(product.rule)},

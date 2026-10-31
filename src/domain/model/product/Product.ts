@@ -44,6 +44,8 @@ export interface BillingRule {
     endDate?: string;
     /** Veces que se puede cobrar a un estudiante en un periodo escolar; vacío = sin límite. */
     maxPerStudent?: number;
+    /** Conceptos recurrentes: se facturan solos a todos los estudiantes inscritos. */
+    autoCharge?: boolean;
 }
 
 export interface Product {
@@ -100,6 +102,7 @@ export interface ProductFormValues {
     startDate?: string;
     endDate?: string;
     maxPerStudent?: number;
+    autoCharge?: boolean;
 }
 
 export interface TaxCategoryFormValues {
