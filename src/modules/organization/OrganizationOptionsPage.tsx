@@ -55,7 +55,7 @@ export const OrganizationOptionsPage = () => {
                     label: "Cursos",
                     icon: "fa-layer-group",
                     active: isCourseTemplates,
-                    helper: "Academico"
+                    helper: "Académico"
                 },
                 {
                     to: "/courses/templates/prices",

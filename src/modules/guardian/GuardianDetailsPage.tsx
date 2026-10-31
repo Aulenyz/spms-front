@@ -114,7 +114,7 @@ export const GuardianDetailsPage = () => {
                         </div>
                         <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
                             <div className="text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                                {guardian.address ?? "Sin direccion registrada."}
+                                {guardian.address ?? "Sin dirección registrada."}
                             </div>
                         </div>
                     </div>

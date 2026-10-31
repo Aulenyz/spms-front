@@ -67,7 +67,7 @@ export const SpecializationDetailsPage = () => {
     const [saving, setSaving] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
 
-    const title = useMemo(() => entity?.name ?? "Area especializada", [entity?.name]);
+    const title = useMemo(() => entity?.name ?? "Área especializada", [entity?.name]);
     const tabLabel = useMemo(() => TABS.find((item) => item.key === tab)?.label ?? "Cursos", [tab]);
 
     const refresh = async () => {
@@ -225,7 +225,7 @@ export const SpecializationDetailsPage = () => {
 
         return (
             <div className="p-6 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                Aqui agregaremos configuraciones avanzadas cuando este la data real.
+                Aquí agregaremos configuraciones avanzadas cuando este la data real.
             </div>
         );
     };
@@ -253,7 +253,7 @@ export const SpecializationDetailsPage = () => {
 
                     <div className="flex flex-wrap items-center justify-center gap-2">
                         <span className="text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                            Area especializada:
+                            Área especializada:
                         </span>
                         <h2 className="max-w-[min(92vw,720px)] truncate text-xl font-semibold" style={{color: "var(--text-primary)"}}>
                             {title}
@@ -332,13 +332,13 @@ export const SpecializationDetailsPage = () => {
                         <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border px-3 py-2" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
                             <i className="fa fa-align-left" style={{color: "var(--text-tertiary)"}}/>
                             <span className="min-w-0 truncate">
-                                {entity?.description ? "Con descripcion" : "Sin descripcion"}
+                                {entity?.description ? "Con descripción" : "Sin descripción"}
                             </span>
                         </div>
                     </div>
 
                     <RightModal
-                        title="Editar area"
+                        title="Editar área"
                         isOpen={hasAuthority(AuthorityKey.SPECIALIZATION_EDIT) && showEdit}
                         onClose={() => setShowEdit(false)}
                         className="w-[420px] h-full z-[9999]"
@@ -351,13 +351,13 @@ export const SpecializationDetailsPage = () => {
                                 const name = editValues.name.trim();
                                 const description = editValues.description.trim();
                                 if (!name) return toast.error("El nombre es requerido.");
-                                if (!description) return toast.error("La descripcion es requerida.");
+                                if (!description) return toast.error("La descripción es requerida.");
                                 if (!editValues.type) return toast.error("El tipo es requerido.");
                                 setSaving(true);
                                 specializationService
                                     .update(entity.id, {name, description, type: editValues.type})
                                     .then(() => {
-                                        toast.success("Area actualizada.");
+                                        toast.success("Área actualizada.");
                                         setShowEdit(false);
                                         void refreshAfterChange();
                                     })
@@ -374,7 +374,7 @@ export const SpecializationDetailsPage = () => {
                                     <input
                                         value={editValues.name}
                                         onChange={(e) => setEditValues((p) => ({...p, name: e.target.value}))}
-                                        placeholder="Nombre del area"
+                                        placeholder="Nombre del área"
                                         maxLength={40}
                                     />
                                 </label>
@@ -389,7 +389,7 @@ export const SpecializationDetailsPage = () => {
                                     <input
                                         value={editValues.description}
                                         onChange={(e) => setEditValues((p) => ({...p, description: e.target.value}))}
-                                        placeholder="Descripcion del area"
+                                        placeholder="Descripción del área"
                                     />
                                 </label>
                             </div>

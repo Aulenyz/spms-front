@@ -56,7 +56,7 @@ export const AuthorityListPage = () => {
                     <tr>
                         <th scope="col">Llave</th>
                         <th scope="col">Nombre</th>
-                        <th scope="col">Descripcion</th>
+                        <th scope="col">Descripción</th>
                     </tr>
                     </thead>
                     <tbody>

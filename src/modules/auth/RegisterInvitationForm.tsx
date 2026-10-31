@@ -97,13 +97,13 @@ export const RegisterInvitationForm = ({token, existingUser}: {
         const normalizedDocument = values.type === DocumentType.ID_CARD
             ? onlyDigits(values.document)
             : values.document.trim();
-        if (!normalizedDocument) nextErrors.document = "El numero de documento es obligatorio.";
-        else if (values.type === DocumentType.ID_CARD && normalizedDocument.length !== 11) nextErrors.document = "La cedula debe tener 11 digitos.";
+        if (!normalizedDocument) nextErrors.document = "El número de documento es obligatorio.";
+        else if (values.type === DocumentType.ID_CARD && normalizedDocument.length !== 11) nextErrors.document = "La cédula debe tener 11 dígitos.";
         else if (values.type === DocumentType.PASSPORT && normalizedDocument.length > 20) nextErrors.document = "El pasaporte no puede exceder 20 caracteres.";
         if (!values.username.trim()) nextErrors.username = "El usuario es obligatorio.";
         else if (values.username.trim().length > 32) nextErrors.username = "El usuario no puede exceder 32 caracteres.";
-        if (!values.password.trim()) nextErrors.password = "La contrasena es obligatoria.";
-        else if (values.password.trim().length > 60) nextErrors.password = "La contrasena no puede exceder 60 caracteres.";
+        if (!values.password.trim()) nextErrors.password = "La contraseña es obligatoria.";
+        else if (values.password.trim().length > 60) nextErrors.password = "La contraseña no puede exceder 60 caracteres.";
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
     };
@@ -291,7 +291,7 @@ export const RegisterInvitationForm = ({token, existingUser}: {
                     <label className="input input-sm w-full">
                         <i className="fa fa-id-card me-1"/>
                         <input
-                            placeholder={values.type === DocumentType.ID_CARD ? "000-0000000-0" : "Numero de pasaporte"}
+                            placeholder={values.type === DocumentType.ID_CARD ? "000-0000000-0" : "Número de pasaporte"}
                             value={values.document}
                             maxLength={values.type === DocumentType.ID_CARD ? 13 : 20}
                             onChange={(event) => {
@@ -311,7 +311,7 @@ export const RegisterInvitationForm = ({token, existingUser}: {
                     Genero*
                 </label>
                 <DropdownSelect
-                    text="Seleccionar genero"
+                    text="Seleccionar género"
                     hasError={Boolean(errors.gender)}
                     value={values.gender}
                     onSelect={(value) => setField("gender", value as Gender)}
@@ -340,7 +340,7 @@ export const RegisterInvitationForm = ({token, existingUser}: {
                 <PasswordInput
                     label="Contrasena*"
                     name="password"
-                    placeholder="Define tu contrasena"
+                    placeholder="Define tu contraseña"
                     value={values.password}
                     maxLength={60}
                     error={errors.password}
@@ -359,7 +359,7 @@ export const RegisterInvitationForm = ({token, existingUser}: {
                 className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2 transition-colors mt-1"
             >
                 <i className="fa fa-arrow-left text-blue-500"></i>
-                Ir a iniciar sesion
+                Ir a iniciar sesión
             </Link>
 
             <ErrorMessage message={message}/>
@@ -404,7 +404,7 @@ const ExistingUserInvitationForm = ({token, details}: {
             <i className="fa fa-spin fa-spinner"/>}</button>
         <Link to="/auth/login"
               className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2"><i
-            className="fa fa-arrow-left text-blue-500"/>Ir a iniciar sesion</Link>
+            className="fa fa-arrow-left text-blue-500"/>Ir a iniciar sesión</Link>
         <ErrorMessage message={message}/>
     </div>;
 };

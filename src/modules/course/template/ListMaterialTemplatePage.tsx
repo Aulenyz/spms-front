@@ -5,12 +5,12 @@ import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 const MATERIAL_TEMPLATES = [
     {
         id: 1,
-        title: "Kit basico primaria",
+        title: "Kit básico primaria",
         subtitle: "Listado base de utiles y materiales para el arranque del periodo en primaria.",
         badge: "Lista",
         accent: "linear-gradient(135deg, #2563eb, #0f62fe)",
         details: [
-            {label: "Area", value: "Primaria"},
+            {label: "Área", value: "Primaria"},
             {label: "Items", value: 8},
             {label: "Entrega", value: "Inicio"},
         ],
@@ -22,7 +22,7 @@ const MATERIAL_TEMPLATES = [
         badge: "Activa",
         accent: "linear-gradient(135deg, #12805c, #0f766e)",
         details: [
-            {label: "Area", value: "Secundaria"},
+            {label: "Área", value: "Secundaria"},
             {label: "Items", value: 12},
             {label: "Entrega", value: "Trimestral"},
         ],
@@ -34,7 +34,7 @@ const MATERIAL_TEMPLATES = [
         badge: "Borrador",
         accent: "linear-gradient(135deg, #be185d, #7c3aed)",
         details: [
-            {label: "Area", value: "Complementaria"},
+            {label: "Área", value: "Complementaria"},
             {label: "Items", value: 6},
             {label: "Entrega", value: "Bajo demanda"},
         ],
@@ -45,9 +45,9 @@ export const ListMaterialTemplatePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Configuracion"
+                eyebrow="Configuración"
                 title="Plantillas de materiales"
-                description="Define listados base de recursos y kits para reutilizarlos por nivel, area o momento del periodo."
+                description="Define listados base de recursos y kits para reutilizarlos por nivel, área o momento del periodo."
             />
 
             <DataTableCard

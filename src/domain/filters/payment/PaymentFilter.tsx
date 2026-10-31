@@ -75,7 +75,7 @@ export const PaymentFilter = ({onFilter, selectedPeriodId,}: { onFilter: (filter
 
             <div className="w-full sm:w-[170px]">
                 <DropdownSelect
-                    text="Metodo"
+                    text="Método"
                     hasError={false}
                     value={method}
                     onSelect={(value) => handleChange("method", String(value ?? ""))}

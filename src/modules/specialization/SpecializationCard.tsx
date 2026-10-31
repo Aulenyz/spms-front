@@ -66,7 +66,7 @@ export const SpecializationCard = ({specialization}: Props) => {
                     </div>
 
                     <p className="line-clamp-3 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                        {specialization.description || "Sin descripcion registrada para esta area especializada."}
+                        {specialization.description || "Sin descripción registrada para esta área especializada."}
                     </p>
                 </div>
 

@@ -172,7 +172,7 @@ export const UserDetailsPage = () => {
                                 {user?.info?.gender && <StudentGenderPill gender={user.info.gender}/>}
                             </div>
                             <div className="mt-3 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                                Este detalle se expandira con endpoints de actividad y gestion avanzada.
+                                Este detalle se expandira con endpoints de actividad y gestión avanzada.
                             </div>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ export const UserDetailsPage = () => {
                                 {user?.role?.name ?? "-"}
                             </div>
                             <div className="mt-2 text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                                {roleLoading ? "Cargando..." : roleDetails?.description ?? "Sin descripcion"}
+                                {roleLoading ? "Cargando..." : roleDetails?.description ?? "Sin descripción"}
                             </div>
                         </div>
 
@@ -204,7 +204,7 @@ export const UserDetailsPage = () => {
                                 {roleLoading ? "..." : String(roleDetails?.countAuthorities ?? user?.role?.countAuthorities ?? 0)}
                             </div>
                             <div className="mt-2 text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
-                                Gestion completa desde Roles.
+                                Gestión completa desde Roles.
                             </div>
                         </div>
                     </div>
@@ -214,7 +214,7 @@ export const UserDetailsPage = () => {
 
         if (tab === "activity") {
             const rows = [
-                {event: "Inicio de sesion", at: "Hoy 9:12 AM", status: "OK"},
+                {event: "Inicio de sesión", at: "Hoy 9:12 AM", status: "OK"},
                 {event: "Cambio de rol", at: "Ayer 2:40 PM", status: "Pendiente"},
             ];
             return (
@@ -241,7 +241,7 @@ export const UserDetailsPage = () => {
 
         return (
             <div className="p-6 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                Aqui agregaremos configuraciones avanzadas cuando este la data real.
+                Aquí agregaremos configuraciones avanzadas cuando este la data real.
             </div>
         );
     };

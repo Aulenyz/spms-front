@@ -7,6 +7,8 @@ export default {
     ],
     safelist: [
         'hidden',
+        // Built at runtime as `metric-card-${tone}`
+        'metric-card-brand', 'metric-card-success', 'metric-card-warning', 'metric-card-danger',
     ],
     darkMode: 'class',
     theme: {
@@ -194,7 +196,7 @@ export default {
                 }
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
             },
             colors: {
                 gray: {

@@ -9,14 +9,19 @@ export type NavigationItem = {
     authority?: AuthorityKey;
 };
 
+/** Color de identidad de cada módulo; ver `[data-tone]` en index.css. */
+export type NavigationTone = "sky" | "violet" | "orange" | "emerald" | "pink" | "amber" | "teal" | "indigo";
+
 export type NavigationSection = {
     title: string;
+    tone: NavigationTone;
     items: NavigationItem[];
 };
 
 export const navigationSections: NavigationSection[] = [
     {
         title: "Inicio",
+        tone: "sky",
         items: [
             {
                 label: "Dashboard",
@@ -28,6 +33,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Gestión académica",
+        tone: "violet",
         items: [
             {
                 label: "Estudiantes",
@@ -45,6 +51,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Gestión docente",
+        tone: "orange",
         items: [
             {
                 label: "Mi horario",
@@ -56,6 +63,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Finanzas",
+        tone: "emerald",
         items: [
             {
                 label: "Nueva cobranza",
@@ -90,6 +98,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Administración",
+        tone: "pink",
         items: [
             {
                 label: "Inscripciones",
@@ -107,6 +116,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Configuración académica",
+        tone: "amber",
         items: [
             {
                 label: "Cursos",
@@ -142,6 +152,7 @@ export const navigationSections: NavigationSection[] = [
     },
     {
         title: "Configuración del sistema",
+        tone: "indigo",
         items: [
             {label: "Gestión Usuarios", icon: "fa-users-gear", to: "/users", authority: AuthorityKey.USERS_VIEW},
             {
@@ -192,4 +203,30 @@ const defaultAuthorizedRoutes: Array<{ to: string; authority: AuthorityKey }> = 
 
 export const resolveFirstAuthorizedPath = (canAccess: AuthorityResolver): string | undefined => {
     return defaultAuthorizedRoutes.find((item) => canAccess(item.authority))?.to;
+};
+
+/**
+ * Tono del módulo al que pertenece la ruta: la sección cuyo enlace comparte el prefijo más largo.
+ * Las rutas sin sección (ayuda, reportes, organizaciones) usan el tono por defecto.
+ */
+/** Rutas de un módulo que no aparecen en el menú. */
+const extraRouteTones: Array<{ to: string; tone: NavigationTone }> = [
+    {to: "/payments", tone: "emerald"},
+    {to: "/catalog", tone: "emerald"},
+    {to: "/organizations", tone: "indigo"},
+];
+
+export const resolveRouteTone = (pathname: string): NavigationTone => {
+    let best: { tone: NavigationTone; length: number } = {tone: "indigo", length: 0};
+    extraRouteTones.forEach((route) => {
+        if ((pathname === route.to || pathname.startsWith(route.to + "/")) && route.to.length > best.length)
+            best = {tone: route.tone, length: route.to.length};
+    });
+    navigationSections.forEach((section) => section.items.forEach((item) => {
+        if (!item.to) return;
+        const base = item.to.replace(/\/list$/, "");
+        if ((pathname === base || pathname.startsWith(base + "/")) && base.length > best.length)
+            best = {tone: section.tone, length: base.length};
+    }));
+    return best.tone;
 };

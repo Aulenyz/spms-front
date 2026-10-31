@@ -78,7 +78,7 @@ export const ListCoursePage = () => {
 
             <DataTableCard
                 title="Listado de cursos"
-                description="Listado de cursos, filtra por periodo, estado, area y nombre"
+                description="Listado de cursos, filtra por periodo, estado, área y nombre"
                 filters={<CourseFilter onFilter={handleUpdateFilter} selectedPeriodId={selectedPeriodId}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={courses}/>}
             >

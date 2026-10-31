@@ -211,7 +211,7 @@ export const RoleDetailsPage = () => {
                     </div>
 
                     <div className="mt-2 max-w-[820px] text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                        {role?.description ?? "Sin descripcion"}
+                        {role?.description ?? "Sin descripción"}
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -307,7 +307,7 @@ export const RoleDetailsPage = () => {
                                         Descripcion
                                     </div>
                                     <div className="mt-2 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
-                                        {role?.description ?? "Sin descripcion"}
+                                        {role?.description ?? "Sin descripción"}
                                     </div>
                                 </div>
                             </div>
@@ -318,7 +318,7 @@ export const RoleDetailsPage = () => {
                                 </div>
                                 <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
                                     <div className="text-sm font-semibold" style={{color: "var(--text-primary)"}}>
-                                        Gestion de permisos
+                                        Gestión de permisos
                                     </div>
                                     <div className="mt-2 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
                                         Mueve permisos entre columnas desde la pestana Permisos (arrastrando).
@@ -461,7 +461,7 @@ export const RoleDetailsPage = () => {
                                 <div className="grid gap-2 max-h-[62vh] overflow-auto pr-1">
                                     {!authorityLoading && assigned.length === 0 && (
                                         <div className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface)", color: "var(--text-secondary)"}}>
-                                            Arrastra permisos aqui para asignarlos.
+                                            Arrastra permisos aquí para asignarlos.
                                         </div>
                                     )}
                                     {assigned.map((auth) => (

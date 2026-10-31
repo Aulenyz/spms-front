@@ -39,11 +39,11 @@ export const NotificationsMenu = memo(() => {
                     <div className="space-y-3 p-3">
                         <div className="notification-card">
                             <strong>Cierre de caja</strong>
-                            <p>Dos pagos quedaron pendientes de validacion manual.</p>
+                            <p>Dos pagos quedaron pendientes de validación manual.</p>
                         </div>
                         <div className="notification-card">
                             <strong>Actividad reciente</strong>
-                            <p>Hay movimientos nuevos en inscripciones y pagos del dia.</p>
+                            <p>Hay movimientos nuevos en inscripciones y pagos del día.</p>
                         </div>
                     </div>
                 </div>

@@ -199,13 +199,7 @@ export const CourseDetailsPage = () => {
 
     return (
         <div className="space-y-5">
-            <section className="relative overflow-hidden rounded-[32px] border p-6 lg:p-8" style={{
-                borderColor: "var(--border-soft)",
-                background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%, color-mix(in srgb, #10b981 10%, var(--surface)) 100%)",
-                boxShadow: "var(--shadow-card)"
-            }}>
-                <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full opacity-30"
-                     style={{background: "var(--accent-soft)"}}/>
+            <section className="page-header lg:p-8">
                 <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                     <div className="flex flex-col gap-5 md:flex-row md:items-center">
                         <div
@@ -222,13 +216,10 @@ export const CourseDetailsPage = () => {
                                 <span
                                     className={`h-2.5 w-2.5 rounded-full ${course?.active ? "bg-green-500" : "bg-red-500"}`}
                                     title={course?.active ? "Activo" : "Inactivo"}/>
-                                <span className="text-xs font-extrabold uppercase tracking-[.18em]"
-                                      style={{color: "var(--accent)"}}>Curso actual</span>
+                                <span className="page-header-eyebrow">Curso actual</span>
                             </div>
-                            <h1 className="mt-2 text-3xl font-black tracking-tight"
-                                style={{color: "var(--text-primary)"}}>{title}</h1>
-                            <p className="mt-2 max-w-2xl text-sm font-semibold"
-                               style={{color: "var(--text-secondary)"}}>{specialization}</p>
+                            <h1 className="page-title mt-2 text-3xl">{title}</h1>
+                            <p className="page-description mt-1">{specialization}</p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 <Tag>Sección {division}</Tag>
                                 {course?.type && <GradeTypePill type={course.type as GradeType}/>}

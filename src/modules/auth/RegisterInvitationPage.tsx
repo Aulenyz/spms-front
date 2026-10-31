@@ -44,16 +44,16 @@ export const RegisterInvitationPage = () => {
     if (validating) {
         return (
             <AuthShell
-                title="Validando invitacion"
+                title="Validando invitación"
                 description="Estamos verificando el enlace antes de mostrar el registro."
-                accentTitle="Preparamos el acceso publico para que completes tu perfil institucional."
+                accentTitle="Preparamos el acceso público para que completes tu perfil institucional."
                 variant="login"
                 form={
                     <div className="auth-minimal-form">
                         <div className="rounded-[22px] border p-5 text-sm font-semibold" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
                             <div className="flex items-center justify-center gap-3">
                                 <i className="fa fa-spinner fa-spin"/>
-                                <span>Validando token de invitacion...</span>
+                                <span>Validando token de invitación...</span>
                             </div>
                         </div>
                     </div>
@@ -69,7 +69,7 @@ export const RegisterInvitationPage = () => {
             accentTitle="Activa tu cuenta institucional, sube tu foto y configura tus credenciales para entrar al campus."
             variant="login"
             title={details?.existingUser ? "Unirse a organización" : "Completar registro"}
-            description={details?.existingUser ? "Confirma para asociarla a la organización." : "Crea tu acceso con la invitacion recibida."}
+            description={details?.existingUser ? "Confirma para asociarla a la organización." : "Crea tu acceso con la invitación recibida."}
             form={<RegisterInvitationForm token={token} existingUser={details?.existingUser ? details : undefined}/>} 
         />
     );

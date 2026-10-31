@@ -26,7 +26,7 @@ export const RoleForm = ({onSubmit}: { onSubmit?: () => void }) => {
     const validateLocal = () => {
         const nextErrors: Partial<Record<keyof RoleFormValues, string>> = {};
         if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio.";
-        if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria.";
+        if (!values.description.trim()) nextErrors.description = "La descripción es obligatoria.";
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
     };
@@ -48,7 +48,7 @@ export const RoleForm = ({onSubmit}: { onSubmit?: () => void }) => {
             }
 
             await roleService.create("", payload);
-            toast.success("Rol creado con exito.");
+            toast.success("Rol creado con éxito.");
             onSubmit?.();
         } catch {
             toast.error("Error creando el rol.");
@@ -70,7 +70,7 @@ export const RoleForm = ({onSubmit}: { onSubmit?: () => void }) => {
                     Datos principales
                 </div>
                 <div className="mt-1 text-sm font-semibold" style={{color: "var(--text-secondary)"}}>
-                    Define el nombre y la descripcion del rol que se asignara a los usuarios.
+                    Define el nombre y la descripción del rol que se asignara a los usuarios.
                 </div>
             </div>
 

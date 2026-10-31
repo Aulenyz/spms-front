@@ -72,7 +72,7 @@ export const Pager = ({
                                 portal
                             />
                         </div>
-                        <span>por pagina</span>
+                        <span>por página</span>
                     </label>
                 )}
             </div>

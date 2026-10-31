@@ -30,7 +30,7 @@ const variantTheme: Record<AuthVariant, {
         secondary: "#14b8a6",
         badge: "Campus conectado",
         copy: "",
-        chips: ["Matricula", "Tesoreria", "Accesos"],
+        chips: ["Matrícula", "Tesorería", "Accesos"],
         stats: [
             {label: "Cobertura", value: "Campus"},
             {label: "Accesos", value: "Seguro"},
@@ -40,7 +40,7 @@ const variantTheme: Record<AuthVariant, {
     recover: {
         accent: "#12805c",
         secondary: "#0f62fe",
-        badge: "Recuperacion segura",
+        badge: "Recuperación segura",
         copy: "Recupera tu acceso institucional sin salir del flujo principal del campus.",
         chips: ["Cuenta", "Seguridad", "Soporte"],
         stats: [
@@ -53,12 +53,12 @@ const variantTheme: Record<AuthVariant, {
         accent: "#7c3aed",
         secondary: "#f59e0b",
         badge: "Clave renovada",
-        copy: "Actualiza tu contrasena y vuelve al entorno institucional con una credencial nueva.",
-        chips: ["Seguridad", "Validacion", "Continuidad"],
+        copy: "Actualiza tu contraseña y vuelve al entorno institucional con una credencial nueva.",
+        chips: ["Seguridad", "Validación", "Continuidad"],
         stats: [
             {label: "Clave", value: "Nueva"},
             {label: "Nivel", value: "Alto"},
-            {label: "Sesion", value: "Lista"},
+            {label: "Sesión", value: "Lista"},
         ],
     },
 };

@@ -109,7 +109,7 @@ export const MainSidebar = ({
                                     type="text"
                                     value={query}
                                     onChange={(event) => setQuery(event.target.value)}
-                                    placeholder="Buscar modulo"
+                                    placeholder="Buscar módulo"
                                     className="sidebar-search-input"
                                 />
                             </div>
@@ -122,7 +122,7 @@ export const MainSidebar = ({
                             ));
 
                             return (
-                                <section key={section.title} className="sidebar-section sidebar-accordion">
+                                <section key={section.title} data-tone={section.tone} className="sidebar-section sidebar-accordion">
                                     {!collapsed && (
                                         <button
                                             type="button"
@@ -131,7 +131,10 @@ export const MainSidebar = ({
                                                 "sidebar-accordion-trigger-active": hasActiveItem,
                                             })}
                                         >
-                                            <span>{section.title}</span>
+                                            <span className="sidebar-accordion-title">
+                                                <span className="sidebar-tone-dot"/>
+                                                {section.title}
+                                            </span>
                                             <i className={`fa ${isOpen ? "fa-chevron-up" : "fa-chevron-down"} text-[10px]`}/>
                                         </button>
                                     )}
@@ -207,7 +210,7 @@ export const MainSidebar = ({
                         })}
 
                         {!collapsed && visibleQuickLinks.length > 0 && (
-                            <section className="sidebar-promo">
+                            <section className="sidebar-promo" data-tone="teal">
                                 <span className="sidebar-section-title">Accesos</span>
                                 <div className="grid gap-1.5">
                                             {visibleQuickLinks.map((item) => (

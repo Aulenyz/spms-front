@@ -93,7 +93,7 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
     const handleSearch = async () => {
         const normalized = term.trim();
         if (!normalized) {
-            toast.error("Escribe matricula o nombre para buscar.");
+            toast.error("Escribe matrícula o nombre para buscar.");
             return;
         }
         setIsSearching(true);
@@ -186,7 +186,7 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
                         </div>
                         <h3 className="text-xl font-black tracking-tight text-slate-950 dark:text-white">Busca el estudiante</h3>
                         <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                            Por matricula o nombre. Si no existe, puedes registrarlo aqui mismo.
+                            Por matrícula o nombre. Si no existe, puedes registrarlo aquí mismo.
                         </p>
                         {!locked && selectedBadge}
                     </div>
@@ -250,7 +250,7 @@ export const StudentStep = ({selected, onSelect, locked = false, onUnlock}: Prop
                         }}
                     >
                         <Input
-                            label="Matricula / nombre"
+                            label="Matrícula / nombre"
                             error={undefined}
                             value={term}
                             onChange={(event) => setTerm(event.target.value)}

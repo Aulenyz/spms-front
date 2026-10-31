@@ -50,7 +50,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
     const [documentNumber, setDocumentNumber] = useState("001-0000000-0");
     const [saleReference, setSaleReference] = useState("COB-2024-0018");
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("transferencia");
-    const [notes, setNotes] = useState("Cobro manual sin dependencia de catalogo interno.");
+    const [notes, setNotes] = useState("Cobro manual sin dependencia de catálogo interno.");
     const [conceptLabel, setConceptLabel] = useState("");
     const [conceptAmount, setConceptAmount] = useState("");
     const [conceptNote, setConceptNote] = useState("");
@@ -110,7 +110,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
         const normalizedLabel = label.trim();
 
         if (!normalizedLabel || !Number.isFinite(amount) || amount <= 0) {
-            toast.error("Completa el concepto y un monto valido.");
+            toast.error("Completa el concepto y un monto válido.");
             return;
         }
 
@@ -326,7 +326,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                 </div>
 
                 <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-white/5">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">Metodo</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">Método</p>
                     <p className="mt-1 font-semibold text-slate-900 capitalize dark:text-white">{paymentMethod}</p>
                 </div>
 
@@ -579,7 +579,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                                     placeholder="001-0000000-0"
                                                 />
                                                 <SelectInput
-                                                    label="Metodo de pago"
+                                                    label="Método de pago"
                                                     error={undefined}
                                                     value={paymentMethod}
                                                     onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
@@ -666,7 +666,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                                     error={undefined}
                                                     value={conceptNote}
                                                     onChange={(event) => setConceptNote(event.target.value)}
-                                                    placeholder="Descripcion corta"
+                                                    placeholder="Descripción corta"
                                                 />
                                                 <button
                                                     type="button"
@@ -704,7 +704,7 @@ export const CommercialCollectionModal = ({isOpen, onClose}: Props) => {
                                                         <h4 className="text-base font-semibold text-slate-900">Sin
                                                             conceptos agregados</h4>
                                                         <p className="mt-1 text-sm text-slate-500">
-                                                            Escribe un concepto libre o usa una sugerencia rapida.
+                                                            Escribe un concepto libre o usa una sugerencia rápida.
                                                         </p>
                                                     </div>
                                                 ) : (

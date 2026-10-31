@@ -79,29 +79,29 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.COURSES_VIEW]: "Permite ver el listado de cursos.",
     [AuthorityKey.COURSE_DETAILS_VIEW]: "Permite acceder a la pantalla de detalles de un curso.",
 
-    [AuthorityKey.GRADES_VIEW]: "Permite acceder al modulo de calificaciones.",
+    [AuthorityKey.GRADES_VIEW]: "Permite acceder al módulo de calificaciones.",
 
-    [AuthorityKey.SPECIALIZATIONS_VIEW]: "Permite ver el listado de areas especializadas.",
-    [AuthorityKey.SPECIALIZATION_CREATE]: "Permite crear nuevas areas especializadas.",
-    [AuthorityKey.SPECIALIZATION_EDIT]: "Permite editar areas especializadas existentes.",
-    [AuthorityKey.SPECIALIZATION_DETAILS_VIEW]: "Permite acceder a los detalles de un area especializada.",
-    [AuthorityKey.SPECIALIZATION_STATUS_UPDATE]: "Permite activar o inactivar areas especializadas.",
+    [AuthorityKey.SPECIALIZATIONS_VIEW]: "Permite ver el listado de áreas especializadas.",
+    [AuthorityKey.SPECIALIZATION_CREATE]: "Permite crear nuevas áreas especializadas.",
+    [AuthorityKey.SPECIALIZATION_EDIT]: "Permite editar áreas especializadas existentes.",
+    [AuthorityKey.SPECIALIZATION_DETAILS_VIEW]: "Permite acceder a los detalles de un área especializada.",
+    [AuthorityKey.SPECIALIZATION_STATUS_UPDATE]: "Permite activar o inactivar áreas especializadas.",
 
     [AuthorityKey.TEACHER_CLASSES_VIEW]: "Permite acceder a la vista de mis clases.",
     [AuthorityKey.TEACHER_SCHEDULE_VIEW]: "Permite acceder a la vista de mi horario docente.",
 
     [AuthorityKey.COLLECTION_CREATE]: "Permite iniciar una nueva cobranza escolar.",
     [AuthorityKey.PAYMENTS_VIEW]: "Permite ver el listado de pagos y cobros registrados.",
-    [AuthorityKey.INVOICES_VIEW]: "Permite acceder al modulo de facturas.",
-    [AuthorityKey.TUITION_VIEW]: "Permite acceder al modulo de pendientes de cobro.",
-    [AuthorityKey.DISCOUNTS_VIEW]: "Permite acceder al modulo de descuentos.",
+    [AuthorityKey.INVOICES_VIEW]: "Permite acceder al módulo de facturas.",
+    [AuthorityKey.TUITION_VIEW]: "Permite acceder al módulo de pendientes de cobro.",
+    [AuthorityKey.DISCOUNTS_VIEW]: "Permite acceder al módulo de descuentos.",
 
     [AuthorityKey.ENROLLMENTS_VIEW]: "Permite ver el listado de inscripciones.",
     [AuthorityKey.ENROLLMENT_CREATE]: "Permite registrar nuevas inscripciones.",
 
     [AuthorityKey.USERS_VIEW]: "Permite ver el listado de usuarios.",
     [AuthorityKey.USER_DETAILS_VIEW]: "Permite acceder a los detalles de un usuario.",
-    [AuthorityKey.USER_EDIT]: "Permite editar la informacion de un usuario.",
+    [AuthorityKey.USER_EDIT]: "Permite editar la información de un usuario.",
     [AuthorityKey.USER_STATUS_UPDATE]: "Permite cambiar el estado de un usuario.",
 
     [AuthorityKey.USER_INVITATIONS_VIEW]: "Permite ver el listado de invitaciones de usuarios.",
@@ -119,7 +119,7 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.GUARDIAN_CREATE]: "Permite registrar nuevos padres o tutores.",
     [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un padre o tutor.",
 
-    [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al modulo de profesores.",
+    [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al módulo de profesores.",
     [AuthorityKey.TEACHER]: "Identifica usuarios elegibles para impartir clases.",
 
     [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de plantillas de cursos.",
