@@ -210,23 +210,30 @@ export const resolveFirstAuthorizedPath = (canAccess: AuthorityResolver): string
  * Las rutas sin sección (ayuda, reportes, organizaciones) usan el tono por defecto.
  */
 /** Rutas de un módulo que no aparecen en el menú. */
-const extraRouteTones: Array<{ to: string; tone: NavigationTone }> = [
-    {to: "/payments", tone: "emerald"},
-    {to: "/catalog", tone: "emerald"},
-    {to: "/organizations", tone: "indigo"},
+const extraRouteTones: Array<{ to: string; tone: NavigationTone; icon: string }> = [
+    {to: "/payments", tone: "emerald", icon: "fa-wallet"},
+    {to: "/catalog", tone: "emerald", icon: "fa-box-open"},
+    {to: "/organizations", tone: "indigo", icon: "fa-building"},
+    {to: "/help", tone: "teal", icon: "fa-life-ring"},
 ];
 
-export const resolveRouteTone = (pathname: string): NavigationTone => {
-    let best: { tone: NavigationTone; length: number } = {tone: "indigo", length: 0};
+export type RouteModule = { tone: NavigationTone; icon: string };
+
+/** Módulo (color e ícono) de la ruta, para que cada página muestre a qué sección pertenece. */
+export const resolveRouteModule = (pathname: string): RouteModule => {
+    let best: RouteModule & { length: number } = {tone: "indigo", icon: "fa-compass", length: 0};
+    const matches = (to: string) => pathname === to || pathname.startsWith(to + "/");
     extraRouteTones.forEach((route) => {
-        if ((pathname === route.to || pathname.startsWith(route.to + "/")) && route.to.length > best.length)
-            best = {tone: route.tone, length: route.to.length};
+        if (matches(route.to) && route.to.length > best.length)
+            best = {tone: route.tone, icon: route.icon, length: route.to.length};
     });
     navigationSections.forEach((section) => section.items.forEach((item) => {
         if (!item.to) return;
         const base = item.to.replace(/\/list$/, "");
-        if ((pathname === base || pathname.startsWith(base + "/")) && base.length > best.length)
-            best = {tone: section.tone, length: base.length};
+        if (matches(base) && base.length > best.length)
+            best = {tone: section.tone, icon: item.icon, length: base.length};
     }));
-    return best.tone;
+    return {tone: best.tone, icon: best.icon};
 };
+
+export const resolveRouteTone = (pathname: string): NavigationTone => resolveRouteModule(pathname).tone;

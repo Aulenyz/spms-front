@@ -82,13 +82,18 @@
 
 @layer components {
     .page-header {
-        @apply relative isolate flex flex-col gap-3 overflow-hidden rounded-[20px] border p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between;
-        border-color: var(--border-soft);
-        border-left: 5px solid var(--accent);
-        background: linear-gradient(110deg, var(--accent-soft) 0%, var(--surface) 62%);
+        @apply relative flex flex-col gap-4 overflow-hidden rounded-[22px] border p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between;
+        border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+        background: linear-gradient(115deg, var(--accent-soft) 0%, color-mix(in srgb, var(--accent-soft) 35%, var(--surface)) 55%, var(--surface) 100%);
         box-shadow: var(--shadow-card);
     }
 
+
+    .page-header-icon {
+        @apply inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-lg text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
+        box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 30%, transparent);
+    }
 
     .page-header-eyebrow {
         @apply inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em];
@@ -317,9 +322,8 @@
     }
 
     .empty-state-icon {
-        @apply inline-flex h-14 w-14 items-center justify-center rounded-[16px] text-lg;
-        color: var(--accent);
-        background: var(--accent-soft);
+        @apply inline-flex h-14 w-14 items-center justify-center rounded-[16px] text-lg text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
     }
 
     .form-label {
@@ -719,7 +723,7 @@
 
     .sidebar-accordion-trigger {
         @apply flex w-full items-center justify-between rounded-[10px] px-2.5 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.1em] transition;
-        color: var(--text-tertiary);
+        color: var(--accent);
     }
 
     .sidebar-accordion-trigger:hover,
@@ -748,13 +752,14 @@
     }
 
     .sidebar-nav-item-active {
-        background: var(--accent-soft);
-        color: var(--accent);
+        background: var(--accent);
+        color: #ffffff;
         font-weight: 700;
+        box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 28%, transparent);
     }
 
     .sidebar-nav-item-active .sidebar-nav-icon {
-        background: var(--accent);
+        background: rgba(255, 255, 255, 0.2);
         color: #ffffff;
     }
 
@@ -850,11 +855,10 @@
     }
 
     .metric-card {
-        @apply relative flex items-center justify-between gap-3 overflow-hidden rounded-[18px] border p-5;
+        @apply relative flex items-center justify-between gap-3 overflow-hidden rounded-[20px] border p-5;
         --accent: #4f46e5; --accent-soft: #e0e7ff; --accent-deep: #3730a3; --tone-bright: #818cf8;
-        border-color: var(--border-soft);
-        border-top: 3px solid var(--accent);
-        background: var(--surface);
+        border-color: color-mix(in srgb, var(--accent) 16%, transparent);
+        background: linear-gradient(135deg, var(--accent-soft), var(--surface) 85%);
         box-shadow: var(--shadow-card);
     }
 
@@ -874,9 +878,9 @@
     }
 
     .metric-card-icon {
-        @apply inline-flex h-12 w-12 items-center justify-center rounded-[14px] text-base;
-        color: var(--accent);
-        background: var(--accent-soft);
+        @apply inline-flex h-12 w-12 items-center justify-center rounded-[14px] text-base text-white;
+        background: linear-gradient(135deg, var(--tone-bright), var(--accent));
+        box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
     }
 
     .metric-card-success {
@@ -962,7 +966,11 @@
 
     .auth-erp-visual {
         @apply relative hidden overflow-hidden lg:block;
-        background: linear-gradient(140deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+        background:
+            radial-gradient(circle at 15% 20%, rgba(253, 230, 138, 0.35) 0 10%, transparent 10.5%),
+            radial-gradient(circle at 85% 80%, rgba(249, 168, 212, 0.35) 0 13%, transparent 13.5%),
+            radial-gradient(circle at 80% 15%, rgba(147, 197, 253, 0.4) 0 7%, transparent 7.5%),
+            linear-gradient(140deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
     }
 
     .auth-erp-visual::after {
