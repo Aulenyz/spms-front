@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import ReactDOM from "react-dom";
 import clsx from "clsx";

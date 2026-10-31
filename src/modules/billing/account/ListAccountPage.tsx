@@ -1,4 +1,5 @@
 import {useState} from "react";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
