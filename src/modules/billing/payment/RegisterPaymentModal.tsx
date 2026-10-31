@@ -62,6 +62,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const [cart, setCart] = useState<CartLine[]>([]);
     const [pending, setPending] = useState<number[]>([]);
     const [enrollCourse, setEnrollCourse] = useState<Course | null>(null);
+    const [choosingCourse, setChoosingCourse] = useState(false);
     const [productId, setProductId] = useState("");
     const [quantity, setQuantity] = useState("1");
     const [price, setPrice] = useState("");
@@ -155,6 +156,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         setCart([]);
         setPending(invoiceId ? [invoiceId] : []);
         setEnrollCourse(null);
+        setChoosingCourse(false);
         setProductId("");
         setQuantity("1");
         setPrice("");
@@ -399,6 +401,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                         setPayer(undefined);
                                                         setPending([]);
                                                         setEnrollCourse(null);
+                                                        setChoosingCourse(false);
                                                         setReceived(null);
                                                     }}/>
                                                 ) : (
@@ -407,6 +410,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                         setPayer(undefined);
                                                         setPending([]);
                                                         setEnrollCourse(null);
+                                                        setChoosingCourse(false);
                                                         setReceived(null);
                                                     }}/>
                                                 )}
@@ -423,21 +427,47 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                         <p className="text-sm" style={{color: "var(--text-primary)"}}>
                                                             <i className={`fa ${enrollCourse ? "fa-circle-check" : "fa-user-clock"} me-2`}
                                                                style={{color: enrollCourse ? "var(--success)" : "var(--warning)"}}/>
-                                                            No está inscrito en <strong>{standing?.periodName}</strong>: elige el curso y la {(standing?.conceptName ?? "inscripción").toLowerCase()} se cobra en este mismo pago.
+                                                            {enrollCourse
+                                                                ? <>Se inscribirá en este pago ({standing?.periodName}).</>
+                                                                : <>No está inscrito en <strong>{standing?.periodName}</strong>. Elige el curso para inscribirlo en este mismo pago.</>}
                                                         </p>
                                                         {Number(standing?.conceptPrice ?? 0) > 0 ? (
-                                                            <div className="grid items-center gap-3 sm:grid-cols-[1fr_auto]">
-                                                                <label className="block">
-                                                                    <span className="form-label mb-1 block text-sm font-semibold">Curso*</span>
-                                                                    <CourseSearchSelect value={enrollCourse} onChange={(course) => {
-                                                                        setEnrollCourse(course);
-                                                                        setReceived(null);
-                                                                    }}/>
-                                                                </label>
-                                                                <strong className="whitespace-nowrap pt-6 text-sm" style={{color: "var(--text-primary)"}}>
-                                                                    {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
-                                                                </strong>
-                                                            </div>
+                                                            enrollCourse ? (
+                                                                <div className="flex flex-wrap items-center gap-3">
+                                                                    <span className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm font-semibold"
+                                                                          style={{borderColor: "var(--success)", background: "var(--surface)", color: "var(--text-primary)"}}>
+                                                                        <i className="fa fa-graduation-cap" style={{color: "var(--success)"}}/>{courseLabel(enrollCourse)}
+                                                                    </span>
+                                                                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
+                                                                        setEnrollCourse(null);
+                                                                        setChoosingCourse(true);
+                                                                    }}>Cambiar</button>
+                                                                    <strong className="ms-auto whitespace-nowrap text-sm" style={{color: "var(--text-primary)"}}>
+                                                                        {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
+                                                                    </strong>
+                                                                </div>
+                                                            ) : choosingCourse ? (
+                                                                <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto]">
+                                                                    <label className="block">
+                                                                        <span className="form-label mb-1 block text-sm font-semibold">Curso para la inscripción*</span>
+                                                                        <CourseSearchSelect value={enrollCourse} onChange={(course) => {
+                                                                            setEnrollCourse(course);
+                                                                            setChoosingCourse(false);
+                                                                            setReceived(null);
+                                                                        }}/>
+                                                                    </label>
+                                                                    <button type="button" className="btn btn-sm" onClick={() => setChoosingCourse(false)}>Cancelar</button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-wrap items-center gap-3">
+                                                                    <button type="button" className="btn btn-sm btn-primary" onClick={() => setChoosingCourse(true)}>
+                                                                        <i className="fa fa-graduation-cap"/>Curso para la inscripción
+                                                                    </button>
+                                                                    <strong className="ms-auto whitespace-nowrap text-sm" style={{color: "var(--text-primary)"}}>
+                                                                        {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
+                                                                    </strong>
+                                                                </div>
+                                                            )
                                                         ) : (
                                                             <p className="text-sm" style={{color: "var(--danger)"}}>
                                                                 Configura el precio de {standing?.conceptName} en Conceptos de pago para poder inscribir.
