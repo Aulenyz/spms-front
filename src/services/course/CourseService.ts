@@ -1,5 +1,5 @@
 import {BaseService} from "../BaseService.ts";
-import {Course, CourseAcademicAssignment, GradeType, ScheduleSlot} from "../../domain/model/course/Course.ts";
+import {Course, CourseAcademicAssignment, GradeType} from "../../domain/model/course/Course.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TeacherOption} from "./CourseTemplateService.ts";
@@ -7,7 +7,6 @@ import {TeacherOption} from "./CourseTemplateService.ts";
 export type CourseAcademicAssignmentRequest = {
     subjectId: number;
     teacherId: number;
-    schedule: ScheduleSlot[];
 };
 
 export type QuickCourseRequest = {

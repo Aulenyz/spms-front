@@ -10,7 +10,7 @@ export type NavigationItem = {
 };
 
 /** Color de identidad de cada módulo; ver `[data-tone]` en index.css. */
-export type NavigationTone = "sky" | "violet" | "orange" | "emerald" | "pink" | "amber" | "teal" | "indigo";
+export type NavigationTone = "sky" | "violet" | "emerald" | "pink" | "amber" | "teal" | "indigo";
 
 export type NavigationSection = {
     title: string;
@@ -46,18 +46,6 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-book",
                 to: "/courses/list",
                 authority: AuthorityKey.COURSES_VIEW,
-            },
-        ],
-    },
-    {
-        title: "Gestión docente",
-        tone: "orange",
-        items: [
-            {
-                label: "Mi horario",
-                icon: "fa-calendar-days",
-                to: "/teacher/schedule",
-                authority: AuthorityKey.TEACHER_SCHEDULE_VIEW,
             },
         ],
     },

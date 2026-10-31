@@ -36,7 +36,6 @@
     /* Module identity colors: bright (decoration), accent (fills and text), deep (pressed edge), soft (tints) */
     [data-tone="sky"] { --tone-bright: #38bdf8; --accent: #0284c7; --accent-deep: #075985; --accent-soft: #e0f2fe; }
     [data-tone="violet"] { --tone-bright: #a78bfa; --accent: #7c3aed; --accent-deep: #5b21b6; --accent-soft: #ede9fe; }
-    [data-tone="orange"] { --tone-bright: #fb923c; --accent: #ea580c; --accent-deep: #9a3412; --accent-soft: #ffedd5; }
     [data-tone="emerald"] { --tone-bright: #34d399; --accent: #059669; --accent-deep: #065f46; --accent-soft: #d1fae5; }
     [data-tone="pink"] { --tone-bright: #f472b6; --accent: #db2777; --accent-deep: #9d174d; --accent-soft: #fce7f3; }
     [data-tone="amber"] { --tone-bright: #fbbf24; --accent: #d97706; --accent-deep: #92400e; --accent-soft: #fef3c7; }
@@ -893,6 +892,131 @@
 
     .metric-card-danger {
         --accent: #db2777; --accent-soft: #fce7f3; --accent-deep: #9d174d; --tone-bright: #f472b6;
+    }
+
+    /* ---------- Detail pages ---------- */
+    .detail-header {
+        @apply flex flex-col gap-4 rounded-[20px] border p-5 sm:flex-row sm:items-center sm:justify-between;
+        border-color: var(--border-soft);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+    }
+
+    .detail-avatar {
+        @apply inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] text-lg font-bold;
+        color: var(--accent);
+        background: var(--accent-soft);
+    }
+
+    .detail-back {
+        @apply inline-flex items-center gap-1.5 text-xs font-semibold;
+        color: var(--text-tertiary);
+    }
+
+    .detail-back:hover {
+        color: var(--accent);
+    }
+
+    .detail-title {
+        @apply truncate text-xl font-bold tracking-tight;
+        color: var(--text-primary);
+    }
+
+    .detail-subtitle {
+        @apply text-sm;
+        color: var(--text-secondary);
+    }
+
+    .detail-badge {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+        color: var(--text-secondary);
+        background: var(--surface-soft);
+    }
+
+    .detail-badge-dot {
+        @apply h-1.5 w-1.5 rounded-full;
+        background: currentColor;
+    }
+
+    .detail-badge:not(.detail-badge-success):not(.detail-badge-muted) .detail-badge-dot {
+        display: none;
+    }
+
+    .detail-badge-success {
+        color: var(--success);
+        background: var(--success-soft);
+    }
+
+    .detail-badge-muted {
+        color: var(--text-tertiary);
+        background: var(--surface-soft);
+    }
+
+    .detail-section {
+        @apply overflow-hidden rounded-[20px] border;
+        border-color: var(--border-soft);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+    }
+
+    .detail-section-head {
+        @apply flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5;
+        border-color: var(--border-soft);
+    }
+
+    .detail-section-title {
+        @apply text-[15px] font-bold;
+        color: var(--text-primary);
+    }
+
+    .detail-section-description {
+        @apply mt-0.5 text-xs;
+        color: var(--text-tertiary);
+    }
+
+    .detail-section .table-shell th {
+        background: var(--surface-muted);
+    }
+
+    .info-list {
+        @apply grid gap-x-6 gap-y-4;
+    }
+
+    .info-list-2 {
+        @apply sm:grid-cols-2;
+    }
+
+    .info-list-3 {
+        @apply sm:grid-cols-2 lg:grid-cols-3;
+    }
+
+    .info-item dt {
+        @apply text-[11px] font-semibold uppercase tracking-[0.06em];
+        color: var(--text-tertiary);
+    }
+
+    .info-item dd {
+        @apply mt-1 break-words text-sm font-medium;
+        color: var(--text-primary);
+    }
+
+    .info-item-full {
+        grid-column: 1 / -1;
+    }
+
+    .row-action {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-[10px] text-[13px] transition;
+        color: var(--text-tertiary);
+    }
+
+    .row-action:hover {
+        color: var(--accent);
+        background: var(--accent-soft);
+    }
+
+    .row-action-danger:hover {
+        color: var(--danger);
+        background: var(--danger-soft);
     }
 
     .auth-screen {

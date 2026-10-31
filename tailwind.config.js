@@ -9,6 +9,8 @@ export default {
         'hidden',
         // Built at runtime as `metric-card-${tone}`
         'metric-card-brand', 'metric-card-success', 'metric-card-warning', 'metric-card-danger',
+        // Built at runtime as `info-list-${columns}`
+        'info-list-1', 'info-list-2', 'info-list-3',
     ],
     darkMode: 'class',
     theme: {

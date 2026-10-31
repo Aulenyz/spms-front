@@ -1,255 +1,106 @@
-import {useEffect, useMemo, useState} from "react";
-import {useQueryClient} from "@tanstack/react-query";
-import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {useState} from "react";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {useParams} from "react-router-dom";
 import {toast} from "react-toastify";
-import {CourseTemplate, GradeTypeLabel} from "../../../domain/model/course/Course.ts";
+
+import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {GradeTypeLabel} from "../../../domain/model/course/Course.ts";
 import {Subject} from "../../../domain/model/course/Subject.ts";
-import {
-    AcademicAssignment,
-    CourseTemplateService,
-    ScheduleSlot,
-    TeacherAssignment,
-    TeacherOption,
-    TemplateSubject,
-    WeekDay,
-} from "../../../services/course/CourseTemplateService.ts";
+import {CourseTemplateService, TemplateSubject} from "../../../services/course/CourseTemplateService.ts";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {RightModal} from "../../../components/shared/RightModal.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CenterModal} from "../../../components/shared/CenterModal.tsx";
-import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
+import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
+import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
+import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
+import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
+import {Badge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
-import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
-import {formatTime12, formatTimeRange12, timeInputValue} from "../../../utils/timeFormat.ts";
+import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
 
 const service = CourseTemplateService.instance;
-const DAYS: Array<{ key: WeekDay; label: string; short: string }> = [
-    {key: "MONDAY", label: "Lunes", short: "Lun"},
-    {key: "TUESDAY", label: "Martes", short: "Mar"},
-    {key: "WEDNESDAY", label: "Miércoles", short: "Mié"},
-    {key: "THURSDAY", label: "Jueves", short: "Jue"},
-    {key: "FRIDAY", label: "Viernes", short: "Vie"},
-];
-const EMPTY_FORM = {division: "A", subjectId: "", teacherId: "", schedule: [] as ScheduleSlot[]};
-const initials = (name: string) => name.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase();
 const message = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as { message?: unknown }).message === "string"
         ? (error as { message: string }).message : fallback;
-const addMinutes = (value: string, minutes: number) => {
-    const [hours = "0", mins = "0"] = timeInputValue(value).split(":");
-    const total = Number(hours) * 60 + Number(mins) + minutes;
-    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-};
-const scheduleLabel = (slot: ScheduleSlot) =>
-    `${DAYS.find((day) => day.key === slot.dayOfWeek)?.short ?? slot.dayOfWeek} ${formatTimeRange12(slot.startsAt, slot.endsAt)}`;
-type AcademicTab = "subjects" | "teachers" | "calendar";
-type FormMode = "subject" | "teacher";
 
+/**
+ * Plantilla de curso: define el nombre, las secciones y las materias. Los profesores se asignan en
+ * cada curso generado.
+ */
 export const CourseTemplateDetailsPage = () => {
     const {id} = useParams<{ id: string }>();
     const {hasAuthority} = useAuthContext();
     const queryClient = useQueryClient();
-    const [template, setTemplate] = useState<CourseTemplate | null>(null);
-    const [assignments, setAssignments] = useState<AcademicAssignment[]>([]);
-    const [teacherAssignments, setTeacherAssignments] = useState<TeacherAssignment[]>([]);
-    const [teachers, setTeachers] = useState<TeacherOption[]>([]);
-    const [subjects, setSubjects] = useState<Subject[]>([]);
-    const [templateSubjects, setTemplateSubjects] = useState<TemplateSubject[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showEdit, setShowEdit] = useState(false);
-    const [showAssignment, setShowAssignment] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const [teacherFilter, setTeacherFilter] = useState("");
-    const [form, setForm] = useState(EMPTY_FORM);
-    const [activeTab, setActiveTab] = useState<AcademicTab>("subjects");
-    const [formMode, setFormMode] = useState<FormMode>("subject");
-    const [templateSubjectTerm, setTemplateSubjectTerm] = useState("");
-    const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
-    const [removingSubject, setRemovingSubject] = useState(false);
-    const [showActions, setShowActions] = useState(false);
-    const [editingAssignment, setEditingAssignment] = useState<TeacherAssignment | null>(null);
-    const [assignmentToRemove, setAssignmentToRemove] = useState<TeacherAssignment | null>(null);
-    const [removingAssignment, setRemovingAssignment] = useState(false);
-
     const canView = hasAuthority(AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW);
     const canEdit = hasAuthority(AuthorityKey.COURSE_TEMPLATE_EDIT);
-    const title = template?.name ?? template?.specialization?.name ?? "Plantilla";
-    const divisions = useMemo(() => Array.from({length: template?.count ?? 0}, (_, index) =>
-        index < 26 ? String.fromCharCode(65 + index) : String(index + 1)), [template?.count]);
-    const visibleAssignments = useMemo(() => teacherFilter
-        ? assignments.filter((item) => item.teacher?.id === Number(teacherFilter)) : assignments, [assignments, teacherFilter]);
-    const scheduleRows = useMemo(() => Array.from(new Set(visibleAssignments.flatMap((assignment) =>
-        assignment.schedule.map((slot) => timeInputValue(slot.startsAt))))).sort(), [visibleAssignments]);
-    const hasValidSchedule = useMemo(() => form.schedule.length > 0 && form.schedule.every((slot) =>
-        Boolean(slot.dayOfWeek && slot.startsAt && slot.endsAt && slot.startsAt < slot.endsAt)), [form.schedule]);
-    const canSaveAssignment = formMode === "subject"
-        ? Boolean(form.subjectId)
-        : Boolean(form.division && form.subjectId && form.teacherId && hasValidSchedule);
-    const load = async () => {
-        if (!id) return;
-        setLoading(true);
-        try {
-            const nextTemplate = await service.getOne(id);
-            setTemplate(nextTemplate ?? null);
-            if (canView) {
-                const [nextTeacherAssignments, nextTeachers, nextSubjects, assignedSubjects] = await Promise.all([
-                    service.teacherAssignments(id), service.teacherOptions(id), service.subjectOptions(id), service.templateSubjects(id),
-                ]);
-                setTeacherAssignments(nextTeacherAssignments);
-                setTeachers(nextTeachers);
-                setSubjects(nextSubjects);
-                setTemplateSubjects(assignedSubjects);
-            }
-        } catch (error) {
-            toast.error(message(error, "No se pudo cargar la plantilla."));
-        } finally {
-            setLoading(false);
-        }
-    };
+    const canGenerate = hasAuthority(AuthorityKey.COURSE_GENERATE);
 
-    useEffect(() => {
-        void load();
-    }, [id, canView]);
+    const [showEdit, setShowEdit] = useState(false);
+    const [showAddSubject, setShowAddSubject] = useState(false);
+    const [subjectOptions, setSubjectOptions] = useState<Subject[]>([]);
+    const [subjectId, setSubjectId] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [generating, setGenerating] = useState(false);
+    const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
+    const [removing, setRemoving] = useState(false);
 
-    useEffect(() => {
-        if (activeTab !== "calendar" || !id || !canView) return;
-        service.academicAssignments(id).then(setAssignments,
-            () => toast.error("No se pudo cargar el calendario."));
-    }, [activeTab, id, canView]);
-
-    const searchTeachers = (term: string = "") => {
-        if (!id) return;
-        service.teacherOptions(id, term).then(setTeachers,
-            () => toast.error("No se pudieron buscar los profesores."));
-    };
+    const templateKey = [...queryKeys.courseTemplates.all, "detail", id];
+    const subjectsKey = [...queryKeys.courseTemplates.all, "subjects", id];
+    const templateQuery = useQuery({
+        queryKey: templateKey,
+        queryFn: ({signal}) => service.withSignal(signal).getOne(id),
+        enabled: Boolean(id),
+        meta: {errorMessage: "No se pudo cargar la plantilla."},
+    });
+    const subjectsQuery = useQuery({
+        queryKey: subjectsKey,
+        queryFn: ({signal}) => service.withSignal(signal).templateSubjects(id as string),
+        enabled: Boolean(id) && canView,
+        meta: {errorMessage: "No se pudieron cargar las materias."},
+    });
+    const template = templateQuery.data;
+    const subjects: TemplateSubject[] = subjectsQuery.data ?? [];
 
     const searchSubjects = (term: string = "") => {
         if (!id) return;
-        service.subjectOptions(id, term).then(setSubjects,
-            () => toast.error("No se pudieron buscar las materias."));
+        service.subjectOptions(id, term).then(setSubjectOptions, () => toast.error("No se pudieron buscar las materias."));
     };
 
-    const openSubjectForm = () => {
-        setFormMode("subject");
-        setEditingAssignment(null);
-        setForm({...EMPTY_FORM, division: divisions[0] ?? "A"});
+    const openAddSubject = () => {
+        setSubjectId("");
         searchSubjects();
-        setShowAssignment(true);
+        setShowAddSubject(true);
     };
 
-    const openTeacherForm = () => {
-        setFormMode("teacher");
-        setEditingAssignment(null);
-        setForm({
-            ...EMPTY_FORM, division: divisions[0] ?? "A",
-            schedule: [{dayOfWeek: "MONDAY", startsAt: "08:00", endsAt: "09:00"}]
-        });
-        searchTeachers();
-        setTemplateSubjectTerm("");
-        setShowAssignment(true);
-    };
-
-    const openEditAssignmentForm = async (assignment: TeacherAssignment) => {
-        const latestAssignments = id ? await service.teacherAssignments(id) : [];
-        const currentAssignment = latestAssignments.find((item) => item.id === assignment.id) ?? assignment;
-        if (id) setTeacherAssignments(latestAssignments);
-        setFormMode("teacher");
-        setEditingAssignment(currentAssignment);
-        setForm({
-            division: currentAssignment.division,
-            subjectId: currentAssignment.templateSubjectId.toString(),
-            teacherId: currentAssignment.teacher?.id?.toString() ?? "",
-            schedule: currentAssignment.schedule?.length ? currentAssignment.schedule.map((slot) => ({...slot})) : []
-        });
-        searchTeachers();
-        setTemplateSubjectTerm("");
-        setShowAssignment(true);
-    };
-
-    const addSlot = () => setForm((current) => {
-        const last = current.schedule[current.schedule.length - 1];
-        const startsAt = last?.endsAt ? timeInputValue(last.endsAt) : "08:00";
-        return {
-            ...current,
-            schedule: [...current.schedule, {dayOfWeek: last?.dayOfWeek ?? "MONDAY", startsAt, endsAt: addMinutes(startsAt, 60)}],
-        };
-    });
-    const updateSlot = (index: number, patch: Partial<ScheduleSlot>) => setForm((current) => ({
-        ...current, schedule: current.schedule.map((slot, position) => position === index ? {...slot, ...patch} : slot),
-    }));
-    const removeSlot = (index: number) => setForm((current) => ({
-        ...current, schedule: current.schedule.filter((_, position) => position !== index),
-    }));
-
-    const saveAssignment = async () => {
-        if (!id || !canSaveAssignment) return;
-        if (form.schedule.length && !form.teacherId) {
-            toast.error("Selecciona un profesor antes de agregar un horario.");
-            return;
-        }
-        if (formMode === "teacher" && (!form.teacherId || !form.schedule.length)) {
-            toast.error("Para asignar un profesor debes seleccionar la materia, el día y el horario.");
-            return;
-        }
+    const addSubject = async () => {
+        if (!id || !subjectId) return;
         setSaving(true);
         try {
-            if (formMode === "subject") {
-                await service.addTemplateSubject(id, Number(form.subjectId));
-                setTemplateSubjects(await service.templateSubjects(id));
-            } else {
-                const request = {
-                    division: form.division, templateSubjectId: Number(form.subjectId),
-                    teacherId: Number(form.teacherId), schedule: form.schedule,
-                };
-                if (editingAssignment) await service.updateAcademicAssignment(id, editingAssignment.id, request);
-                else await service.saveAcademicAssignment(id, request);
-            }
-            setTeacherAssignments(await service.teacherAssignments(id));
-            if (activeTab === "calendar") setAssignments(await service.academicAssignments(id));
-            setShowAssignment(false);
-            setEditingAssignment(null);
-            toast.success(formMode === "subject" ? "Materia agregada al curso."
-                : editingAssignment ? "Asignación actualizada." : "Profesor y horario asignados.");
+            await service.addTemplateSubject(id, Number(subjectId));
+            await queryClient.invalidateQueries({queryKey: subjectsKey});
+            setShowAddSubject(false);
+            toast.success("Materia agregada a la plantilla.");
         } catch (error) {
-            toast.error(message(error, "No se pudo guardar la asignación."));
+            toast.error(message(error, "No se pudo agregar la materia."));
         } finally {
             setSaving(false);
         }
     };
 
-    const removeSubject = async (templateSubjectId: number) => {
-        if (!id) return;
-        setRemovingSubject(true);
+    const removeSubject = async () => {
+        if (!subjectToRemove) return;
+        setRemoving(true);
         try {
-            await service.deleteTemplateSubject(id, templateSubjectId);
-            setTemplateSubjects((current) => current.filter((item) => item.id !== templateSubjectId));
-            setAssignments((current) => current.filter((item) => item.templateSubjectId !== templateSubjectId));
-            setTeacherAssignments((current) => current.filter((item) => item.templateSubjectId !== templateSubjectId));
+            await service.deleteTemplateSubject(subjectToRemove.id);
+            await queryClient.invalidateQueries({queryKey: subjectsKey});
             setSubjectToRemove(null);
-            toast.success("Materia removida del curso.");
+            toast.success("Materia removida de la plantilla.");
         } catch (error) {
             toast.error(message(error, "No se pudo remover la materia."));
         } finally {
-            setRemovingSubject(false);
-        }
-    };
-
-    const removeAssignment = async (assignmentId: number) => {
-        if (!id) return;
-        setRemovingAssignment(true);
-        try {
-            await service.deleteAcademicAssignment(id, assignmentId);
-            setTeacherAssignments((current) => current.filter((item) => item.id !== assignmentId));
-            setAssignments((current) => current.filter((item) => item.id !== assignmentId));
-            setAssignmentToRemove(null);
-            toast.success("Asignación removida correctamente.");
-        } catch (error) {
-            toast.error(message(error, "No se pudo remover la asignación."));
-        } finally {
-            setRemovingAssignment(false);
+            setRemoving(false);
         }
     };
 
@@ -257,10 +108,9 @@ export const CourseTemplateDetailsPage = () => {
         if (!id) return;
         setGenerating(true);
         try {
-            const generated = await service.generateCourses(id);
+            await service.generateCourses(id);
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
-            toast.success(generated.length ? `${generated.length} cursos actualizados con sus materias y horarios.`
-                : "Los cursos existentes fueron sincronizados con sus materias y horarios.");
+            toast.success("Cursos del período actualizados con las materias de la plantilla.");
         } catch (error) {
             toast.error(message(error, "No se pudieron generar los cursos."));
         } finally {
@@ -268,365 +118,119 @@ export const CourseTemplateDetailsPage = () => {
         }
     };
 
-    if (!loading && !template) return <EmptyState title="No se encontró la plantilla"
-                                                  description="Vuelve al listado e intenta nuevamente."
-                                                  icon="fa-layer-group"/>;
+    if (templateQuery.isLoading) return <LoadingContent loading className="py-16"/>;
+    if (!template) return <EmptyState title="No se encontró la plantilla"
+                                      description="Vuelve al listado e intenta nuevamente." icon="fa-layer-group"/>;
 
-    return <div className="space-y-5">
-        <section className="surface-card overflow-visible">
-            <div className="relative flex flex-col items-center px-6 py-7 text-center"
-                 style={{background: "radial-gradient(circle at top, rgba(15,98,254,.09), transparent 62%)"}}>
-                {(canEdit || hasAuthority(AuthorityKey.COURSE_GENERATE)) &&
-                    <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-                        <button type="button" className="icon-button h-10 w-10" title="Más acciones"
-                                aria-expanded={showActions} onClick={() => setShowActions((current) => !current)}><i
-                            className="fa fa-ellipsis-vertical"/></button>
-                        {showActions && <div className="floating-panel right-0 top-full z-50 mt-2 w-60 text-left">
-                            <div className="space-y-1 p-2">
-                                {canEdit && <button type="button" className="profile-menu-item w-full" onClick={() => {
-                                    setShowActions(false);
-                                    setShowEdit(true);
-                                }}><i className="fa fa-pen text-[var(--accent)]"/><span>Editar plantilla</span>
-                                </button>}
-                                {hasAuthority(AuthorityKey.COURSE_GENERATE) &&
-                                    <button type="button" className="profile-menu-item w-full" disabled={generating}
-                                            onClick={() => {
-                                                setShowActions(false);
-                                                void generateCourses();
-                                            }}><i
-                                        className={generating ? "fa fa-spinner fa-spin text-[var(--accent)]" : "fa fa-layer-group text-[var(--accent)]"}/><span>{generating ? "Agregando cursos..." : "Agregar cursos al período escolar"}</span>
-                                    </button>}
-                            </div>
-                        </div>}
-                    </div>}
-                <span
-                    className="mb-3 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-extrabold"
-                    style={{background: "var(--accent-soft)", color: "var(--accent)"}}>{initials(title)}</span>
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                    <h1 className="text-xl font-extrabold">{title}</h1>
+    const title = template.name ?? template.specialization?.name ?? "Plantilla";
+    const sections = template.count ?? 0;
+
+    return <div className="space-y-4">
+        <DetailHeader
+            avatar={title}
+            title={title}
+            subtitle={[template.type ? GradeTypeLabel[template.type] : null, template.specialization?.name].filter(Boolean).join(" · ") || "Sin área especializada"}
+            badges={<>
+                <Badge>{sections} {sections === 1 ? "sección" : "secciones"}</Badge>
+                <Badge>{subjects.length} {subjects.length === 1 ? "materia" : "materias"}</Badge>
+            </>}
+            actions={<>
+                {canEdit && <button type="button" className="btn btn-sm" onClick={() => setShowEdit(true)}>
+                    <i className="fa fa-pen"/>Editar
+                </button>}
+                {canGenerate && <button type="button" className="btn btn-sm btn-primary" disabled={generating}
+                                        onClick={() => void generateCourses()}>
+                    <i className={generating ? "fa fa-spinner fa-spin" : "fa fa-layer-group"}/>
+                    {generating ? "Generando..." : "Generar cursos del período"}
+                </button>}
+            </>}
+        />
+
+        <DetailSection title="Materias"
+                       description="Cada curso generado desde esta plantilla incluye estas materias. Los profesores se asignan en cada curso."
+                       flush
+                       actions={canEdit && <button type="button" className="btn btn-sm btn-primary" onClick={openAddSubject}>
+                           <i className="fa fa-plus"/>Agregar materia
+                       </button>}>
+            {subjectsQuery.isLoading ? <LoadingContent loading className="py-12"/> : subjects.length ? (
+                <table className="table-shell">
+                    <thead>
+                    <tr>
+                        <th>Materia</th>
+                        <th>Descripción</th>
+                        {canEdit && <th className="w-12"/>}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {subjects.map((item) => (
+                        <tr key={item.id}>
+                            <td className="font-semibold text-[var(--text-primary)]">{item.name}</td>
+                            <td>{item.description || "—"}</td>
+                            {canEdit && <td className="text-right">
+                                <button type="button" className="row-action row-action-danger" title="Remover materia"
+                                        aria-label="Remover materia" onClick={() => setSubjectToRemove(item)}>
+                                    <i className="fa fa-trash"/>
+                                </button>
+                            </td>}
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            ) : (
+                <div className="p-5">
+                    <EmptyState title="Sin materias" icon="fa-book-open"
+                                description="Agrega las materias que tendrán los cursos de esta plantilla."/>
                 </div>
-                <p className="mt-2 text-sm" style={{color: "var(--text-secondary)"}}>
-                    {template?.type ? GradeTypeLabel[template.type] : "Sin tipo"} · {template?.count ?? 0} secciones
-                    · {template?.specialization?.name ?? "Sin especialidad"}
-                </p>
-            </div>
-        </section>
-
-        <section className="surface-card overflow-hidden">
-            <header className="border-b p-5" style={{borderColor: "var(--border-soft)"}}>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div><span className="text-xs font-extrabold uppercase tracking-[.16em]"
-                               style={{color: "var(--accent)"}}>Plan académico</span>
-                    </div>
-                    <nav className="flex w-fit flex-wrap gap-1 rounded-2xl border p-1.5"
-                         style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                        {([{key: "subjects", label: "Materias", icon: "fa-book-open"}, {
-                            key: "teachers",
-                            label: "Profesores",
-                            icon: "fa-chalkboard-teacher"
-                        }, {key: "calendar", label: "Calendario", icon: "fa-calendar-days"}] as const).map((tab) =>
-                            <button key={tab.key} type="button"
-                                    className={`section-tab ${activeTab === tab.key ? "section-tab-active" : ""}`}
-                                    onClick={() => setActiveTab(tab.key)}><i
-                                className={`fa ${tab.icon}`}/><span>{tab.label}</span></button>)}
-                    </nav>
-                </div>
-            </header>
-
-            <div className="p-5">
-                {activeTab === "calendar" && <>
-                    <div
-                        className="mb-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-                        style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                        <div><strong className="text-sm">Horario semanal</strong><p className="mt-1 text-xs"
-                                                                                    style={{color: "var(--text-secondary)"}}>Filtra
-                            por profesor para consultar su agenda individual.</p></div>
-                        <div className="w-full sm:max-w-sm"><SearchSelect text="Buscar profesor en el calendario"
-                                                                          hasError={false} portal
-                                                                          value={teacherFilter || undefined}
-                                                                          options={teachers.map((teacher) => ({
-                                                                              value: teacher.id,
-                                                                              description: `${teacher.name} · ${teacher.email}`
-                                                                          }))}
-                                                                          onSearch={searchTeachers}
-                                                                          onSelect={(value) => setTeacherFilter(value?.toString() ?? "")}
-                                                                          className="w-full"/></div>
-                    </div>
-                    <div className="overflow-x-auto rounded-2xl border"
-                         style={{borderColor: "var(--border-soft)", boxShadow: "var(--shadow-soft)"}}>
-                        <div className="min-w-[980px]">
-                            <div className="grid grid-cols-[78px_repeat(5,minmax(170px,1fr))] border-b"
-                                 style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                <div
-                                    className="flex items-center justify-center border-r text-[10px] font-extrabold uppercase tracking-wider"
-                                    style={{borderColor: "var(--border-soft)", color: "var(--text-tertiary)"}}>Hora
-                                </div>
-                                {DAYS.map((day) => <div key={day.key}
-                                                        className="border-r px-3 py-3 text-center last:border-r-0"
-                                                        style={{borderColor: "var(--border-soft)"}}><strong
-                                    className="text-sm">{day.label}</strong></div>)}
-                            </div>
-                            {scheduleRows.map((rowTime) => <div key={rowTime}
-                                                                className="grid min-h-[96px] grid-cols-[78px_repeat(5,minmax(170px,1fr))] border-b last:border-b-0"
-                                                                style={{borderColor: "var(--border-soft)"}}>
-                                <div className="border-r px-2 pt-4 text-center text-xs font-extrabold" style={{
-                                    borderColor: "var(--border-soft)",
-                                    color: "var(--text-secondary)",
-                                    background: "var(--surface-muted)"
-                                }}>{formatTime12(rowTime)}</div>
-                                {DAYS.map((day) => <div key={day.key} className="space-y-2 border-r p-2 last:border-r-0"
-                                                        style={{borderColor: "var(--border-soft)"}}>
-                                    {visibleAssignments.flatMap((assignment) => assignment.schedule.filter((slot) => slot.dayOfWeek === day.key && timeInputValue(slot.startsAt) === rowTime).map((slot) => ({
-                                        assignment,
-                                        slot
-                                    }))).map(({assignment, slot}) => <article
-                                        key={`${assignment.id}-${slot.dayOfWeek}-${slot.startsAt}`}
-                                        className="relative overflow-hidden rounded-xl border p-3 pl-4" style={{
-                                        borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border-soft))",
-                                        background: "color-mix(in srgb, var(--accent) 6%, var(--surface))"
-                                    }}><span className="absolute inset-y-0 left-0 w-1"
-                                             style={{background: "var(--accent)"}}/>
-                                        <div className="flex items-start justify-between gap-2"><strong
-                                            className="truncate text-xs">{assignment.subject.name}</strong><span
-                                            className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-extrabold"
-                                            style={{
-                                                background: "var(--accent-soft)",
-                                                color: "var(--accent)"
-                                            }}>{assignment.division}</span></div>
-                                        <p className="mt-1 text-[11px] font-bold"
-                                           style={{color: "var(--accent)"}}>{formatTimeRange12(slot.startsAt, slot.endsAt, " — ")}</p>
-                                        <p className="mt-1 truncate text-[11px]"
-                                           style={{color: "var(--text-secondary)"}}>{assignment.teacher?.name}</p>
-                                    </article>)}
-                                </div>)}
-                            </div>)}
-                            {!scheduleRows.length &&
-                                <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
-                                    <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl"
-                                          style={{background: "var(--accent-soft)", color: "var(--accent)"}}><i
-                                        className="fa fa-calendar-day"/></span><strong>No hay clases
-                                    programadas</strong><p className="mt-1 max-w-sm text-sm"
-                                                           style={{color: "var(--text-secondary)"}}>Asigna un profesor,
-                                    una materia y un horario para construir el calendario semanal.</p></div>}
-                        </div>
-                    </div>
-                </>}
-
-                {activeTab === "subjects" &&
-                    <div className="overflow-hidden rounded-2xl border" style={{borderColor: "var(--border-soft)"}}>
-                        <div className="flex justify-end border-b p-3"
-                             style={{borderColor: "var(--border-soft)"}}>{canEdit &&
-                            <button className="btn btn-sm btn-primary" onClick={openSubjectForm}><i
-                                className="fa fa-plus me-1"/>Agregar materia</button>}</div>
-                        <table className="table-shell">
-                            <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th/>
-                            </tr>
-                            </thead>
-                            <tbody>{templateSubjects.map((item) => <tr key={item.id}>
-                                <td><strong>{item.name}</strong></td>
-                                <td style={{color: "var(--text-secondary)"}}>{item.description || "Sin descripción"}</td>
-                                <td className="text-right">{canEdit &&
-                                    <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
-                                            title="Remover materia" aria-label="Remover materia"
-                                            onClick={() => setSubjectToRemove(item)}>
-                                        <i className="fa fa-trash"/>
-                                    </button>}</td>
-                            </tr>)}
-                            {!templateSubjects.length && <tr>
-                                <td colSpan={3} className="py-10 text-center"
-                                    style={{color: "var(--text-secondary)"}}>Todavía no hay materias asignadas a este
-                                    curso.
-                                </td>
-                            </tr>}</tbody>
-                        </table>
-                    </div>}
-
-                {activeTab === "teachers" &&
-                    <div className="overflow-hidden rounded-2xl border" style={{borderColor: "var(--border-soft)"}}>
-                        <div className="flex justify-end border-b p-3"
-                             style={{borderColor: "var(--border-soft)"}}>{canEdit &&
-                            <button className="btn btn-sm btn-primary" onClick={openTeacherForm}><i
-                                className="fa fa-user-plus me-1"/>Asignar profesor</button>}</div>
-                        <table className="table-shell">
-                            <thead>
-                            <tr>
-                                <th>Profesor</th>
-                                <th>Materia</th>
-                                <th>Sección</th>
-                                <th>Horario</th>
-                                <th/>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {teacherAssignments.filter((item) => item.teacher).map((item) => <tr key={item.id}>
-                                <td><strong>{item.teacher?.name}</strong><small className="block"
-                                                                                style={{color: "var(--text-tertiary)"}}>{item.teacher?.email}</small>
-                                </td>
-                                <td>{item.subject.name}</td>
-                                <td>{item.division}</td>
-                                <td>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {item.schedule?.length ? item.schedule.map((slot, index) =>
-                                            <span key={`${slot.dayOfWeek}-${slot.startsAt}-${index}`}
-                                                  className="rounded-full border px-2 py-1 text-[11px] font-bold"
-                                                  style={{borderColor: "var(--border-soft)", color: "var(--text-secondary)"}}>
-                                                {scheduleLabel(slot)}
-                                            </span>) : <span className="text-xs" style={{color: "var(--text-tertiary)"}}>Sin horario</span>}
-                                    </div>
-                                </td>
-                                <td className="text-right">{canEdit &&
-                                    <div className="flex justify-end gap-2">
-                                        <button type="button" className="icon-button h-9 w-9" title="Editar asignación"
-                                                aria-label="Editar asignación" onClick={() => void openEditAssignmentForm(item)}>
-                                            <i className="fa fa-pen"/>
-                                        </button>
-                                        <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
-                                                title="Eliminar asignación" aria-label="Eliminar asignación"
-                                                onClick={() => setAssignmentToRemove(item)}>
-                                            <i className="fa fa-trash"/>
-                                        </button>
-                                    </div>}</td>
-                            </tr>)}
-                            {!teacherAssignments.some((item) => item.teacher) && <tr>
-                                <td colSpan={5} className="py-10 text-center"
-                                    style={{color: "var(--text-secondary)"}}>No hay profesores asignados todavía.
-                                </td>
-                            </tr>}
-                            </tbody>
-                        </table>
-                    </div>}
-            </div>
-        </section>
+            )}
+        </DetailSection>
 
         <RightModal title="Editar plantilla" isOpen={canEdit && showEdit} onClose={() => setShowEdit(false)}
                     className="h-full w-[420px] z-[9999]">
-            <CourseTemplateForm initial={template} onDone={() => setShowEdit(false)} onSaved={load}/>
+            <CourseTemplateForm initial={template} onDone={() => setShowEdit(false)}
+                                onSaved={() => void queryClient.invalidateQueries({queryKey: templateKey})}/>
         </RightModal>
 
-        <LeftModal title={formMode === "subject" ? "Agregar materia" : editingAssignment ? "Editar asignación" : "Asignar profesor"} isOpen={showAssignment}
-                   onClose={() => setShowAssignment(false)} className="h-full w-[min(560px,100vw)]">
+        <LeftModal title="Agregar materia" isOpen={showAddSubject} onClose={() => setShowAddSubject(false)}
+                   className="h-full w-[min(480px,100vw)]">
             <form className="flex min-h-0 flex-1 flex-col" onSubmit={(event) => {
                 event.preventDefault();
-                void saveAssignment();
+                void addSubject();
             }}>
-                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-1">
-                    <p className="rounded-2xl border p-4 text-sm" style={{
-                        borderColor: "var(--border-soft)",
-                        background: "var(--surface-muted)",
-                        color: "var(--text-secondary)"
-                    }}>
-                        {formMode === "subject" ? "Selecciona una materia para agregarla al curso." : "Selecciona una materia del curso, la sección, el profesor y su horario."}
-                    </p>
-                    <div className={`grid gap-4 ${formMode === "teacher" ? "sm:grid-cols-2" : "grid-cols-1"}`}>
-                        {formMode === "teacher" &&
-                            <label><span className="mb-2 block text-sm font-bold">Sección</span><select
-                                className="input select w-full" value={form.division}
-                                onChange={(e) => setForm({...form, division: e.target.value})}>{divisions.map((division) => <option key={division}
-                                                                     value={division}>Sección {division}</option>)}</select></label>}
-                        <label><span className="mb-2 block text-sm font-bold">Materia *</span><SearchSelect
-                            text="Buscar materia por nombre, código o descripción" hasError={false} portal
-                            value={form.subjectId || undefined}
-                            options={(formMode === "subject" ? subjects.map((subject) => ({
-                                value: subject.id,
-                                description: `${subject.name}${subject.code ? ` · ${subject.code}` : ""}`
-                            })) : templateSubjects.filter((subject) => subject.name.toLowerCase().includes(templateSubjectTerm.toLowerCase())).map((subject) => ({
-                                value: subject.id,
-                                description: subject.name
-                            })))}
-                            onSearch={formMode === "subject" ? searchSubjects : setTemplateSubjectTerm}
-                            onSelect={(value) => setForm((current) => ({...current, subjectId: value?.toString() ?? ""}))}
-                            className="w-full"/></label>
-                    </div>
-                    {formMode === "teacher" && <><label className="block"><span className="mb-2 block text-sm font-bold">Profesor *</span><SearchSelect
-                        text="Buscar por nombre, correo o usuario" hasError={false} portal
-                        value={form.teacherId || undefined} options={teachers.map((teacher) => ({
-                        value: teacher.id,
-                        description: `${teacher.name} · ${teacher.email}`
-                    }))} onSearch={searchTeachers}
-                        onSelect={(value) => setForm((current) => ({...current, teacherId: value?.toString() ?? ""}))}
-                        className="w-full"/></label>
-                        <div className="rounded-2xl border p-4"
-                             style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                            <div className="flex items-center justify-between gap-3">
-                                <div><strong className="text-sm">Horario semanal</strong><p className="text-xs"
-                                                                                            style={{color: "var(--text-secondary)"}}>Bloques
-                                    de lunes a viernes.</p></div>
-                                <button type="button" className="btn btn-sm" disabled={!form.teacherId} onClick={addSlot}><i
-                                    className="fa fa-clock me-1"/>Agregar bloque
-                                </button>
-                            </div>
-                            <div className="mt-3 space-y-2">{form.schedule.map((slot, index) => <div key={index}
-                                                                                                     className="grid grid-cols-[1fr_110px_110px_38px] items-center gap-2 rounded-xl border bg-white p-2"
-                                                                                                     style={{borderColor: "var(--border-soft)"}}>
-                                <select className="input select select-sm" value={slot.dayOfWeek}
-                                        onChange={(e) => updateSlot(index, {dayOfWeek: e.target.value as WeekDay})}>{DAYS.map((day) =>
-                                    <option key={day.key} value={day.key}>{day.label}</option>)}</select>
-                                <input type="time" className="input input-sm" value={timeInputValue(slot.startsAt)}
-                                       onChange={(e) => updateSlot(index, {startsAt: e.target.value})}/>
-                                <input type="time" className="input input-sm" value={timeInputValue(slot.endsAt)}
-                                       onChange={(e) => updateSlot(index, {endsAt: e.target.value})}/>
-                                <button type="button" className="icon-button h-9 w-9 text-[var(--danger)]"
-                                        onClick={() => removeSlot(index)} title="Quitar"><i className="fa fa-trash"/>
-                                </button>
-                            </div>)}</div>
-                        </div>
-                    </>}
+                <div className="min-h-0 flex-1 overflow-y-auto pb-4 pr-1">
+                    <label className="block"><span className="form-label">Materia *</span>
+                        <SearchSelect text="Buscar por nombre o código" hasError={false} portal
+                                      value={subjectId || undefined}
+                                      options={subjectOptions.map((subject) => ({
+                                          value: subject.id,
+                                          description: `${subject.name}${subject.code ? ` · ${subject.code}` : ""}`,
+                                      }))}
+                                      onSearch={searchSubjects}
+                                      onSelect={(value) => setSubjectId(value?.toString() ?? "")}
+                                      className="w-full"/>
+                    </label>
                 </div>
                 <div className="flex justify-end border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
-                    <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !canSaveAssignment}><i
-                        className={saving ? "fa fa-spinner fa-spin me-1" : "fa fa-check me-1"}/>{saving ? "Guardando..." : "Guardar"}
+                    <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !subjectId}>
+                        <i className={saving ? "fa fa-spinner fa-spin" : "fa fa-check"}/>{saving ? "Guardando..." : "Agregar"}
                     </button>
                 </div>
             </form>
         </LeftModal>
 
-        <CenterModal title="Remover materia"
-                     description="Esta acción también eliminará sus asignaciones de profesores y horarios dentro de esta plantilla."
-                     isOpen={Boolean(subjectToRemove)} onClose={() => !removingSubject && setSubjectToRemove(null)}
-                     className="max-w-md">
+        <CenterModal title="Remover materia" isOpen={Boolean(subjectToRemove)}
+                     onClose={() => !removing && setSubjectToRemove(null)} className="max-w-md">
             <div className="space-y-5">
                 <p className="text-sm" style={{color: "var(--text-secondary)"}}>
-                    ¿Estás seguro de que deseas remover <strong
-                    style={{color: "var(--text-primary)"}}>{subjectToRemove?.name}</strong> de este curso?
+                    ¿Quitar <strong style={{color: "var(--text-primary)"}}>{subjectToRemove?.name}</strong> de esta
+                    plantilla? Los cursos dejarán de tenerla cuando se vuelvan a generar.
                 </p>
                 <div className="flex justify-end gap-2">
-                    <button type="button" className="btn btn-sm" disabled={removingSubject}
-                            onClick={() => setSubjectToRemove(null)}>Cancelar
+                    <button type="button" className="btn btn-sm" disabled={removing} onClick={() => setSubjectToRemove(null)}>
+                        Cancelar
                     </button>
-                    <button type="button" className="btn btn-sm bg-[var(--danger)] text-white"
-                            disabled={removingSubject || !subjectToRemove}
-                            onClick={() => subjectToRemove && void removeSubject(subjectToRemove.id)}>
-                        <i className={removingSubject ? "fa fa-spinner fa-spin me-1" : "fa fa-trash me-1"}/>{removingSubject ? "Removiendo..." : "Sí, remover"}
-                    </button>
-                </div>
-            </div>
-        </CenterModal>
-
-        <CenterModal title="Eliminar asignación"
-                     description="Se quitará el profesor y su horario de esta materia y sección."
-                     isOpen={Boolean(assignmentToRemove)}
-                     onClose={() => !removingAssignment && setAssignmentToRemove(null)}
-                     className="max-w-md">
-            <div className="space-y-5">
-                <div className="rounded-2xl border p-4 text-sm"
-                     style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                    <strong className="block">{assignmentToRemove?.subject.name}</strong>
-                    <span className="mt-1 block" style={{color: "var(--text-secondary)"}}>
-                        Sección {assignmentToRemove?.division} · {assignmentToRemove?.teacher?.name}
-                    </span>
-                </div>
-                <div className="flex justify-end gap-2">
-                    <button type="button" className="btn btn-sm" disabled={removingAssignment}
-                            onClick={() => setAssignmentToRemove(null)}>Cancelar
-                    </button>
-                    <button type="button" className="btn btn-sm bg-[var(--danger)] text-white"
-                            disabled={removingAssignment || !assignmentToRemove}
-                            onClick={() => assignmentToRemove && void removeAssignment(assignmentToRemove.id)}>
-                        <i className={removingAssignment ? "fa fa-spinner fa-spin me-1" : "fa fa-trash me-1"}/>{removingAssignment ? "Eliminando..." : "Sí, eliminar"}
+                    <button type="button" className="btn btn-sm bg-[var(--danger)] text-white" disabled={removing}
+                            onClick={() => void removeSubject()}>
+                        <i className={removing ? "fa fa-spinner fa-spin" : "fa fa-trash"}/>{removing ? "Removiendo..." : "Sí, remover"}
                     </button>
                 </div>
             </div>

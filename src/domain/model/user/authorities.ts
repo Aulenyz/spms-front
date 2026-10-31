@@ -16,8 +16,6 @@ export enum AuthorityKey {
     SPECIALIZATION_EDIT = "SPECIALIZATION_EDIT",
     SPECIALIZATION_DETAILS_VIEW = "SPECIALIZATION_DETAILS_VIEW",
     SPECIALIZATION_STATUS_UPDATE = "SPECIALIZATION_STATUS_UPDATE",
-    TEACHER_CLASSES_VIEW = "TEACHER_CLASSES_VIEW",
-    TEACHER_SCHEDULE_VIEW = "TEACHER_SCHEDULE_VIEW",
     COLLECTION_CREATE = "COLLECTION_CREATE",
     PAYMENTS_VIEW = "PAYMENTS_VIEW",
     INVOICES_VIEW = "INVOICES_VIEW",
@@ -87,8 +85,6 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.SPECIALIZATION_DETAILS_VIEW]: "Permite acceder a los detalles de un área especializada.",
     [AuthorityKey.SPECIALIZATION_STATUS_UPDATE]: "Permite activar o inactivar áreas especializadas.",
 
-    [AuthorityKey.TEACHER_CLASSES_VIEW]: "Permite acceder a la vista de mis clases.",
-    [AuthorityKey.TEACHER_SCHEDULE_VIEW]: "Permite acceder a la vista de mi horario docente.",
 
     [AuthorityKey.COLLECTION_CREATE]: "Permite iniciar una nueva cobranza escolar.",
     [AuthorityKey.PAYMENTS_VIEW]: "Permite ver el listado de pagos y cobros registrados.",

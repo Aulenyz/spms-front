@@ -34,7 +34,6 @@ const GuardianRouting = lazyPage(() => import("./modules/guardian/GuardianRoutin
 const SubjectRouting = lazyPage(() => import("./modules/subject/SubjectRouting.tsx"), "SubjectRouting");
 const HelpCenterPage = lazyPage(() => import("./modules/help/HelpCenterPage.tsx"), "HelpCenterPage");
 const CatalogRouting = lazyPage(() => import("./modules/catalog/CatalogRouting.tsx"), "CatalogRouting");
-const TeacherRouting = lazyPage(() => import("./modules/teacher/TeacherRouting.tsx"), "TeacherRouting");
 const OrganizationListPage = lazyPage(() => import("./modules/organization/OrganizationListPage.tsx"), "OrganizationListPage");
 const OrganizationDetailsPage = lazyPage(() => import("./modules/organization/OrganizationDetailsPage.tsx"), "OrganizationDetailsPage");
 
@@ -50,7 +49,6 @@ export const AppRouting = () => {
                 <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
                 <Route path="payments/*" element={<PaymentRouting/>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
-                <Route path="teacher/*" element={<TeacherRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
                 <Route path="help" element={<HelpCenterPage/>}/>
                 <Route path="catalog/*" element={<CatalogRouting/>}/>
