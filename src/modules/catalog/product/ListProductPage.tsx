@@ -1,6 +1,9 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {toast} from "react-toastify";
 import {ProductFilter, ProductFilterValues} from "../../../domain/filters/product/ProductFilter.tsx";
+import {PRODUCT_FILTER_DEFAULTS} from "../../../domain/filters/product/productFilterDefaults.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {Product} from "../../../domain/model/product/Product.ts";
 import {ProductSearchFilters, ProductService} from "../../../services/product/ProductService.ts";
@@ -13,41 +16,35 @@ import {ProductTable} from "./ProductTable.tsx";
 import {ProductActions} from "./ProductActions.tsx";
 
 const productService = ProductService.instance;
+const EMPTY_PAGE: Page<Product> = Pagination.empty<Product>();
+const EMPTY_COUNTS: Record<string, number> = {};
 
 export const ListProductPage = () => {
-    const [pagination, setPagination] = useState(Pagination.ofSize(5));
-    const [filters, setFilters] = useState<ProductSearchFilters>({});
-    const [products, setProducts] = useState<Page<Product>>(Pagination.empty<Product>());
-    const [loading, setLoading] = useState(true);
-    const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+    // Deben coincidir con PRODUCT_FILTER_DEFAULTS: el filtro no emite su valor inicial.
+    const [pagination, setPagination] = useState<Pagination>({
+        ...Pagination.ofSize(5),
+        field: PRODUCT_FILTER_DEFAULTS.field,
+        order: PRODUCT_FILTER_DEFAULTS.order,
+    });
+    const [filters, setFilters] = useState<ProductSearchFilters>({
+        term: PRODUCT_FILTER_DEFAULTS.term,
+        status: PRODUCT_FILTER_DEFAULTS.status,
+    });
+    const {data: statusCounts = EMPTY_COUNTS} = useQuery({
+        queryKey: queryKeys.products.totals,
+        queryFn: ({signal}) => productService.withSignal(signal).grouped(),
+        meta: {silent: true},
+    });
 
-    useEffect(() => {
-        productService
-            .grouped()
-            .then(setStatusCounts)
-            .catch(() => setStatusCounts({}));
-    }, []);
-
-    useEffect(() => {
-        let activeRequest = true;
-        setLoading(true);
-        productService
-            .search(filters, pagination)
-            .then((page) => {
-                if (activeRequest) setProducts(page);
-            })
-            .catch((error) => {
-                if (!activeRequest) return;
-                setProducts(Pagination.empty<Product>());
-                toast.error((error as {message?: string})?.message || "No se pudieron cargar los recursos.");
-            })
-            .finally(() => {
-                if (activeRequest) setLoading(false);
-            });
-        return () => {
-            activeRequest = false;
-        };
-    }, [filters, pagination]);
+    const productsQuery = useQuery({
+        queryKey: queryKeys.products.list({filters, pagination}),
+        queryFn: ({signal}) => productService.withSignal(signal).search(filters, pagination),
+        placeholderData: keepPreviousData,
+        meta: {errorMessage: "No se pudieron cargar los recursos."},
+    });
+    const products: Page<Product> = productsQuery.data ?? EMPTY_PAGE;
+    // Spinner en la carga inicial y al cambiar filtros/página (no en refrescos en segundo plano).
+    const loading: boolean = productsQuery.isPending || (productsQuery.isFetching && productsQuery.isPlaceholderData);
 
     const handleFilters = useCallback((values: ProductFilterValues, sort: Pick<Pagination, "field" | "order">) => {
         setFilters({

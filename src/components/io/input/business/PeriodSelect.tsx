@@ -1,15 +1,17 @@
-import {toast} from "react-toastify";
+import {useQuery} from "@tanstack/react-query";
 import {Optional, PlainValue, SelectOption, State} from "../../../../domain/types/steoreotype.ts";
 import {Control, ControllerRenderProps} from "react-hook-form";
 import clsx from "clsx";
 import {PeriodService} from "../../../../services/period/PeriodService.ts";
-import {Page, Pagination} from "../../../../domain/filters/Page.ts";
-import {Period, PeriodOptionMapper} from "../../../../domain/model/organization/Organization.tsx";
+import {Pagination} from "../../../../domain/filters/Page.ts";
+import {PeriodOptionMapper} from "../../../../domain/model/organization/Organization.tsx";
 import {BusinessSelector} from "./BusinessSelector.tsx";
 import {SearchSelect} from "../SearchSelect.tsx";
-import {forwardRef, useEffect, useState} from "react";
+import {forwardRef, useState} from "react";
+import {queryKeys} from "../../../../app/query/queryKeys.ts";
 
 const periodService: PeriodService = PeriodService.instance;
+const EMPTY_OPTIONS: Array<SelectOption> = [];
 
 export type PeriodSelectParams = {
     text: string;
@@ -26,27 +28,22 @@ export type PeriodSelectParams = {
 
 export const PeriodSelect = forwardRef<HTMLDivElement, PeriodSelectParams>(
     ({ text, name, label, labelClassName, control, id, ...props }: PeriodSelectParams, ref) => {
-        const [options, setOptions]: State<Array<SelectOption>> = useState<Array<SelectOption>>([]);
+        const [term, setTerm]: State<string> = useState<string>('');
 
         const labelClass: string = clsx('form-label text-md mb-1', {
             'text-red-500': Boolean(props.error),
         });
 
-        const handleLoadPeriods = (term: string = '') => {
-            const filters: Record<string, Optional<PlainValue>> = { term };
-            filters.id = id;
-            periodService.search(filters, Pagination.unsorted()).then((periodPage: Page<Period>) => {
-                setOptions(periodPage.content.map(PeriodOptionMapper));
-            }, () => toast.error('Problemas cargando los períodos.'));
-        };
+        // Opciones en caché por término de búsqueda (SearchSelect ya aplica debounce a onSearch).
+        const filters: Record<string, Optional<PlainValue>> = {term, id};
+        const {data: options = EMPTY_OPTIONS} = useQuery({
+            queryKey: queryKeys.period.search(filters),
+            queryFn: ({signal}) => periodService.withSignal(signal).search(filters, Pagination.unsorted()),
+            select: (periodPage) => periodPage.content.map(PeriodOptionMapper) as Array<SelectOption>,
+            meta: {errorMessage: 'Problemas cargando los períodos.'},
+        });
 
-        useEffect(() => {
-            handleLoadPeriods();
-        }, []);
-
-        const handleOnSearch = (term: string) => {
-            handleLoadPeriods(term);
-        };
+        const handleOnSearch = (value: string) => setTerm(value);
 
         return (
             <BusinessSelector

@@ -1,19 +1,20 @@
-import {useEffect, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {UserService} from "../../services/user/UserService.ts";
-import {State} from "../../domain/types/steoreotype.ts";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {mapColor, UserStatus, UserStatusLabel} from "../../domain/model/user/user.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const userService: UserService = UserService.instance;
+const EMPTY_TOTALS = {} as Record<UserStatus, number>;
 
 export const UserBreadcrumb = ({onInvite}: {onInvite: () => void}) => {
     const {hasAuthority} = useAuthContext();
-    const [status, setStatus]: State<Record<UserStatus, number>> = useState<Record<UserStatus, number>>({} as Record<UserStatus, number>);
-
-    useEffect(() => {
-        userService.getTotalByStatus().then(setStatus).catch(() => setStatus({} as Record<UserStatus, number>));
-    }, []);
+    const {data: status = EMPTY_TOTALS} = useQuery({
+        queryKey: queryKeys.users.totals,
+        queryFn: ({signal}) => userService.withSignal(signal).getTotalByStatus(),
+        meta: {silent: true},
+    });
 
     return (
         <div
@@ -25,12 +26,12 @@ export const UserBreadcrumb = ({onInvite}: {onInvite: () => void}) => {
             }}
         >
             <div className="flex flex-wrap items-center gap-2">
-                {Object.keys(status).map((value: string, index: number) => {
+                {Object.keys(status).map((value: string) => {
                     const key = value as keyof typeof UserStatus;
                     const colorClass = mapColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
                     return (
                         <div
-                            key={index}
+                            key={value}
                             className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
                         >
                             <span className="text-sm font-medium">{UserStatusLabel[key]}:</span>

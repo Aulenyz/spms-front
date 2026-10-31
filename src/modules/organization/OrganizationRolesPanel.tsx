@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useState} from "react";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {OrganizationAdminService} from "../../services/organization/OrganizationAdminService.ts";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
@@ -11,22 +13,26 @@ import {UserRole} from "../../domain/model/user/user.ts";
 
 type OrganizationRole = {id: number; name: string; description?: string};
 
+const EMPTY_ROLES: OrganizationRole[] = [];
+
 export const OrganizationRolesPanel = ({organizationId}: {organizationId: number}) => {
     const {hasAuthority} = useAuthContext();
-    const [roles, setRoles] = useState<OrganizationRole[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [showCreate, setShowCreate] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [showAuthorities, setShowAuthorities] = useState(false);
 
-    useEffect(() => {
-        setLoading(true);
-        OrganizationAdminService.instance.roles(organizationId)
-            .then((page) => setRoles(page.content))
-            .finally(() => setLoading(false));
-    }, [organizationId]);
+    const rolesKey = [...queryKeys.organizations.all, organizationId, "roles"];
+    const {data: roles = EMPTY_ROLES, isPending: loading} = useQuery({
+        queryKey: rolesKey,
+        queryFn: ({signal}) => OrganizationAdminService.instance.withSignal(signal).roles(organizationId).then((page): OrganizationRole[] => page.content),
+    });
 
-    const refresh = () => { setShowCreate(false); setLoading(true); OrganizationAdminService.instance.roles(organizationId).then((page) => setRoles(page.content)).finally(() => setLoading(false)); };
+    const refresh = () => {
+        setShowCreate(false);
+        void queryClient.invalidateQueries({queryKey: rolesKey});
+        void queryClient.invalidateQueries({queryKey: queryKeys.roles.all});
+    };
     const openAuthorities = async (roleId: number) => {
         try {
             setSelectedRole(await RoleService.instance.getOne(roleId));

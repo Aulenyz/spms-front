@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../../app/query/queryKeys.ts";
 import {Input} from "../../../../components/io/Input.tsx";
 import {KeyValueOf, State, UseForm} from "../../../../domain/types/steoreotype.ts";
 import {useForm} from "react-hook-form";
@@ -22,16 +24,21 @@ interface Props {
 type ViewMode = "SELECT" | "CREATE";
 
 const guardianService = GuardianService.instance;
+const EMPTY_PAGE: Page<Guardian> = Pagination.empty<Guardian>();
 
 export const AddGuardianModal = ({isOpen, onClose, onCreated}: Props) => {
     const [view, setView] = useState<ViewMode>("SELECT");
-    const [guardians, setGuardians]: State<Page<Guardian>> = useState(Pagination.empty<Guardian>());
+    const queryClient = useQueryClient();
     const [filters, setFilters]: State<KeyValueOf<string>> = useState<KeyValueOf<string>>({});
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.first);
 
-    useEffect(() => {
-        guardianService.getAll(filters, pagination).then(setGuardians)
-    }, [filters, pagination]);
+    // Solo se consulta mientras el modal está abierto.
+    const {data: guardians = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.guardians.list({filters, pagination}),
+        queryFn: ({signal}) => guardianService.withSignal(signal).getAll(filters, pagination),
+        enabled: isOpen,
+        placeholderData: keepPreviousData,
+    });
 
     const {
         register,
@@ -47,6 +54,7 @@ export const AddGuardianModal = ({isOpen, onClose, onCreated}: Props) => {
         guardianService.create('', params)
             .then(() => {
                 toast.success("Representante agregado con éxito");
+                void queryClient.invalidateQueries({queryKey: queryKeys.guardians.all});
                 onCreated?.(params);
                 reset();
                 onClose();
@@ -60,10 +68,10 @@ export const AddGuardianModal = ({isOpen, onClose, onCreated}: Props) => {
         setPagination((prev) => ({...prev, page}));
     };
 
-    const handleUpdateFilter = (filters: KeyValueOf<string>) => {
-        setFilters({...filters});
-        handlePageChange(0);
-    };
+    const handleUpdateFilter = useCallback((nextFilters: KeyValueOf<string>) => {
+        setFilters({...nextFilters});
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <RightModal title="Agregar Representante" isOpen={isOpen} onClose={onClose}

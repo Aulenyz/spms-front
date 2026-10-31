@@ -1,5 +1,6 @@
-import {useEffect} from "react";
-import {useForm} from "react-hook-form";
+import {useEffect, useMemo, useRef} from "react";
+import {useForm, useWatch} from "react-hook-form";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 import {UseForm} from "../../types/steoreotype";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 
@@ -9,7 +10,7 @@ export type GuardianFilterFormValue = {
 };
 
 export const GuardianFilter = ({onFilter}: { onFilter: (value: Record<string, string>) => void }) => {
-    const {register, watch, setValue}: UseForm<GuardianFilterFormValue> = useForm<GuardianFilterFormValue>({
+    const {register, control, setValue}: UseForm<GuardianFilterFormValue> = useForm<GuardianFilterFormValue>({
         defaultValues: {
             searchBy: "document",
             criteria: "",
@@ -17,19 +18,23 @@ export const GuardianFilter = ({onFilter}: { onFilter: (value: Record<string, st
         reValidateMode: "onChange",
     });
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            const searchBy = watch("searchBy");
-            const criteria = watch("criteria");
-            onFilter(criteria?.trim() ? {[searchBy]: criteria} : {});
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("searchBy"), watch("criteria")]);
+    const [searchBy, criteria] = useWatch({control, name: ["searchBy", "criteria"]});
 
+    const filters = useMemo(
+        () => (criteria?.trim() ? {[searchBy]: criteria} : {}) as Record<string, string>,
+        [searchBy, criteria],
+    );
+    useFilterEmitter(filters, onFilter);
+
+    // When changing filter type, clear criteria to avoid sending mismatched params (no en el montaje).
+    const mounted = useRef(false);
     useEffect(() => {
-        // When changing filter type, clear criteria to avoid sending mismatched params.
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
         setValue("criteria", "");
-    }, [watch("searchBy")]);
+    }, [searchBy, setValue]);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -37,7 +42,7 @@ export const GuardianFilter = ({onFilter}: { onFilter: (value: Record<string, st
                 <DropdownSelect
                     text="Filtrar por"
                     hasError={false}
-                    value={watch("searchBy")}
+                    value={searchBy}
                     onSelect={(value) => setValue("searchBy", (value ?? "document") as any)}
                     className="w-full"
                     options={[
@@ -58,9 +63,7 @@ export const GuardianFilter = ({onFilter}: { onFilter: (value: Record<string, st
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
                                 e.preventDefault();
-                                const searchBy = watch("searchBy");
-                                const criteria = watch("criteria");
-                                onFilter(criteria?.trim() ? {[searchBy]: criteria} : {});
+                                onFilter(filters);
                             }
                         }}
                     />

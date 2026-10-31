@@ -1,4 +1,5 @@
-import {useEffect, useState} from "react";
+import {useCallback, useMemo, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
 import {SelectOption} from "../../../components/io/output/Select.tsx";
@@ -12,16 +13,11 @@ import {
     RecurrenceTypeLabel,
 } from "../../model/product/Product.ts";
 import {ProductCategoryService} from "../../../services/product/ProductCategoryService.ts";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
+import {PRODUCT_FILTER_DEFAULTS, ProductFilterValues} from "./productFilterDefaults.ts";
 
-export type ProductFilterValues = {
-    term: string;
-    status?: ProductStatus;
-    type?: ProductType;
-    categoryId?: number;
-    chargeMode?: RecurrenceType;
-    field: string;
-    order: SortOrder;
-};
+export type {ProductFilterValues} from "./productFilterDefaults.ts";
 
 const productCategoryService = ProductCategoryService.instance;
 
@@ -63,46 +59,31 @@ export const ProductFilter = ({
     onFilter: (filters: ProductFilterValues, pagination: Pick<Pagination, "field" | "order">) => void;
 }) => {
     const [advancedOpen, setAdvancedOpen] = useState(false);
-    const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
-    const [values, setValues] = useState<ProductFilterValues>({
-        term: "",
-        status: ProductStatus.ACTIVE,
-        field: "id",
-        order: SortOrder.DESC,
+    const [categoryTerm, setCategoryTerm] = useState("");
+    const [values, setValues] = useState<ProductFilterValues>(PRODUCT_FILTER_DEFAULTS);
+
+    const {data: categoryPage} = useQuery({
+        queryKey: [...queryKeys.categories.all, "search", {term: categoryTerm, active: true}],
+        queryFn: ({signal}) => productCategoryService.withSignal(signal).search({term: categoryTerm, active: true}, Pagination.ofSize(12)),
+        meta: {silent: true},
     });
+    const categoryOptions: SelectOption[] = useMemo(() => (categoryPage?.content ?? []).map((category) => ({
+        value: category.id ?? category.code,
+        description: `${category.code} · ${category.name}`,
+    })), [categoryPage]);
 
-    const searchCategories = (term: string) => {
-        productCategoryService
-            .search({term, active: true}, Pagination.ofSize(12))
-            .then((page) => setCategoryOptions(page.content.map((category) => ({
-                value: category.id ?? category.code,
-                description: `${category.code} · ${category.name}`,
-            }))))
-            .catch(() => setCategoryOptions([]));
-    };
-
-    useEffect(() => {
-        searchCategories("");
-    }, []);
-
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            onFilter(values, {field: values.field, order: values.order});
-        }, 300);
-        return () => window.clearTimeout(timeout);
-    }, [onFilter, values]);
+    const emit = useCallback(
+        (next: ProductFilterValues) => onFilter(next, {field: next.field, order: next.order}),
+        [onFilter],
+    );
+    useFilterEmitter(values, emit, 300);
 
     const setField = <K extends keyof ProductFilterValues>(key: K, value: ProductFilterValues[K]) => {
         setValues((current) => ({...current, [key]: value}));
     };
 
     const clear = () => {
-        setValues({
-            term: "",
-            status: ProductStatus.ACTIVE,
-            field: "id",
-            order: SortOrder.DESC,
-        });
+        setValues(PRODUCT_FILTER_DEFAULTS);
     };
 
     return (
@@ -126,7 +107,7 @@ export const ProductFilter = ({
                             hasError={false}
                             value={values.categoryId}
                             options={categoryOptions}
-                            onSearch={searchCategories}
+                            onSearch={setCategoryTerm}
                             onSelect={(value) => setField("categoryId", value ? Number(value) : undefined)}
                             portal
                         />

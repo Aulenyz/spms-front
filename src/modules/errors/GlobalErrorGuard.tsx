@@ -1,37 +1,36 @@
 import {useEffect} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
-import {ERROR_503_PATH, isNetworkLikeError, resolveErrorPath} from "./resolveErrorPath.ts";
+import {toast} from "react-toastify";
+import {isNetworkLikeError, resolveErrorPath} from "./resolveErrorPath.ts";
+import {apiErrorMessage} from "../../app/query/queryClient.ts";
 
+/**
+ * Red de seguridad para promesas rechazadas sin manejar (llamadas a servicios fuera de react-query).
+ * Antes redirigía a /errors/500 o /errors/503 desde cualquier pantalla; ahora notifica con un toast y
+ * deja al usuario en la pantalla actual. Las páginas de error completas quedan para fallos de ruta
+ * (ver RouteErrorBoundary) y para la validación de sesión en AuthContext.
+ */
 export const GlobalErrorGuard = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-
     useEffect(() => {
-        const redirectToServiceError = () => {
-            if (location.pathname === ERROR_503_PATH) return;
-            navigate(ERROR_503_PATH, {replace: true});
+        const notify = (reason: unknown) => {
+            const message = apiErrorMessage(reason);
+            toast.error(message, {toastId: `unhandled-${message}`});
         };
 
         const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
             const reason = event.reason;
-            const errorPath = resolveErrorPath(reason as {status?: number});
-            if (errorPath) {
+            if ((reason as { name?: string })?.name === "AbortError") {
                 event.preventDefault();
-                if (location.pathname !== errorPath) {
-                    navigate(errorPath, {replace: true});
-                }
                 return;
             }
-
-            if (isNetworkLikeError(reason)) {
+            if (resolveErrorPath(reason as { status?: number }) || isNetworkLikeError(reason)) {
                 event.preventDefault();
-                redirectToServiceError();
+                notify(reason);
             }
         };
 
         const handleWindowError = (event: ErrorEvent) => {
             if (!isNetworkLikeError(event.error ?? event.message)) return;
-            redirectToServiceError();
+            notify(event.error ?? event.message);
         };
 
         window.addEventListener("unhandledrejection", handleUnhandledRejection);
@@ -41,7 +40,7 @@ export const GlobalErrorGuard = () => {
             window.removeEventListener("unhandledrejection", handleUnhandledRejection);
             window.removeEventListener("error", handleWindowError);
         };
-    }, [location.pathname, navigate]);
+    }, []);
 
     return null;
 };

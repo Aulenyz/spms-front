@@ -1,4 +1,5 @@
 import {environment} from "../../environment/environment.ts";
+import {readStoredToken} from "../BaseService.ts";
 
 type ResultResponse<T> = {
     result: T;
@@ -11,14 +12,21 @@ export class PublicFileService {
         return PublicFileService.factory;
     }
 
-    async upload(file: File): Promise<string> {
+    /**
+     * Sube una imagen. Con sesión iniciada usa el token de la sesión; durante el registro por
+     * invitación (sin sesión) la API exige el token de la invitación.
+     */
+    async upload(file: File, invitationToken?: string): Promise<string> {
         const formData = new FormData();
         formData.append("file", file);
+        if (invitationToken) formData.append("token", invitationToken);
+        const sessionToken = readStoredToken()?.token;
 
         try {
             const response = await fetch(`${environment.apiURL}/files/upload`, {
                 method: "POST",
                 body: formData,
+                headers: sessionToken ? {authorization: `Bearer ${sessionToken}`} : undefined,
             });
 
             if (!response.ok) {

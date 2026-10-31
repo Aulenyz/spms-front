@@ -16,8 +16,10 @@ const message = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as {message?: unknown}).message === "string"
         ? (error as {message: string}).message : fallback;
 
-type AssignmentForm = {subjectId: string; teacherId: string; subject?: Subject; teacher?: TeacherOption; schedule: ScheduleSlot[]};
-const emptyAssignment = (): AssignmentForm => ({subjectId: "", teacherId: "", schedule: [emptySlot()]});
+type AssignmentForm = {uid?: string; subjectId: string; teacherId: string; subject?: Subject; teacher?: TeacherOption; schedule: ScheduleSlot[]};
+// `uid` solo vive en el cliente: clave estable de React para filas que se agregan/quitan.
+let assignmentSequence = 0;
+const emptyAssignment = (): AssignmentForm => ({uid: `assignment-${++assignmentSequence}`, subjectId: "", teacherId: "", schedule: [emptySlot()]});
 const addMinutes = (value: string, minutes: number) => {
     const [hours = "0", mins = "0"] = timeInputValue(value).split(":");
     const total = Number(hours) * 60 + Number(mins) + minutes;
@@ -95,7 +97,7 @@ export const QuickCourseModal = ({open, onClose, onSaved}: {open: boolean; onClo
                             <i className="fa fa-plus me-1"/>Agregar materia
                         </button>
                     </div>
-                    {assignments.map((assignment, index) => <AssignmentEditor key={index}
+                    {assignments.map((assignment, index) => <AssignmentEditor key={assignment.uid ?? index}
                                                                               value={assignment}
                                                                               index={index}
                                                                               canRemove={assignments.length > 1}

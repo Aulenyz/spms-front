@@ -1,5 +1,5 @@
 import {FieldValues, Path, UseFormSetValue} from 'react-hook-form';
-import {isDate} from "lodash";
+import {isDate} from "./lang.ts";
 import {Optional, SelectOption} from "../domain/types/steoreotype.ts";
 
 export const setValues = <T extends FieldValues>(setValue: UseFormSetValue<T | any>, values: Optional<T>) => {

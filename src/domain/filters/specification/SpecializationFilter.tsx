@@ -1,35 +1,23 @@
-import {useForm} from "react-hook-form";
+import {useForm, useWatch} from "react-hook-form";
 import {GradeType, GradeTypeLabel} from "../../model/course/Course.ts";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
-import {useEffect} from "react";
+import {useMemo} from "react";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
+import {SPECIALIZATION_FILTER_DEFAULTS} from "./specializationFilterDefaults.ts";
+
 
 export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<string, any>) => void }) => {
-    const {watch, setValue} = useForm({
-        defaultValues: {
-            name: "",
-            type: "",
-            active: "true",
-        },
+    const {control, setValue} = useForm({
+        defaultValues: SPECIALIZATION_FILTER_DEFAULTS,
     });
+    const [name, type, active] = useWatch({control, name: ["name", "type", "active"]});
 
     const handleChange = (key: "name" | "type" | "active", value: string) => {
         setValue(key, value);
     };
 
-    const handleFilter = () => {
-        onFilter({
-            name: watch("name"),
-            type: watch("type"),
-            active: watch("active"),
-        });
-    };
-
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            handleFilter();
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("name"), watch("type"), watch("active")]);
+    const filters = useMemo(() => ({name, type, active}), [name, type, active]);
+    useFilterEmitter(filters, onFilter);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -37,7 +25,7 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                 <DropdownSelect
                     text="Estado"
                     hasError={false}
-                    value={watch("active")}
+                    value={active}
                     onSelect={(value) => handleChange("active", String(value ?? "true"))}
                     className="w-full"
                     options={[
@@ -51,7 +39,7 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                 <DropdownSelect
                     text="Tipo"
                     hasError={false}
-                    value={watch("type")}
+                    value={type}
                     onSelect={(value) => handleChange("type", String(value ?? ""))}
                     className="w-full"
                     options={[
@@ -69,7 +57,7 @@ export const SpecializationFilter = ({onFilter}: { onFilter: (filters: Record<st
                     className="input input-sm w-full"
                     type="text"
                     placeholder="Buscar por nombre"
-                    value={watch("name")}
+                    value={name}
                     onChange={(e) => handleChange("name", e.target.value)}
                 />
             </div>

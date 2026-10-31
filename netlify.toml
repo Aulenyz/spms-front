@@ -2,6 +2,17 @@
   publish = "dist"
   command = "npm run build-prod"
 
+# Proxy de la API. `.env.production` usa VITE_API_URL=/api/v1, por lo que el frontend llama
+# a /api/v1/... en el mismo dominio. Sin esta regla, la SPA fallback de abajo responde index.html
+# (HTML con 200) a las llamadas de la API.
+# TODO: reemplazar <BACKEND_URL> por la URL pública del backend (p. ej. https://api.mi-dominio.com,
+# sin barra final) y descomentar. Debe ir ANTES de la regla "/*".
+# [[redirects]]
+#   from = "/api/*"
+#   to = "<BACKEND_URL>/api/:splat"
+#   status = 200
+#   force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

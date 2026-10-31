@@ -2,7 +2,7 @@ import {useMemo, useState} from "react";
 import clsx from "clsx";
 import {NavLink, useLocation} from "react-router-dom";
 import {toast} from "react-toastify";
-import logo from "../../../assets/images/logo.png";
+import logo from "../../../assets/images/logo.webp";
 import {navigationSections, secondaryQuickLinks} from "../../../app/navigation/menu.ts";
 import {APP_DESCRIPTOR, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 import {CommercialCollectionModal} from "../../student/enrollment/modal/EnrollmentInscriptionModal.tsx";

@@ -1,5 +1,5 @@
-import {useForm} from "react-hook-form";
-import {useEffect} from "react";
+import {useForm, useWatch} from "react-hook-form";
+import {useEffect, useRef} from "react";
 import {UseForm} from "../../types/steoreotype.ts";
 
 const placeholders: Record<string, string> = {
@@ -13,7 +13,7 @@ export type UserFilterFormValue = {
 
 export const RoleFilter = (props: { onFilter: (value: Record<string, string>) => void }) => {
 
-    const {register, handleSubmit, watch, setValue}: UseForm<UserFilterFormValue> = useForm<UserFilterFormValue>({
+    const {register, handleSubmit, control, setValue}: UseForm<UserFilterFormValue> = useForm<UserFilterFormValue>({
         defaultValues: {
             searchBy: 'name'
         },
@@ -26,13 +26,23 @@ export const RoleFilter = (props: { onFilter: (value: Record<string, string>) =>
         props.onFilter(filters);
     }
 
-    useEffect(() => setValue('criteria', ''), [watch('searchBy')]);
+    const searchBy = useWatch({control, name: 'searchBy'});
+
+    // Al cambiar el campo de búsqueda se limpia el criterio (no en el montaje).
+    const mounted = useRef(false);
+    useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
+        setValue('criteria', '');
+    }, [searchBy, setValue]);
 
     return (
         <form onSubmit={handleSubmit(handleFilter)} className="flex flex-wrap items-end gap-2.5">
             <label className="input input-sm w-full sm:w-56">
                 <i className="fa fa-user me-1"/>
-                <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
+                <input placeholder={placeholders[searchBy]} type="text" {...register('criteria')}/>
             </label>
             <button className="btn btn-sm btn-outline btn-primary">
                 <i className="fa fa-search"/>

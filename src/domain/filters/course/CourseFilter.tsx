@@ -1,5 +1,6 @@
-import {Controller, useForm} from "react-hook-form";
-import {useEffect, useState} from "react";
+import {Controller, useForm, useWatch} from "react-hook-form";
+import {useEffect, useMemo, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 import {PeriodSelect} from "../../../components/io/input/business/PeriodSelect.tsx";
 import {SpecializationService} from "../../../services/specialization/SpecializationService.ts";
@@ -7,6 +8,8 @@ import {Page, Pagination} from "../Page.ts";
 import {Specialization} from "../../model/course/Course.ts";
 import {Optional, PlainValue, SelectOption} from "../../types/steoreotype.ts";
 import {SearchSelect} from "../../../components/io/input/SearchSelect.tsx";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 
 const specializationService = SpecializationService.instance;
 
@@ -16,7 +19,7 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
     onFilter: (filters: Record<string, any>) => void;
     selectedPeriodId: string | number | null;
 }) => {
-    const {control, register, setValue, watch} = useForm({
+    const {control, register, setValue} = useForm({
         defaultValues: {
             periodId: selectedPeriodId || "",
             active: true as boolean,
@@ -25,37 +28,25 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
         },
     });
 
-    const [specializations, setSpecializations] = useState<SelectOption[]>([{value: "", description: "Todas"}]);
-
-    const loadSpecializations = (term: string = "") => {
-        specializationService
-            .search(term, Pagination.of(0, 20))
-            .then((page: Page<Specialization>) => setSpecializations([{
-                value: "",
-                description: "Todas"
-            }, ...page.content.map(toOption)]))
-            .catch(() => setSpecializations([{value: "", description: "Todas"}]));
-    };
-
-    useEffect(() => {
-        loadSpecializations();
-    }, []);
+    const [specializationTerm, setSpecializationTerm] = useState("");
+    const {data: specializationPage} = useQuery({
+        queryKey: [...queryKeys.specializations.all, "search", specializationTerm],
+        queryFn: ({signal}) => specializationService.withSignal(signal).search(specializationTerm, Pagination.of(0, 20)),
+        meta: {silent: true},
+    });
+    const specializations: SelectOption[] = useMemo(() => [
+        {value: "", description: "Todas"},
+        ...((specializationPage as Page<Specialization> | undefined)?.content ?? []).map(toOption),
+    ], [specializationPage]);
 
     useEffect(() => {
         if (selectedPeriodId !== null) setValue("periodId", selectedPeriodId);
     }, [selectedPeriodId, setValue]);
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            onFilter({
-                periodId: watch("periodId"),
-                active: watch("active"),
-                specializationId: watch("specializationId"),
-                name: watch("name"),
-            });
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("periodId"), watch("active"), watch("specializationId"), watch("name")]);
+    const [periodId, active, specializationId, name] = useWatch({control, name: ["periodId", "active", "specializationId", "name"]});
+
+    const filters = useMemo(() => ({periodId, active, specializationId, name}), [periodId, active, specializationId, name]);
+    useFilterEmitter(filters, onFilter);
 
     return (
         <div className="flex flex-wrap items-end gap-2.5">
@@ -80,7 +71,7 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
                 <DropdownSelect
                     text="Estado"
                     hasError={false}
-                    value={watch("active") ? "true" : "false"}
+                    value={active ? "true" : "false"}
                     onSelect={(value) => setValue("active", String(value ?? "true") === "true")}
                     className="w-full"
                     options={[
@@ -94,8 +85,8 @@ export const CourseFilter = ({onFilter, selectedPeriodId}: {
                 <SearchSelect
                     text="Área especializada"
                     hasError={false}
-                    value={watch("specializationId")}
-                    onSearch={loadSpecializations}
+                    value={specializationId}
+                    onSearch={setSpecializationTerm}
                     onSelect={(value: Optional<PlainValue>) => setValue("specializationId", String(value ?? ""))}
                     className="w-full"
                     options={specializations}

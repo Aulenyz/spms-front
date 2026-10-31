@@ -1,7 +1,7 @@
 import {CSSProperties, ReactNode} from "react";
 import {Link} from "react-router-dom";
 import {motion} from "framer-motion";
-import logo from "../../../assets/images/logo.png";
+import logo from "../../../assets/images/logo.webp";
 import {APP_DESCRIPTOR, APP_FULL_NAME, APP_SHORT_NAME} from "../../../app/config/branding.ts";
 import {APPVersion} from "../../io/output/shared/APPVersion.tsx";
 

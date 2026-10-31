@@ -1,9 +1,11 @@
 import {Navigate, Route, Routes} from "react-router-dom";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
 import {LoginPage} from "./LoginPage.tsx";
-import {RecoverPage} from "./recover/RecoverPage.tsx";
-import {SendRecoverPasswordPage} from "./recover/SendRecoverPasswordPage.tsx";
-import {SelectOrganizationPage} from "./select-company/SelectOrganizationPage.tsx";
-import {RegisterInvitationPage} from "./RegisterInvitationPage.tsx";
+
+const RecoverPage = lazyPage(() => import("./recover/RecoverPage.tsx"), "RecoverPage");
+const SendRecoverPasswordPage = lazyPage(() => import("./recover/SendRecoverPasswordPage.tsx"), "SendRecoverPasswordPage");
+const SelectOrganizationPage = lazyPage(() => import("./select-company/SelectOrganizationPage.tsx"), "SelectOrganizationPage");
+const RegisterInvitationPage = lazyPage(() => import("./RegisterInvitationPage.tsx"), "RegisterInvitationPage");
 
 export const AuthPage = () => {
     return (

@@ -1,5 +1,7 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {TeacherWorkloadPage} from "./TeacherWorkloadPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const TeacherWorkloadPage = lazyPage(() => import("./TeacherWorkloadPage.tsx"), "TeacherWorkloadPage");
 
 export const TeacherRouting = () => <Routes>
     <Route path="schedule" element={<TeacherWorkloadPage/>}/>

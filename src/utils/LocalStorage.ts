@@ -1,6 +1,6 @@
 import {StorageItem} from "../domain/types/StorageItem.ts";
 import {Nullable, Optional} from "../domain/types/steoreotype.ts";
-import {isNil} from "lodash";
+import {isNil} from "./lang.ts";
 
 type PlainValue<T> = string | number | boolean | null | T;
 

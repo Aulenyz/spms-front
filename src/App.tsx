@@ -6,10 +6,13 @@ import {AppRouting} from "./AppRouting.tsx";
 import {BrowserRouter} from "react-router-dom";
 import {ThemeProvider} from "./app/providers/ThemeProvider.tsx";
 import {GlobalErrorGuard} from "./modules/errors/GlobalErrorGuard.tsx";
+import {QueryClientProvider} from "@tanstack/react-query";
+import {queryClient} from "./app/query/queryClient.ts";
 
 const App = () => {
 
     return (
+        <QueryClientProvider client={queryClient}>
         <BrowserRouter>
             <ThemeProvider>
                 <CompanyProvider>
@@ -25,6 +28,7 @@ const App = () => {
                 style={{zIndex: 20000}}
             />
         </BrowserRouter>
+        </QueryClientProvider>
     );
 };
 

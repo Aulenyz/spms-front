@@ -1,37 +1,27 @@
-import {useEffect, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {EnrollmentService} from "../../services/student/enrollment/EnrollmentService.ts";
 import {EnrollmentStatus, EnrollmentStatusColor, EnrollmentStatusLabel} from "../../domain/student/Enrollment.ts";
-import {State} from "../../domain/types/steoreotype.ts";
-import {PeriodService} from "../../services/period/PeriodService.ts";
-import {Period} from "../../domain/model/organization/Organization.tsx";
 import {ErrorMessage} from "../../components/io/output/ErrorMessage.tsx";
+import {useCurrentPeriod} from "../../hooks/queries/useCurrentPeriod.ts";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 
 const enrollmentService: EnrollmentService = EnrollmentService.instance;
-const periodService: PeriodService = PeriodService.instance;
+const EMPTY_TOTALS = {} as Record<EnrollmentStatus, number>;
 
 export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: number }) => {
-    const [status, setStatus]: State<Record<EnrollmentStatus, number>> = useState<Record<EnrollmentStatus, number>>({} as Record<EnrollmentStatus, number>);
-    const [currentPeriod, setCurrentPeriod] = useState<Period | null>(null);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        periodService.current().then((period) => {
-            setCurrentPeriod(period);
-        }).catch((currentError) => {
-            setError("Error al obtener el periodo actual");
-            console.error("Error al obtener el periodo actual", currentError);
-        });
-    }, []);
-
-    useEffect(() => {
-        const periodId = selectedPeriodId || currentPeriod?.id;
-        if (periodId) {
-            enrollmentService.getTotalByStatus(periodId).then(setStatus).catch((statusError) => {
-                setError("Error al obtener los totales por estado");
-                console.error("Error al obtener los totales por estado", statusError);
-            });
-        }
-    }, [selectedPeriodId, currentPeriod]);
+    // Comparte la caché del periodo actual con la página (sin peticiones duplicadas).
+    const currentPeriod = useCurrentPeriod({silent: true});
+    const periodId = selectedPeriodId || currentPeriod.data?.id;
+    const totals = useQuery({
+        queryKey: queryKeys.enrollments.totals(periodId),
+        queryFn: ({signal}) => enrollmentService.withSignal(signal).getTotalByStatus(periodId as number),
+        enabled: Boolean(periodId),
+        meta: {silent: true},
+    });
+    const status: Record<EnrollmentStatus, number> = totals.data ?? EMPTY_TOTALS;
+    const error: string | null = currentPeriod.isError
+        ? "Error al obtener el periodo actual"
+        : totals.isError ? "Error al obtener los totales por estado" : null;
 
     return (
         <div
@@ -43,12 +33,12 @@ export const EnrollmentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: nu
             }}
         >
             <div className="flex flex-wrap items-center gap-2">
-                {Object.keys(status).map((value: string, index: number) => {
+                {Object.keys(status).map((value: string) => {
                     const key = value as keyof typeof EnrollmentStatus;
                     const colorClass = EnrollmentStatusColor[key] || "bg-gray-100 text-gray-700 border-gray-300";
                     return (
                         <div
-                            key={index}
+                            key={value}
                             className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
                         >
                             <span className="text-sm font-medium">{EnrollmentStatusLabel[key]}:</span>

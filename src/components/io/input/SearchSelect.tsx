@@ -14,11 +14,13 @@ interface SearchableSelectProps {
     onSelect: (value: Optional<PlainValue>) => void;
     className?: string;
     portal?: boolean;
+    /** Milisegundos de espera antes de invocar `onSearch` (evita una petición por tecla). */
+    searchDelay?: number;
 }
 
 export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
     (props: SearchableSelectProps, inputRef) => {
-        const {options, onSelect, onSearch, value, hasError, className, text, portal = false} = props;
+        const {options, onSelect, onSearch, value, hasError, className, text, portal = false, searchDelay = 300} = props;
         const [isFirst, setIsFirst]: State<boolean> = useState(true);
         const [isOpen, setIsOpen]: State<boolean> = useState(false);
         const [searchTerm, setSearchTerm]: State<string> = useState('');
@@ -27,12 +29,23 @@ export const SearchSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
         const localInputRef = useRef<HTMLInputElement | null>(null);
         const [portalRect, setPortalRect] = useState<{left: number; top: number; width: number} | null>(null);
         const [highlightedIndex, setHighlightedIndex]: State<number> = useState(-1);
+        const searchTimeout = useRef<number | undefined>(undefined);
+        const onSearchRef = useRef(onSearch);
+
+        useEffect(() => {
+            onSearchRef.current = onSearch;
+        }, [onSearch]);
+
+        useEffect(() => () => window.clearTimeout(searchTimeout.current), []);
 
         const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
             const term = event.target.value;
             setIsFirst(false);
             setSearchTerm(term);
-            onSearch?.(term);
+            window.clearTimeout(searchTimeout.current);
+            if (onSearchRef.current) {
+                searchTimeout.current = window.setTimeout(() => onSearchRef.current?.(term), searchDelay);
+            }
             if (!term.trim()) onSelect(undefined);
             setHighlightedIndex(-1);
         };

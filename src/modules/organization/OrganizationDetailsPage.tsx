@@ -1,6 +1,8 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {useParams} from "react-router-dom";
 import {toast} from "react-toastify";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {Organization} from "../../domain/model/organization/Organization.ts";
 import {OrganizationAdminService} from "../../services/organization/OrganizationAdminService.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
@@ -17,28 +19,22 @@ const initials = (name: string) => name.split(" ").map((part) => part[0]).slice(
 export const OrganizationDetailsPage = () => {
     const {id} = useParams<{ id: string }>();
     const {hasAuthority} = useAuthContext();
-    const [organization, setOrganization] = useState<Organization | null>(null);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [showEdit, setShowEdit] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [section, setSection] = useState<"users" | "invitations" | "roles">("users");
     const menuRef = useRef<HTMLDivElement | null>(null);
-    const refresh = async () => {
-        if (!id) return;
-        setLoading(true);
-        try {
-            setOrganization(await service.getOne(id));
-        } catch (error: any) {
-            toast.error(error?.message ?? "No se pudo cargar la organización.");
-            setOrganization(null);
-        } finally {
-            setLoading(false);
-        }
-    };
-    useEffect(() => {
-        void refresh();
-    }, [id]);
+    const organizationQuery = useQuery({
+        queryKey: [...queryKeys.organizations.all, "detail", id],
+        queryFn: ({signal}) => service.withSignal(signal).getOne(id) as Promise<Organization>,
+        enabled: Boolean(id),
+        meta: {errorMessage: "No se pudo cargar la organización."},
+    });
+    const organization: Organization | null = organizationQuery.data ?? null;
+    const loading: boolean = organizationQuery.isPending;
+    // Refresca el detalle y los listados de organizaciones.
+    const refresh = () => queryClient.invalidateQueries({queryKey: queryKeys.organizations.all});
     useEffect(() => {
         const close = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) setShowMenu(false);

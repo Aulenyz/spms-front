@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
+import {useQuery} from "@tanstack/react-query";
 import {StudentService} from "../../services/student/StudentService";
-import {State} from "../../domain/types/steoreotype.ts";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {statusColors, StudentStatus, StudentStatusLabel} from "../../domain/student/Student.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
@@ -9,19 +9,14 @@ import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const studentService: StudentService = StudentService.instance;
 
-export const StudentBreadcrumb = ({
-                                      onCreate,
-                                      refreshKey = 0,
-                                  }: {
-    onCreate?: () => void;
-    refreshKey?: number;
-}) => {
+const EMPTY_TOTALS = {} as Record<StudentStatus, number>;
+
+export const StudentBreadcrumb = ({onCreate}: { onCreate?: () => void }) => {
     const {hasAuthority} = useAuthContext();
-    const [status, setStatus]: State<Record<StudentStatus, number>> = useState<Record<StudentStatus, number>>({} as Record<StudentStatus, number>);
-    
-    useEffect(() => {
-        studentService.getTotalByStatus().then(setStatus);
-    }, [refreshKey]);
+    const {data: status = EMPTY_TOTALS} = useQuery({
+        queryKey: queryKeys.students.totals,
+        queryFn: ({signal}) => studentService.withSignal(signal).getTotalByStatus(),
+    });
 
     return (
         <div
@@ -33,12 +28,12 @@ export const StudentBreadcrumb = ({
             }}
         >
             <div className="flex flex-wrap items-center gap-2">
-                {Object.keys(status).map((value: string, index: number) => {
+                {Object.keys(status).map((value: string) => {
                     const key = value as keyof typeof StudentStatus;
                     const colorClass = statusColors[key] || "bg-gray-100 text-gray-700 border-gray-300";
                     return (
                         <div
-                            key={index}
+                            key={value}
                             className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
                         >
                             <span className="text-sm font-medium">{StudentStatusLabel[key]}:</span>

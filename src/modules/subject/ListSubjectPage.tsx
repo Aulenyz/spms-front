@@ -1,4 +1,6 @@
-import {useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {toast} from "react-toastify";
 
 import {Page, Pagination} from "../../domain/filters/Page.ts";
@@ -18,6 +20,7 @@ import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const subjectService = SubjectService.instance;
+const EMPTY_PAGE: Page<Subject> = Pagination.empty<Subject>();
 
 const getApiErrorMessage = (error: unknown) => {
     if (!error) return null;
@@ -32,8 +35,6 @@ const getApiErrorMessage = (error: unknown) => {
 export const ListSubjectPage = () => {
     const {hasAuthority} = useAuthContext();
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(6));
-    const [subjects, setSubjects]: State<Page<Subject>> = useState(Pagination.empty<Subject>());
-    const [refreshKey, setRefreshKey] = useState(0);
     const [filters, setFilters] = useState<Record<string, any>>({term: "", active: "true"});
     const [showCreate, setShowCreate] = useState(false);
     const [editing, setEditing] = useState<Subject | null>(null);
@@ -41,10 +42,15 @@ export const ListSubjectPage = () => {
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
 
-    useEffect(() => {
-        const active = filters.active === "" ? undefined : filters.active === "true";
-        subjectService.search({term: filters.term ?? "", active}, pagination).then(setSubjects);
-    }, [pagination, filters, refreshKey]);
+    const queryClient = useQueryClient();
+    const {data: subjects = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.subjects.list({filters, pagination}),
+        queryFn: ({signal}) => {
+            const active = filters.active === "" ? undefined : filters.active === "true";
+            return subjectService.withSignal(signal).search({term: filters.term ?? "", active}, pagination);
+        },
+        placeholderData: keepPreviousData,
+    });
 
     useEffect(() => {
         const handler = (event: MouseEvent) => {
@@ -60,12 +66,12 @@ export const ListSubjectPage = () => {
 
     const handlePageSizeChange = (size: number) => setPagination((prev) => ({...prev, page: 0, size}));
 
-    const handleFilters = (next: Record<string, any>) => {
+    const handleFilters = useCallback((next: Record<string, any>) => {
         setFilters({...next});
         setPagination((prev) => ({...prev, page: 0}));
-    };
+    }, []);
 
-    const refresh = () => setRefreshKey((prev) => prev + 1);
+    const refresh = () => void queryClient.invalidateQueries({queryKey: queryKeys.subjects.all});
 
     const pagerPage: Page<Subject> = {
         ...subjects,

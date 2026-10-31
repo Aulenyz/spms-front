@@ -1,4 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {useParams} from "react-router-dom";
 import clsx from "clsx";
 import {toast} from "react-toastify";
@@ -52,6 +54,7 @@ const sortPriceHistory = (prices: ProductPriceHistory[] = []) => {
 
 export const ProductDetailsPage = () => {
     const {id} = useParams<{id: string}>();
+    const queryClient = useQueryClient();
     const [product, setProduct] = useState<ProductDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<DetailSection>("summary");
@@ -106,6 +109,7 @@ export const ProductDetailsPage = () => {
             });
             setProduct((current) => current ? {...current, ...updated} : current);
             setProduct(await productService.getProduct(product.id));
+            void queryClient.invalidateQueries({queryKey: queryKeys.products.all});
             setShowPriceForm(false);
             toast.success("Precio actualizado correctamente.");
         } catch (error) {

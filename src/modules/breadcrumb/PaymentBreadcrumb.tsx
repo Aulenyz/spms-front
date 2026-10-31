@@ -1,20 +1,19 @@
-import {useEffect, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {PaymentService} from "../../services/payment/PaymentService";
-import {State} from "../../domain/types/steoreotype.ts";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {PaymentStatus, PaymentStatusLabel, statusColors} from "../../domain/model/payment/Payment";
 
 const paymentService: PaymentService = PaymentService.instance;
 
-export const PaymentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: number }) => {
-    const [status, setStatus]: State<Record<PaymentStatus, number>> = useState<Record<PaymentStatus, number>>({} as Record<PaymentStatus, number>);
+const EMPTY_TOTALS = {} as Record<PaymentStatus, number>;
 
-    useEffect(() => {
-        if (selectedPeriodId) {
-            paymentService.getTotalByStatus(selectedPeriodId).then(setStatus).catch((error) => {
-                console.error("Error al obtener los totales por estado", error);
-            });
-        }
-    }, [selectedPeriodId]);
+export const PaymentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: number }) => {
+    const {data: status = EMPTY_TOTALS} = useQuery({
+        queryKey: queryKeys.payments.totals(selectedPeriodId),
+        queryFn: ({signal}) => paymentService.withSignal(signal).getTotalByStatus(selectedPeriodId as number),
+        enabled: Boolean(selectedPeriodId),
+        meta: {silent: true},
+    });
 
     return (
         <div
@@ -26,12 +25,12 @@ export const PaymentBreadcrumb = ({selectedPeriodId}: { selectedPeriodId?: numbe
             }}
         >
             <div className="flex flex-wrap items-center gap-2">
-                {Object.keys(status).map((value: string, index: number) => {
+                {Object.keys(status).map((value: string) => {
                     const key = value as keyof typeof PaymentStatus;
                     const colorClass = statusColors[key] || "bg-gray-100 text-gray-700 border-gray-300";
                     return (
                         <div
-                            key={index}
+                            key={value}
                             className={`flex items-center gap-1 rounded-full border px-2.5 py-1 ${colorClass}`}
                         >
                             <span className="text-sm font-medium">

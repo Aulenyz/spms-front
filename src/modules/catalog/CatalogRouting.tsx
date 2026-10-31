@@ -1,8 +1,10 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {CatalogCollectionsPage} from "./CatalogPages.tsx";
-import {ListProductCategoryPage} from "./category/ListProductCategoryPage.tsx";
-import {ListProductPage} from "./product/ListProductPage.tsx";
-import {ProductDetailsPage} from "./product/ProductDetailsPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const CatalogCollectionsPage = lazyPage(() => import("./CatalogPages.tsx"), "CatalogCollectionsPage");
+const ListProductCategoryPage = lazyPage(() => import("./category/ListProductCategoryPage.tsx"), "ListProductCategoryPage");
+const ListProductPage = lazyPage(() => import("./product/ListProductPage.tsx"), "ListProductPage");
+const ProductDetailsPage = lazyPage(() => import("./product/ProductDetailsPage.tsx"), "ProductDetailsPage");
 
 export const CatalogRouting = () => {
     return (

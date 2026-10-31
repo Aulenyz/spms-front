@@ -1,6 +1,6 @@
 import {Dispatch, MutableRefObject, SetStateAction} from "react";
 import {FieldValues, UseFormReturn} from "react-hook-form";
-import {isEmpty, isNil} from "lodash";
+import {isEmpty, isNil} from "../../utils/lang.ts";
 
 export type NumericString = string | number;
 export type RecordValue = string | number | symbol;

@@ -7,6 +7,8 @@ import {RoleService} from "../../../services/user/RoleService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {UserAuthority} from "../../../domain/model/user/user.ts";
 import {InputLabel} from "../../../components/io/input/InputLabel.tsx";
+import {useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../../app/query/queryKeys.ts";
 
 type AuthoritiesModalProps = {
     open: boolean;
@@ -21,6 +23,7 @@ const authorityService = AuthorityService.instance;
 const roleService = RoleService.instance;
 
 export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthorities, onSaved,}: AuthoritiesModalProps) => {
+    const queryClient = useQueryClient();
 
     const [authorities, setAuthorities] = useState<Page<UserAuthority>>(Pagination.empty<UserAuthority>());
     const [page, setPage] = useState(0);
@@ -81,6 +84,7 @@ export const AuthoritiesModal = ({open, onClose, roleName, roleId, initialAuthor
         if (toAssign.length) await roleService.assign(roleId, toAssign);
         if (toUnassign.length) await roleService.unassign(roleId, toUnassign);
         setIsLoading(false);
+        void queryClient.invalidateQueries({queryKey: queryKeys.roles.all});
         onSaved();
         onClose();
     };

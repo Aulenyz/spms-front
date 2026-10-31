@@ -1,9 +1,10 @@
-import {useForm} from "react-hook-form";
-import {useEffect} from "react";
+import {useForm, useWatch} from "react-hook-form";
+import {useEffect, useMemo, useRef} from "react";
 import {StudentStatus} from "../../student/Student.ts";
 import {SelectOption} from "../../../components/io/output/Select.tsx";
 import {UseForm} from "../../types/steoreotype.ts";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 
 const placeholders: Record<string, string> = {
     firstname: 'Ingrese el nombre',
@@ -53,32 +54,33 @@ export type StudentFilterFormValue = {
 
 export const StudentFilter = (props: { onFilter: (value: Record<string, string>) => void }) => {
 
-    const {register, watch, setValue}: UseForm<StudentFilterFormValue> = useForm<StudentFilterFormValue>({
+    const {register, control, setValue}: UseForm<StudentFilterFormValue> = useForm<StudentFilterFormValue>({
         defaultValues: {
             status: StudentStatus.ACTIVE,
             searchBy: 'document'
         },
         reValidateMode: 'onChange'
     });
+    const [status, searchBy, criteria] = useWatch({control, name: ['status', 'searchBy', 'criteria']});
 
-    const handleFilter = ({status, searchBy, criteria}: StudentFilterFormValue) => {
-        const filters: Record<string, string> = {status}
-        filters[searchBy] = criteria;
-        props.onFilter(filters);
-    }
-
-    useEffect(() => setValue('criteria', ''), [watch('status'), watch('searchBy')]);
-
+    // Al cambiar estado o campo de búsqueda se limpia el criterio (no en el montaje).
+    const mounted = useRef(false);
     useEffect(() => {
-        const timeout = window.setTimeout(() => {
-            handleFilter({
-                status: watch("status"),
-                searchBy: watch("searchBy"),
-                criteria: watch("criteria") ?? "",
-            });
-        }, 250);
-        return () => window.clearTimeout(timeout);
-    }, [watch("status"), watch("searchBy"), watch("criteria")]);
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
+        setValue('criteria', '');
+    }, [status, searchBy, setValue]);
+
+    const filters = useMemo(() => {
+        const value: Record<string, string> = {status};
+        // Criterio vacío no se envía: equivale al filtro inicial de la página.
+        if (criteria) value[searchBy] = criteria;
+        return value;
+    }, [status, searchBy, criteria]);
+
+    useFilterEmitter(filters, props.onFilter);
 
     return (
         <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
@@ -87,7 +89,7 @@ export const StudentFilter = (props: { onFilter: (value: Record<string, string>)
                     text="Estado"
                     hasError={false}
                     options={useStatusFilter}
-                    value={watch("status")}
+                    value={status}
                     onSelect={(value) => setValue("status", value as StudentStatus)}
                     className="w-full"
                 />
@@ -97,14 +99,14 @@ export const StudentFilter = (props: { onFilter: (value: Record<string, string>)
                     text="Buscar por"
                     hasError={false}
                     options={SearchByOptions}
-                    value={watch("searchBy")}
+                    value={searchBy}
                     onSelect={(value) => setValue("searchBy", String(value ?? "document"))}
                     className="w-full"
                 />
             </div>
             <label className="input input-sm w-full sm:w-56">
                 <i className="fa fa-user me-1"/>
-                <input placeholder={placeholders[watch('searchBy')]} type="text" {...register('criteria')}/>
+                <input placeholder={placeholders[searchBy]} type="text" {...register('criteria')}/>
             </label>
         </form>
     );

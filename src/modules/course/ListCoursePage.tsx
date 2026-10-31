@@ -1,11 +1,13 @@
-import {useEffect, useState} from "react";
+import {useCallback, useMemo, useState} from "react";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {Link} from "react-router-dom";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
 import {Course, GradeType} from "../../domain/model/course/Course.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {CourseService} from "../../services/course/CourseService.ts";
-import {PeriodService} from "../../services/period/PeriodService.ts";
+import {useCurrentPeriod} from "../../hooks/queries/useCurrentPeriod.ts";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {Pager} from "../../components/io/input/Pager.tsx";
 import {PageHeader} from "../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
@@ -15,42 +17,45 @@ import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 import {QuickCourseModal} from "./CourseQuickForms.tsx";
 
 const courseService = CourseService.instance;
-const periodService = PeriodService.instance;
+const EMPTY_PAGE: Page<Course> = Pagination.empty<Course>();
 
 export const ListCoursePage = () => {
+    const queryClient = useQueryClient();
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(10));
-    const [courses, setCourses]: State<Page<Course>> = useState(Pagination.empty<Course>());
     const [filters, setFilters] = useState<KeyValueOf<string>>({active: "true"});
-    const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
+    // undefined: usar el periodo actual; null: sin periodo; número: periodo elegido en el filtro.
+    const [chosenPeriodId, setChosenPeriodId] = useState<number | null | undefined>(undefined);
     const [showQuickCourse, setShowQuickCourse] = useState(false);
+    const currentPeriod = useCurrentPeriod({silent: true});
 
-    useEffect(() => {
-        periodService.current().then((period) => {
-            if (!period?.id) {
-                setSelectedPeriodId(null);
-                return;
-            }
-            setSelectedPeriodId(period.id);
-            setFilters((prev) => ({...prev, periodId: String(period.id)}));
-        }).catch(() => setSelectedPeriodId(null));
-    }, []);
+    const selectedPeriodId: number | null = chosenPeriodId !== undefined ? chosenPeriodId : (currentPeriod.data?.id ?? null);
+    const periodResolved: boolean = chosenPeriodId !== undefined || !currentPeriod.isPending || currentPeriod.fetchStatus === "idle";
 
-    useEffect(() => {
-        courseService.getAll(filters as any, pagination).then(setCourses);
-    }, [pagination, filters]);
+    const queryFilters: KeyValueOf<string> = useMemo(() => {
+        const {periodId: _ignored, ...rest} = filters;
+        void _ignored;
+        return selectedPeriodId ? {...rest, periodId: String(selectedPeriodId)} : rest;
+    }, [filters, selectedPeriodId]);
+
+    const {data: courses = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.courses.list({filters: queryFilters, pagination}),
+        queryFn: ({signal}) => courseService.withSignal(signal).getAll(queryFilters, pagination),
+        enabled: periodResolved,
+        placeholderData: keepPreviousData,
+    });
 
     const handlePageChange = (page: number) => setPagination((prev) => ({...prev, page}));
 
     const handlePageSizeChange = (size: number) => setPagination((prev) => ({...prev, page: 0, size}));
 
-    const handleUpdateFilter = (incoming: KeyValueOf<string>) => {
+    const handleUpdateFilter = useCallback((incoming: KeyValueOf<string>) => {
         const nextFilters = {...incoming};
 
         if (!incoming.periodId) {
             delete nextFilters.periodId;
-            setSelectedPeriodId(null);
+            setChosenPeriodId(null);
         } else {
-            setSelectedPeriodId(Number(incoming.periodId));
+            setChosenPeriodId(Number(incoming.periodId));
         }
 
         if (!incoming.specializationId) delete nextFilters.specializationId;
@@ -58,8 +63,8 @@ export const ListCoursePage = () => {
         nextFilters.active = String(incoming.active ?? true);
 
         setFilters(nextFilters);
-        handlePageChange(0);
-    };
+        setPagination((prev) => ({...prev, page: 0}));
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -129,7 +134,7 @@ export const ListCoursePage = () => {
                 )}
             </DataTableCard>
             <QuickCourseModal open={showQuickCourse} onClose={() => setShowQuickCourse(false)}
-                              onSaved={() => courseService.getAll(filters as any, pagination).then(setCourses)}/>
+                              onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.courses.all})}/>
         </div>
     );
 };

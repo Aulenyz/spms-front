@@ -1,5 +1,7 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {ListSubjectPage} from "./ListSubjectPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const ListSubjectPage = lazyPage(() => import("./ListSubjectPage.tsx"), "ListSubjectPage");
 
 export const SubjectRouting = () => {
     return (

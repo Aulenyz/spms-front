@@ -1,6 +1,8 @@
 import {Navigate, Route, Routes} from "react-router-dom";
-import {ListSpecializationPage} from "./ListSpecializationPage.tsx";
-import {SpecializationDetailsPage} from "./SpecializationDetailsPage.tsx";
+import {lazyPage} from "../../app/routing/lazyPage.ts";
+
+const ListSpecializationPage = lazyPage(() => import("./ListSpecializationPage.tsx"), "ListSpecializationPage");
+const SpecializationDetailsPage = lazyPage(() => import("./SpecializationDetailsPage.tsx"), "SpecializationDetailsPage");
 
 export const SpecializationRouting = () => {
     return (

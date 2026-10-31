@@ -1,4 +1,7 @@
-import {useEffect, useState} from "react";
+import {useCallback, useState} from "react";
+import {SPECIALIZATION_FILTER_DEFAULTS} from "../../domain/filters/specification/specializationFilterDefaults.ts";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {queryKeys} from "../../app/query/queryKeys.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Specialization} from "../../domain/model/course/Course.ts";
 import {Pager} from "../../components/io/input/Pager.tsx";
@@ -14,20 +17,20 @@ import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 
 const specializationService = SpecializationService.instance;
+const EMPTY_PAGE: Page<Specialization> = Pagination.empty<Specialization>();
 
 export const ListSpecializationPage = () => {
     const {hasAuthority} = useAuthContext();
     const [pagination, setPagination] = useState(Pagination.ofSize(8));
     const [showModal, setShowModal] = useState(false);
-    const [filters, setFilters] = useState<Record<string, any>>({
-        name: "",
-        type: "",
+    // Debe coincidir con SPECIALIZATION_FILTER_DEFAULTS: el filtro no emite su valor inicial.
+    const [filters, setFilters] = useState<Record<string, any>>(SPECIALIZATION_FILTER_DEFAULTS);
+    const queryClient = useQueryClient();
+    const {data: specializations = EMPTY_PAGE} = useQuery({
+        queryKey: queryKeys.specializations.list({filters, pagination}),
+        queryFn: ({signal}) => specializationService.withSignal(signal).getAll(filters, pagination),
+        placeholderData: keepPreviousData,
     });
-    const [specializations, setSpecializations] = useState<Page<Specialization>>(Pagination.empty<Specialization>());
-
-    useEffect(() => {
-        specializationService.getAll(filters, pagination).then(setSpecializations);
-    }, [pagination, filters]);
 
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({...prev, page}));
@@ -37,10 +40,10 @@ export const ListSpecializationPage = () => {
         setPagination((prev) => ({...prev, page: 0, size}));
     };
 
-    const handleFilters = (nextFilters: Record<string, any>) => {
+    const handleFilters = useCallback((nextFilters: Record<string, any>) => {
         setFilters(nextFilters);
         setPagination((prev) => ({...prev, page: 0}));
-    };
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -69,7 +72,10 @@ export const ListSpecializationPage = () => {
                                     onClose={() => setShowModal(false)}
                                     className="w-[400px] h-full z-[9999]"
                                 >
-                                    <SpecializationForm onSubmit={() => setShowModal(false)}/>
+                                    <SpecializationForm onSubmit={() => {
+                                        setShowModal(false);
+                                        void queryClient.invalidateQueries({queryKey: queryKeys.specializations.all});
+                                    }}/>
                                 </LeftModal>
                             </>
                         )}

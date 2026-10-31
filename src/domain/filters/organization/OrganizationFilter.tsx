@@ -1,8 +1,9 @@
-import {useEffect} from "react";
-import {useForm} from "react-hook-form";
+import {useMemo} from "react";
+import {useForm, useWatch} from "react-hook-form";
 import {DropdownSelect} from "../../../components/io/input/DropdownSelect.tsx";
 import {SelectOption} from "../../../components/io/output/Select.tsx";
 import {UseForm} from "../../types/steoreotype.ts";
+import {useFilterEmitter} from "../../../hooks/useFilterEmitter.ts";
 
 const searchOptions: SelectOption[] = [
     {description: "Nombre", value: "name"},
@@ -18,20 +19,17 @@ const statusOptions: SelectOption[] = [
 type OrganizationFilterValues = {active: string; searchBy: "name" | "document"; criteria: string};
 
 export const OrganizationFilter = ({onFilter}: {onFilter: (filters: Record<string, string>) => void}) => {
-    const {register, watch, setValue}: UseForm<OrganizationFilterValues> = useForm<OrganizationFilterValues>({defaultValues: {active: "", searchBy: "name", criteria: ""}});
-    const active = watch("active");
-    const searchBy = watch("searchBy");
-    const criteria = watch("criteria");
+    const {register, control, setValue}: UseForm<OrganizationFilterValues> = useForm<OrganizationFilterValues>({defaultValues: {active: "", searchBy: "name", criteria: ""}});
+    const [active, searchBy, criteria] = useWatch({control, name: ["active", "searchBy", "criteria"]});
 
-    useEffect(() => {
-        const timer = window.setTimeout(() => {
-            const filters: Record<string, string> = {};
-            if (active) filters.active = active;
-            if (criteria.trim()) filters[searchBy] = criteria.trim();
-            onFilter(filters);
-        }, 250);
-        return () => window.clearTimeout(timer);
-    }, [active, searchBy, criteria, onFilter]);
+    const filters = useMemo(() => {
+        const value: Record<string, string> = {};
+        if (active) value.active = active;
+        if (criteria?.trim()) value[searchBy] = criteria.trim();
+        return value;
+    }, [active, searchBy, criteria]);
+
+    useFilterEmitter(filters, onFilter);
 
     return <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
         <div className="w-full sm:w-[190px]"><DropdownSelect text="Estado" hasError={false} options={statusOptions} value={active} onSelect={(value) => setValue("active", String(value ?? ""))} className="w-full"/></div>

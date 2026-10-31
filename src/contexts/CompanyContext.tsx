@@ -1,4 +1,5 @@
-import {createContext, FC, ReactNode, useContext, useEffect, useState} from "react";
+import {createContext, FC, ReactNode, useCallback, useContext, useMemo, useState} from "react";
+import {readCompanyId} from "../services/BaseService.ts";
 import {StorageItem} from "../domain/types/StorageItem.ts";
 
 export interface CompanyContextValue {
@@ -16,27 +17,22 @@ const CompanyContext = createContext<CompanyContextValue>({
 });
 
 export const CompanyProvider: FC<{ children: ReactNode }> = ({children}) => {
-    const [rnc, setRncState] = useState<string | undefined>(undefined);
+    const [rnc, setRncState] = useState<string | undefined>(() => readCompanyId() || undefined);
 
-    useEffect(() => {
-        const storedRnc = localStorage.getItem(StorageItem.CompanyRNC);
-        if (storedRnc) {
-            setRncState(storedRnc);
-        }
-    }, []);
-
-    const setRnc = (value: string) => {
+    const setRnc = useCallback((value: string) => {
         localStorage.setItem(StorageItem.CompanyRNC, value);
         setRncState(value);
-    };
+    }, []);
 
-    const clearRnc = () => {
+    const clearRnc = useCallback(() => {
         localStorage.removeItem(StorageItem.CompanyRNC);
         setRncState(undefined);
-    };
+    }, []);
+
+    const value = useMemo(() => ({rnc, setRnc, clearRnc}), [rnc, setRnc, clearRnc]);
 
     return (
-        <CompanyContext.Provider value={{rnc, setRnc, clearRnc}}>
+        <CompanyContext.Provider value={value}>
             {children}
         </CompanyContext.Provider>
     );
