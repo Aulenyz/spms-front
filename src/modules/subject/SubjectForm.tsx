@@ -27,7 +27,7 @@ export const SubjectForm = ({
 
     const isEdit = Boolean(initial?.id);
 
-    // La IA escribe la descripción a partir del nombre solo cuando se pulsa el botón.
+    // La IA escribe el código y la descripción a partir del nombre solo cuando se pulsa el botón.
     const {data: assistant} = useQuery({
         queryKey: ["assistant", "status"],
         queryFn: ({signal}) => AssistantService.instance.withSignal(signal).status(),
@@ -36,15 +36,19 @@ export const SubjectForm = ({
     });
     const [suggesting, setSuggesting] = useState(false);
     const [suggested, setSuggested] = useState(false);
+    // El código solo se reemplaza si está vacío o lo puso la IA; uno escrito a mano se respeta.
+    const [codeFromAi, setCodeFromAi] = useState(false);
     const canSuggest = Boolean(assistant?.enabled) && values.name.trim().length >= 3;
 
     const suggest = async () => {
         if (!canSuggest) return;
         setSuggesting(true);
         try {
-            const {description} = await AssistantService.instance.describe("subject", values.name.trim());
-            setValues((prev) => ({...prev, description}));
-            setErrors((prev) => ({...prev, description: undefined}));
+            const {description, code} = await AssistantService.instance.describe("subject", values.name.trim());
+            const fillCode = Boolean(code) && (!values.code.trim() || codeFromAi);
+            setValues((prev) => ({...prev, description, code: fillCode ? code! : prev.code}));
+            setErrors((prev) => ({...prev, description: undefined, code: fillCode ? undefined : prev.code}));
+            if (fillCode) setCodeFromAi(true);
             setSuggested(true);
         } catch {
             // Si la IA no responde, la descripción se escribe a mano.
@@ -176,7 +180,10 @@ export const SubjectForm = ({
                         placeholder="Código corto"
                         value={values.code}
                         maxLength={24}
-                        onChange={(event) => setField("code", event.target.value)}
+                        onChange={(event) => {
+                            setField("code", event.target.value);
+                            setCodeFromAi(false);
+                        }}
                     />
                 </label>
                 {errors.code && <p className="mt-1 text-xs font-semibold text-red-500">{errors.code}</p>}
@@ -200,7 +207,7 @@ export const SubjectForm = ({
                     />
                     {assistant?.enabled && (
                         <button type="button" className="btn btn-sm btn-square shrink-0" disabled={!canSuggest || suggesting}
-                                title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir descripción con IA"
+                                title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir código y descripción con IA"
                                 onClick={() => void suggest()}>
                             <i className={`fa ${suggesting ? "fa-spinner fa-spin" : "fa-wand-magic-sparkles"}`} style={{color: "var(--accent)"}}/>
                         </button>
@@ -208,7 +215,7 @@ export const SubjectForm = ({
                 </div>
                 {(suggesting || suggested) && (
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
-                        {suggesting ? "La IA está escribiendo la descripción…" : "Sugerida por IA; puedes editarla."}
+                        {suggesting ? "La IA está escribiendo…" : codeFromAi ? "Código y descripción sugeridos por IA; puedes editarlos." : "Sugerida por IA; puedes editarla."}
                     </p>
                 )}
                 {errors.description && <p className="mt-1 text-xs font-semibold text-red-500">{errors.description}</p>}
