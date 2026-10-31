@@ -1,7 +1,6 @@
 import {useCallback, useState} from "react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {useNavigate} from "react-router-dom";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {CourseTemplate} from "../../../domain/model/course/Course.ts";
@@ -14,12 +13,12 @@ import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {CourseTemplateBreadcrumb} from "../../breadcrumb/CourseTemplateBreadcrumb.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
+import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
 
 const courseTemplateService: CourseTemplateService = CourseTemplateService.instance;
 const EMPTY_PAGE: Page<CourseTemplate> = Pagination.empty<CourseTemplate>();
 
 export const ListCourseTemplatePage = () => {
-    const navigate = useNavigate();
     const [pagination, setPagination] = useState(Pagination.first);
     const [showCreate, setShowCreate] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
@@ -76,7 +75,7 @@ export const ListCourseTemplatePage = () => {
                             <th scope="col">Tipo</th>
                             <th scope="col">Secciones</th>
                             <th scope="col">Área especializada</th>
-                            <th scope="col" className="text-right">Acciones</th>
+                            <th scope="col"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -87,13 +86,7 @@ export const ListCourseTemplatePage = () => {
                                 <td>{template.count}</td>
                                 <td>{template.specialization?.name ?? "Sin área especializada"}</td>
                                 <td className="text-right">
-                                    <button
-                                        className="btn btn-xs"
-                                        onClick={() => navigate(`/courses/templates/${template.id}`)}
-                                    >
-                                        Detalles
-                                        <i className="fa fa-arrow-right ms-2"/>
-                                    </button>
+                                    <TableDetailAction to={`/courses/templates/${template.id}`}/>
                                 </td>
                             </tr>
                         ))}
