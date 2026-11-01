@@ -13,9 +13,16 @@ const errorMessage = (error: unknown, fallback: string): string => {
     return typeof message === "string" && message.trim() ? message : fallback;
 };
 
+const CHANNEL_ICON: Record<string, string> = {
+    WEB: "fa-desktop",
+    TEACHER_APP: "fa-mobile-screen-button",
+};
+
 /**
- * Apps que el administrador habilita a este usuario en la organización activa. La app de profesores solo se
- * puede habilitar si su rol tiene el permiso de docente; al quitarla, deja de poder entrar en la siguiente petición.
+ * Apps que el administrador habilita a este usuario en la organización activa (panel web, app de profesores).
+ * Nadie entra a una app que no tenga habilitada; al habilitarla, el usuario recibe un correo. La app de profesores
+ * solo se puede habilitar si su rol tiene el permiso de docente; al quitar una app, deja de poder entrar en la
+ * siguiente petición.
  */
 export const UserChannelsSection = ({userId}: {userId: number | string}) => {
     const [channels, setChannels] = useState<UserChannel[]>([]);
@@ -37,7 +44,7 @@ export const UserChannelsSection = ({userId}: {userId: number | string}) => {
                 ? await userService.grantChannel(userId, channel.key)
                 : await userService.revokeChannel(userId, channel.key);
             setChannels((current) => current.map((item) => item.key === updated.key ? updated : item));
-            toast.success(enabled ? `${channel.name} habilitada.` : `${channel.name} deshabilitada.`);
+            toast.success(enabled ? `${channel.name} habilitada. Le enviamos un correo al usuario.` : `${channel.name} deshabilitada.`);
         } catch (error) {
             toast.error(errorMessage(error, "No se pudo actualizar el acceso."));
         } finally {
@@ -49,7 +56,7 @@ export const UserChannelsSection = ({userId}: {userId: number | string}) => {
 
     return (
         <DetailSection title="Aplicaciones"
-                       description="Apps a las que este usuario puede entrar en esta organización.">
+                       description="Apps a las que este usuario puede entrar en esta organización. Al habilitar una, le llega un correo.">
             {loading ? (
                 <p className="text-sm" style={{color: "var(--text-tertiary)"}}>Cargando...</p>
             ) : (
@@ -62,7 +69,7 @@ export const UserChannelsSection = ({userId}: {userId: number | string}) => {
                                 <div className="flex min-w-0 gap-3">
                                     <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
                                           style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
-                                        <i className="fa fa-mobile-screen-button"/>
+                                        <i className={`fa ${CHANNEL_ICON[channel.key] ?? "fa-grip"}`}/>
                                     </span>
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
