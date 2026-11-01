@@ -128,8 +128,4 @@ export class AccountService extends BaseService<AccountBalance> {
     settings(): Promise<BillingSettings> {
         return this.get<BillingSettings>("/settings");
     }
-
-    runRecurring(): Promise<{invoices: number; overdue: number}> {
-        return this.post<{invoices: number; overdue: number}>("/recurring/run");
-    }
 }

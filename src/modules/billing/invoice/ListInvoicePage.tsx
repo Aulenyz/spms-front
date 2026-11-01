@@ -1,9 +1,8 @@
 import {useEffect, useState} from "react";
-import {keepPreviousData, useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
-import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {InvoiceService, AccountService} from "../../../services/billing/BillingService.ts";
+import {InvoiceService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {Invoice, InvoiceStatus, InvoiceStatusLabel, invoiceLink} from "../../../domain/billing/Invoice.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
@@ -25,7 +24,6 @@ export const ListInvoicePage = () => {
     const {hasAuthority} = useAuthContext();
     const canCreate = hasAuthority(AuthorityKey.INVOICE_CREATE);
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     // ?q=NÚMERO llega desde otros enlaces: filtra por ese número y lo abre.
     const [searchParams] = useSearchParams();
     const linked = searchParams.get("q") ?? "";
@@ -54,18 +52,6 @@ export const ListInvoicePage = () => {
     }, [invoices, linked]);
     const loading = invoicesQuery.isPending || (invoicesQuery.isFetching && invoicesQuery.isPlaceholderData);
 
-    const recurring = useMutation({
-        mutationFn: () => AccountService.instance.runRecurring(),
-        onSuccess: (result) => {
-            toast.success(result.invoices > 0
-                ? `Se generaron ${result.invoices} facturas de cobros recurrentes.`
-                : "No hay cobros recurrentes pendientes por facturar.");
-            void queryClient.invalidateQueries({queryKey: queryKeys.invoices.all});
-            void queryClient.invalidateQueries({queryKey: queryKeys.accounts.all});
-        },
-        onError: (error) => toast.error((error as {message?: string})?.message ?? "No se pudieron generar los cobros."),
-    });
-
     const resetPage = () => setPagination((current) => ({...current, page: 0}));
 
     return (
@@ -74,16 +60,9 @@ export const ListInvoicePage = () => {
                 title="Facturas emitidas"
                 description="Todo lo que se ha cobrado a los estudiantes: inscripciones, mensualidades y ventas."
                 actions={canCreate ? (
-                    <>
-                        <button type="button" className="btn btn-sm" disabled={recurring.isPending} onClick={() => recurring.mutate()}
-                                title="Factura ahora los conceptos de cobro automático que ya vencieron">
-                            {recurring.isPending ? <i className="fa fa-spinner fa-spin"/> : <i className="fa fa-rotate"/>}
-                            Generar cobros pendientes
-                        </button>
-                        <button type="button" className="btn btn-sm btn-primary" onClick={() => setCreating(true)}>
-                            <i className="fa fa-plus"/>Nueva factura
-                        </button>
-                    </>
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => setCreating(true)}>
+                        <i className="fa fa-plus"/>Nueva factura
+                    </button>
                 ) : undefined}
             />
 
