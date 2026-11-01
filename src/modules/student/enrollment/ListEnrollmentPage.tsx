@@ -4,8 +4,10 @@ import {EnrollmentService} from "../../../services/student/enrollment/Enrollment
 import {useCurrentPeriod} from "../../../hooks/queries/useCurrentPeriod.ts";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
-import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
+import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {EnrollmentStatusPill} from "../../../components/io/output/pill/EnrollmentStatusPill.tsx";
+import {GradeTypePill} from "../../../components/io/output/pill/GradeTypePill.tsx";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {EnrollmentBreadcrumb} from "../../breadcrumb/EnrollmentBreadcrumb.tsx";
 import {EnrollmentFilter} from "../../../domain/filters/student/EnrollmentFilter.tsx";
@@ -95,18 +97,16 @@ export const ListEnrollmentPage = () => {
                     <tr>
                         <th scope="col">Fecha</th>
                         <th scope="col">Documento</th>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Apellido</th>
+                        <th scope="col">Estudiante</th>
                         <th scope="col">Curso</th>
                         <th scope="col">Estado</th>
-                        <th scope="col"></th>
                     </tr>
                     </thead>
 
                     {!isPageLoading && enrollments.content.length === 0 ? (
                         <tbody>
                         <tr>
-                            <td colSpan={7}>
+                            <td colSpan={5}>
                                 <EmptyState
                                     title="No se encontraron inscripciones"
                                     description="Ajusta el periodo o el estado para mostrar otros registros."
@@ -121,18 +121,26 @@ export const ListEnrollmentPage = () => {
                             <tr key={enrollment.id}>
                                 <td>{enrollment.date ? new Date(enrollment.date).toLocaleDateString() : "---"}</td>
                                 <td><strong>{enrollment.student.document}</strong></td>
-                                <td>{enrollment.student.firstname}</td>
-                                <td>{enrollment.student.lastname}</td>
                                 <td>
-                                    {enrollment.course.name} {enrollment.course.division}
-                                    {enrollment.course.specialization?.name && (
-                                        <span className="block text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
-                                    )}
+                                    {/* Lleva a la ficha del estudiante (su estado de cuenta) */}
+                                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${enrollment.student.id}`}
+                                                   title="Ver estado de cuenta del estudiante"
+                                                   className="font-semibold hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-primary)"}}>
+                                        {[enrollment.student.firstname, enrollment.student.lastname].filter(Boolean).join(" ")}
+                                    </PermittedLink>
+                                </td>
+                                <td>
+                                    <span className="font-semibold" style={{color: "var(--text-primary)"}}>
+                                        {enrollment.course.name} {enrollment.course.division}
+                                    </span>
+                                    <span className="mt-1 flex flex-wrap items-center gap-2">
+                                        {enrollment.course.type && <GradeTypePill type={enrollment.course.type}/>}
+                                        {enrollment.course.specialization?.name && (
+                                            <span className="text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
+                                        )}
+                                    </span>
                                 </td>
                                 <td><EnrollmentStatusPill status={enrollment.status}/></td>
-                                <td className="text-right">
-                                    <TableDetailAction to={`/enrollments/${enrollment.id}`}/>
-                                </td>
                             </tr>
                         ))}
                         </tbody>
