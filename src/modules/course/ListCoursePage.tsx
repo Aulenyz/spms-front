@@ -121,10 +121,10 @@ export const ListCoursePage = () => {
                                 <div className="mt-4 border-t pt-3" style={{borderColor: "var(--border-soft)"}}>
                                     <div className="flex items-center justify-between gap-2">
                                         <GradeTypePill type={course.type as GradeType}/>
-                                        <span
-                                            className="flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:translate-x-0.5"
-                                            style={{background: "var(--surface-muted)", color: "var(--accent)"}}>
-                                            <i className="fa fa-chevron-right text-[10px]"/>
+                                        {/* Mismo "Detalles" que en Estudiantes; toda la tarjeta abre el detalle. */}
+                                        <span className="table-link whitespace-nowrap text-sm">
+                                            Detalles
+                                            <i className="fa fa-chevron-right text-2xs transition-transform group-hover:translate-x-0.5"/>
                                         </span>
                                     </div>
                                 </div>

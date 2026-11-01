@@ -1,7 +1,6 @@
 import {useCallback, useState} from "react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {useNavigate} from "react-router-dom";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {CourseTemplate} from "../../../domain/model/course/Course.ts";
@@ -14,17 +13,19 @@ import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {CourseTemplateBreadcrumb} from "../../breadcrumb/CourseTemplateBreadcrumb.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
+import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
+import {CourseActivePill} from "../../../components/io/output/pill/CourseActivePill.tsx";
 
 const courseTemplateService: CourseTemplateService = CourseTemplateService.instance;
 const EMPTY_PAGE: Page<CourseTemplate> = Pagination.empty<CourseTemplate>();
 
 export const ListCourseTemplatePage = () => {
-    const navigate = useNavigate();
     const [pagination, setPagination] = useState(Pagination.first);
     const [showCreate, setShowCreate] = useState(false);
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
         type: "",
+        active: "true",
     });
     const queryClient = useQueryClient();
     const {data: courseTemplates = EMPTY_PAGE} = useQuery({
@@ -49,23 +50,23 @@ export const ListCourseTemplatePage = () => {
     return (
         <div className="space-y-6">
             <PageHeader
-                eyebrow="Configuración"
-                title="Plantillas de cursos"
-                description="Gestiona las plantillas base usadas para organizar cursos, niveles y estructuras académicas."
+                eyebrow="Configuración académica"
+                title="Cursos base"
+                description="Define cada curso con sus secciones y materias; con ellos se generan los cursos de cada período."
             />
 
             <CourseTemplateBreadcrumb onCreate={() => setShowCreate(true)}/>
 
             <DataTableCard
                 title="Listado"
-                description="Filtra por nombre o tipo para localizar rapidamente una plantilla."
+                description="Filtra por nombre o tipo para localizar rápidamente un curso base."
                 filters={<CourseTemplateFilter onFilter={handleFilters}/>}
                 footer={<Pager onChange={handlePageChange} onPageSizeChange={handlePageSizeChange} page={courseTemplates}/>}
             >
                 {courseTemplates.content.length === 0 ? (
                     <EmptyState
-                        title="No hay plantillas de cursos"
-                        description="Crea una nueva plantilla o ajusta los filtros para continuar."
+                        title="No hay cursos base"
+                        description="Crea un curso base o ajusta los filtros para continuar."
                         icon="fa-layer-group"
                     />
                 ) : (
@@ -76,24 +77,20 @@ export const ListCourseTemplatePage = () => {
                             <th scope="col">Tipo</th>
                             <th scope="col">Secciones</th>
                             <th scope="col">Área especializada</th>
-                            <th scope="col" className="text-right">Acciones</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col"></th>
                         </tr>
                         </thead>
                         <tbody>
                         {courseTemplates.content.map((template) => (
                             <tr key={template.id}>
-                                <td><strong>{template.name ?? "Plantilla"}</strong></td>
+                                <td><strong>{template.name ?? "Curso base"}</strong></td>
                                 <td><GradeTypePill type={template.type}/></td>
                                 <td>{template.count}</td>
                                 <td>{template.specialization?.name ?? "Sin área especializada"}</td>
+                                <td><CourseActivePill active={template.active !== false}/></td>
                                 <td className="text-right">
-                                    <button
-                                        className="btn btn-xs"
-                                        onClick={() => navigate(`/courses/templates/${template.id}`)}
-                                    >
-                                        Detalles
-                                        <i className="fa fa-arrow-right ms-2"/>
-                                    </button>
+                                    <TableDetailAction to={`/courses/templates/${template.id}`}/>
                                 </td>
                             </tr>
                         ))}
@@ -103,7 +100,7 @@ export const ListCourseTemplatePage = () => {
             </DataTableCard>
 
             <LeftModal
-                title="Nuevo curso"
+                title="Nuevo curso base"
                 isOpen={showCreate}
                 onClose={() => setShowCreate(false)}
                 className="w-[420px] h-full z-[9999]"

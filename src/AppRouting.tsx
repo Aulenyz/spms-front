@@ -1,5 +1,7 @@
 import {Suspense} from "react";
 import {Navigate, Route, Routes, useLocation} from "react-router-dom";
+import {RequireAuthority} from "./components/auth/RequireAuthority.tsx";
+import {AuthorityKey} from "./domain/model/user/authorities.ts";
 import {lazyPage} from "./app/routing/lazyPage.ts";
 import {RouteErrorBoundary} from "./app/routing/RouteErrorBoundary.tsx";
 import {LoadingPage} from "./components/io/output/LoadingPage.tsx";
@@ -15,15 +17,15 @@ const Error403 = lazyPage(() => import("./modules/errors/components/Error403.tsx
 const Error503 = lazyPage(() => import("./modules/errors/components/Error503.tsx"), "Error503");
 const StudentRouting = lazyPage(() => import("./modules/student/StudentRouting.tsx"), "StudentRouting");
 const EnrollmentRouting = lazyPage(() => import("./modules/student/enrollment/EnrollmentRouting.tsx"), "EnrollmentRouting");
-const PaymentRouting = lazyPage(() => import("./modules/payment/PaymentRouting.tsx"), "PaymentRouting");
+const ReceiptRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "ReceiptRouting");
+const InvoiceRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "InvoiceRouting");
+const AccountRouting = lazyPage(() => import("./modules/billing/BillingRouting.tsx"), "AccountRouting");
 const SpecializationRouting = lazyPage(() => import("./modules/specialization/SpecializationRouting.tsx"), "SpecializationRouting");
 const UserListPage = lazyPage(() => import("./modules/user/UserListPage.tsx"), "UserListPage");
 const UserOptionsPage = lazyPage(() => import("./modules/user/tabs/UserOptionsPage.tsx"), "UserOptionsPage");
 const RoleListPage = lazyPage(() => import("./modules/user/role/RoleListPage.tsx"), "RoleListPage");
 const AuthorityListPage = lazyPage(() => import("./modules/user/authority/AuthorityListPage.tsx"), "AuthorityListPage");
 const ListCourseTemplatePage = lazyPage(() => import("./modules/course/template/ListCourseTemplatePage.tsx"), "ListCourseTemplatePage");
-const ListPriceTemplatePage = lazyPage(() => import("./modules/course/template/ListPriceTemplatePage.tsx"), "ListPriceTemplatePage");
-const ListMaterialTemplatePage = lazyPage(() => import("./modules/course/template/ListMaterialTemplatePage.tsx"), "ListMaterialTemplatePage");
 const CourseTemplateDetailsPage = lazyPage(() => import("./modules/course/template/CourseTemplateDetailsPage.tsx"), "CourseTemplateDetailsPage");
 const SpecializationForm = lazyPage(() => import("./modules/specialization/create/SpecializationForm.tsx"), "SpecializationForm");
 const UserInvitationListPage = lazyPage(() => import("./modules/user/invitation/UserInvitationListPage.tsx"), "UserInvitationListPage");
@@ -45,14 +47,16 @@ export const AppRouting = () => {
         <Routes>
             <Route path="/" element={<MainLayout/>}>
                 <Route path="home/*" element={<HomeRouting/>}/>
-                <Route path="students/*" element={<StudentRouting/>}/>
-                <Route path="enrollments/*" element={<EnrollmentRouting/>}/>
-                <Route path="payments/*" element={<PaymentRouting/>}/>
+                <Route path="students/*" element={<RequireAuthority authority={AuthorityKey.STUDENTS_VIEW}><StudentRouting/></RequireAuthority>}/>
+                <Route path="enrollments/*" element={<RequireAuthority authority={AuthorityKey.ENROLLMENTS_VIEW}><EnrollmentRouting/></RequireAuthority>}/>
+                <Route path="payments/*" element={<RequireAuthority authority={AuthorityKey.PAYMENTS_VIEW}><ReceiptRouting/></RequireAuthority>}/>
+                <Route path="invoices/*" element={<RequireAuthority authority={AuthorityKey.INVOICES_VIEW}><InvoiceRouting/></RequireAuthority>}/>
+                <Route path="accounts/*" element={<RequireAuthority authority={AuthorityKey.INVOICES_VIEW}><AccountRouting/></RequireAuthority>}/>
                 <Route path="courses/*" element={<CourseRouting/>}/>
                 <Route path="subjects/*" element={<SubjectRouting/>}/>
                 <Route path="help" element={<HelpCenterPage/>}/>
-                <Route path="catalog/*" element={<CatalogRouting/>}/>
-                <Route path="guardians/*" element={<GuardianRouting/>}/>
+                <Route path="catalog/*" element={<RequireAuthority authority={AuthorityKey.CATALOG_VIEW}><CatalogRouting/></RequireAuthority>}/>
+                <Route path="guardians/*" element={<RequireAuthority authority={AuthorityKey.GUARDIANS_VIEW}><GuardianRouting/></RequireAuthority>}/>
                 <Route path="specializations/*" element={<SpecializationRouting/>}/>
                 <Route path="specializations/create" element={<SpecializationForm/>}/>
                 <Route path="/users" element={<UserOptionsPage/>}>
@@ -61,18 +65,16 @@ export const AppRouting = () => {
                     <Route path="authorities" element={<AuthorityListPage/>}/>
                     <Route path="invitations" element={<UserInvitationListPage/>}/>
                 </Route>
-                <Route path="/users/:id" element={<UserDetailsPage/>}/>
+                <Route path="/users/:id" element={<RequireAuthority authority={AuthorityKey.USER_DETAILS_VIEW}><UserDetailsPage/></RequireAuthority>}/>
                 <Route path="/users/roles/:id" element={<RoleDetailsPage/>}/>
-                <Route path="/organizations" element={<OrganizationListPage/>}/>
-                <Route path="/organizations/:id" element={<OrganizationDetailsPage/>}/>
+                <Route path="/organizations" element={<RequireAuthority authority={AuthorityKey.ORGANIZATIONS_VIEW}><OrganizationListPage/></RequireAuthority>}/>
+                <Route path="/organizations/:id" element={<RequireAuthority authority={AuthorityKey.ORGANIZATIONS_VIEW}><OrganizationDetailsPage/></RequireAuthority>}/>
 
                 {/* Full details screen (outside templates tabs) */}
                 <Route path="/courses/templates/:id" element={<CourseTemplateDetailsPage/>}/>
 
                 {/* Templates as separate screens (no tabs). */}
                 <Route path="/courses/templates" element={<ListCourseTemplatePage/>}/>
-                <Route path="/courses/templates/prices" element={<ListPriceTemplatePage/>}/>
-                <Route path="/courses/templates/materials" element={<ListMaterialTemplatePage/>}/>
             </Route>
 
             <Route path="/auth/*" element={<AuthPage/>}/>

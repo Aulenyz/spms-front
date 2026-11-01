@@ -70,8 +70,21 @@ export const queryKeys = {
         list: (params: unknown) => ['product-categories', 'list', params] as const,
         totals: ['product-categories', 'totals'] as const,
     },
+    invoices: {
+        all: ['invoices'] as const,
+        list: (params: unknown) => ['invoices', 'list', params] as const,
+        open: (studentId?: number) => ['invoices', 'open', studentId ?? null] as const,
+        details: (id: number | string) => ['invoices', 'details', String(id)] as const,
+    },
+    accounts: {
+        all: ['accounts'] as const,
+        list: (params: unknown) => ['accounts', 'list', params] as const,
+        statement: (studentId: number | string) => ['accounts', 'statement', String(studentId)] as const,
+        summary: ['accounts', 'summary'] as const,
+    },
     payments: {
         all: ['payments'] as const,
+        details: (id: number | string) => ['payments', 'details', String(id)] as const,
         list: (params: unknown) => ['payments', 'list', params] as const,
         totals: (periodId?: number) => ['payments', 'totals', periodId ?? null] as const,
     },
@@ -79,5 +92,6 @@ export const queryKeys = {
         all: ['enrollments'] as const,
         list: (params: unknown) => ['enrollments', 'list', params] as const,
         totals: (periodId?: number) => ['enrollments', 'totals', periodId ?? null] as const,
+        preview: (studentId?: number, courseId?: number) => ['enrollments', 'preview', studentId ?? null, courseId ?? null] as const,
     },
 };

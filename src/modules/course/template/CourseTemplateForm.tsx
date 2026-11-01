@@ -91,17 +91,17 @@ export const CourseTemplateForm = ({
 
             if (isEdit) {
                 await courseTemplateService.update(initial?.id, payload);
-                toast.success("Plantilla actualizada.");
+                toast.success("Curso base actualizado.");
             } else {
                 await courseTemplateService.create("", payload);
-                toast.success("Plantilla creada.");
+                toast.success("Curso base creado.");
             }
 
             onSaved?.();
             onDone();
         } catch (error) {
             const message = (error as {message?: string})?.message;
-            toast.error(message?.trim() || "No se pudo guardar la plantilla.");
+            toast.error(message?.trim() || "No se pudo guardar el curso base.");
         } finally {
             setSubmitting(false);
         }

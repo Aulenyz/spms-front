@@ -2,7 +2,6 @@ import {useCallback, useState} from "react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {toast} from "react-toastify";
 import {ProductFilter, ProductFilterValues} from "../../../domain/filters/product/ProductFilter.tsx";
 import {PRODUCT_FILTER_DEFAULTS} from "../../../domain/filters/product/productFilterDefaults.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
@@ -67,14 +66,6 @@ export const ListProductPage = () => {
         setPagination((current) => ({...current, ...sort, page: 0}));
     }, []);
 
-    const exportProducts = async () => {
-        try {
-            await productService.export(filters);
-        } catch (error) {
-            toast.error((error as {message?: string})?.message || "No se pudo exportar el listado de conceptos.");
-        }
-    };
-
     return (
         <div className="space-y-6">
             <PageHeader
@@ -82,23 +73,13 @@ export const ListProductPage = () => {
                 description="Lo que el colegio cobra a sus estudiantes: inscripción, mensualidades, transporte, libros y más, con su precio y cómo se cobra."
             />
 
-            <ProductActions counts={statusCounts} onExport={exportProducts}
+            <ProductActions counts={statusCounts} onExport={() => productService.exportExcel(filters)}
                             onCreate={canEdit ? () => setShowForm(true) : undefined}/>
-
-            <section
-                className="rounded-[24px] border p-4 sm:p-5"
-                style={{
-                    borderColor: "var(--border-soft)",
-                    background: "var(--surface)",
-                    boxShadow: "var(--shadow-card)",
-                }}
-            >
-                <ProductFilter onFilter={handleFilters}/>
-            </section>
 
             <DataTableCard
                 title="Conceptos registrados"
                 description="Abre un concepto para ver su detalle, cambiar su precio o editar cómo se cobra."
+                filters={<ProductFilter onFilter={handleFilters}/>}
                 footer={!loading ? (
                     <Pager
                         page={products}

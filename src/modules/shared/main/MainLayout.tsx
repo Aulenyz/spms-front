@@ -8,14 +8,23 @@ import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {RouteErrorBoundary} from "../../../app/routing/RouteErrorBoundary.tsx";
 import {resolveRouteAuthority} from "../../../app/security/routeAuthorities.ts";
 import {resolveFirstAuthorizedPath, resolveRouteTone} from "../../../app/navigation/menu.ts";
+import {AssistantChat} from "../../assistant/AssistantChat.tsx";
 
 const resolvePageMeta = (pathname: string) => {
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
-        return {title: "Detalles", subtitle: "Plantillas de cursos"};
+        return {title: "Detalles", subtitle: "Cursos base"};
     }
 
     if (pathname.startsWith("/payments")) {
         return {title: "Pagos recibidos", subtitle: "Finanzas"};
+    }
+
+    if (pathname.startsWith("/invoices")) {
+        return {title: "Facturas emitidas", subtitle: "Finanzas"};
+    }
+
+    if (pathname.startsWith("/accounts")) {
+        return /^\/accounts\/\d+/.test(pathname) ? {title: "Estado de cuenta", subtitle: "Estados de cuenta"} : {title: "Estados de cuenta", subtitle: "Finanzas"};
     }
 
     if (pathname.startsWith("/students")) {
@@ -35,6 +44,10 @@ const resolvePageMeta = (pathname: string) => {
         if (pathname.startsWith("/catalog/categories")) return {title: "Categorías de pago", subtitle: "Finanzas"};
         if (pathname.startsWith("/catalog/taxes")) return {title: "Impuestos", subtitle: "Finanzas"};
         return {title: "Conceptos de pago", subtitle: "Finanzas"};
+    }
+
+    if (pathname.startsWith("/courses/templates")) {
+        return {title: "Cursos base", subtitle: "Configuración académica"};
     }
 
     if (pathname.startsWith("/courses")) {
@@ -62,13 +75,7 @@ const resolvePageMeta = (pathname: string) => {
     }
 
     if (pathname.startsWith("/guardians")) {
-        return /^\/guardians\/\d+/.test(pathname)
-            ? {title: "Detalles", subtitle: "Padres / Tutores"}
-            : {title: "Padres / Tutores", subtitle: "Administración"};
-    }
-
-    if (pathname.startsWith("/courses/templates")) {
-        return {title: "Plantillas", subtitle: "Configuración base"};
+        return {title: "Representantes", subtitle: "Administración"};
     }
 
     return {title: "Panel", subtitle: "Resumen operativo"};
@@ -78,8 +85,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     // Breadcrumbs are hierarchical for navigation (no "volver" wording).
     if (/^\/courses\/templates\/\d+/.test(pathname)) {
         return [
-            {label: "Plantillas", to: "/courses/templates"},
-            {label: "Cursos", to: "/courses/templates"},
+            {label: "Cursos base", to: "/courses/templates"},
             {label: "Detalles", to: pathname},
         ];
     }
@@ -87,13 +93,6 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
     if (/^\/courses\/\d+/.test(pathname)) {
         return [
             {label: "Cursos", to: "/courses/list"},
-            {label: "Detalles", to: pathname},
-        ];
-    }
-
-    if (/^\/specializations\/\d+/.test(pathname)) {
-        return [
-            {label: "Áreas especializadas", to: "/specializations/list"},
             {label: "Detalles", to: pathname},
         ];
     }
@@ -113,18 +112,9 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         ];
     }
 
-    if (/^\/guardians\/\d+/.test(pathname)) {
-        return [
-            {label: "Padres / Tutores", to: "/guardians/list"},
-            {label: "Detalles", to: pathname},
-        ];
-    }
 
     if (pathname.startsWith("/courses/templates")) {
-        if (pathname === "/courses/templates") return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: "/courses/templates"}];
-        if (pathname.startsWith("/courses/templates/prices")) return [{label: "Plantillas", to: "/courses/templates"}, {label: "Precios", to: pathname}];
-        if (pathname.startsWith("/courses/templates/materials")) return [{label: "Plantillas", to: "/courses/templates"}, {label: "Materiales", to: pathname}];
-        return [{label: "Plantillas", to: "/courses/templates"}, {label: "Cursos", to: pathname}];
+        return [{label: "Cursos base", to: "/courses/templates"}];
     }
 
     if (pathname.startsWith("/courses")) {
@@ -141,12 +131,16 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         return [{label: "Conceptos de pago", to: pathname}];
     }
 
-    if (pathname.startsWith("/payments")) return [{label: "Pagos recibidos", to: pathname}];
+    if (pathname.startsWith("/payments")) return [{label: "Pagos recibidos", to: "/payments/list"}];
+    if (pathname.startsWith("/invoices")) return [{label: "Facturas emitidas", to: "/invoices/list"}];
+    if (pathname.startsWith("/accounts")) {
+        if (pathname === "/accounts/list") return [{label: "Estados de cuenta", to: pathname}];
+        return [{label: "Estados de cuenta", to: "/accounts/list"}, {label: "Estado de cuenta", to: pathname}];
+    }
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
     if (pathname.startsWith("/students")) return [{label: "Estudiantes", to: pathname}];
     if (pathname.startsWith("/guardians")) {
-        if (pathname === "/guardians/list") return [{label: "Padres / Tutores", to: "/guardians/list"}];
-        return [{label: "Padres / Tutores", to: "/guardians/list"}, {label: "Detalles", to: pathname}];
+        return [{label: "Representantes", to: "/guardians/list"}];
     }
     if (pathname.startsWith("/users")) {
         if (pathname === "/users") return [{label: "Gestión de usuarios", to: "/users"}, {label: "Usuarios", to: "/users"}];
@@ -221,6 +215,7 @@ export const MainLayout = () => {
                     </div>
                 </main>
             </div>
+            <AssistantChat/>
         </div>
     );
 };

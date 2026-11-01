@@ -18,11 +18,14 @@ import {DetailHeader} from "../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {Badge, StatusBadge} from "../../components/ui/detail/StatusBadge.tsx";
 import {CourseAssignmentModal} from "./CourseQuickForms.tsx";
+import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
+import {describeSlots} from "./template/schedule.ts";
 
-type TabKey = "subjects" | "students";
+type TabKey = "subjects" | "schedule" | "students";
 
 const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
     {key: "subjects", label: "Materias y profesores", icon: "fa-book-open"},
+    {key: "schedule", label: "Horario", icon: "fa-calendar-week"},
     {key: "students", label: "Estudiantes", icon: "fa-user-graduate"},
 ];
 
@@ -115,6 +118,7 @@ export const CourseDetailsPage = () => {
                             <tr>
                                 <th>Materia</th>
                                 <th>Profesor</th>
+                                <th>Horario</th>
                                 <th className="w-12"/>
                             </tr>
                             </thead>
@@ -130,6 +134,11 @@ export const CourseDetailsPage = () => {
                                             ? <>{assignment.teacher.name}<span className="block text-xs text-[var(--text-tertiary)]">{assignment.teacher.email}</span></>
                                             : <span className="text-[var(--warning)]">Sin profesor</span>}
                                     </td>
+                                    <td className="text-sm">
+                                        {assignment.slots?.length
+                                            ? describeSlots(assignment.slots).map((line) => <span key={line} className="block whitespace-nowrap">{line}</span>)
+                                            : <span className="text-[var(--text-tertiary)]">Sin horario</span>}
+                                    </td>
                                     <td className="text-right">
                                         <button type="button" className="row-action" title="Cambiar profesor"
                                                 aria-label="Cambiar profesor" onClick={() => openAssignmentModal(assignment)}>
@@ -144,6 +153,19 @@ export const CourseDetailsPage = () => {
                         <div className="p-5">
                             <EmptyState title="Sin materias" icon="fa-book"
                                         description="Agrega materias y su profesor a este curso."/>
+                        </div>
+                    )}
+                </DetailSection>
+            )}
+
+            {tab === "schedule" && (
+                <DetailSection title="Horario" description="Clases de la semana según el curso base de esta sección." flush>
+                    {assignments.some((assignment) => assignment.slots?.length) ? (
+                        <CourseWeekSchedule assignments={assignments}/>
+                    ) : (
+                        <div className="p-5">
+                            <EmptyState title="Sin horario" icon="fa-calendar-week"
+                                        description="Define los días y horas de cada materia en su curso base."/>
                         </div>
                     )}
                 </DetailSection>

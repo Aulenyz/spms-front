@@ -123,7 +123,12 @@ export const ListEnrollmentPage = () => {
                                 <td><strong>{enrollment.student.document}</strong></td>
                                 <td>{enrollment.student.firstname}</td>
                                 <td>{enrollment.student.lastname}</td>
-                                <td>{enrollment.course.specialization?.name}{" "}{enrollment.course?.division && `(${enrollment.course.division})`}</td>
+                                <td>
+                                    {enrollment.course.name} {enrollment.course.division}
+                                    {enrollment.course.specialization?.name && (
+                                        <span className="block text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
+                                    )}
+                                </td>
                                 <td><EnrollmentStatusPill status={enrollment.status}/></td>
                                 <td className="text-right">
                                     <TableDetailAction to={`/enrollments/${enrollment.id}`}/>

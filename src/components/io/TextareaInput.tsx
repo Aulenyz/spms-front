@@ -32,7 +32,7 @@ const TextareaInputRender = ({error, label, ...props}: TextareaInputParams, ref:
                 ref={ref}
                 {...props}
                 rows={props.rows ?? 4}
-                className={clsx("input bg-transparent resize-none py-6 leading-relaxed",
+                className={clsx("input h-auto min-h-[7rem] w-full bg-transparent resize-none py-3 leading-relaxed",
                     {
                         "border-red-500": Boolean(error),
                     })}

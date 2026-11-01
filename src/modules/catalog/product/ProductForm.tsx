@@ -1,4 +1,5 @@
 import {FormEvent, ReactNode, useEffect, useMemo, useState} from "react";
+import {useBillingSettings} from "../../billing/useBillingSettings.ts";
 import {useQuery} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
@@ -15,6 +16,7 @@ import {ProductService} from "../../../services/product/ProductService.ts";
 import {ProductCategoryService} from "../../../services/product/ProductCategoryService.ts";
 import {TaxCategoryService} from "../../../services/product/TaxCategoryService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 
 const productService = ProductService.instance;
 const categoryService = ProductCategoryService.instance;
@@ -37,6 +39,7 @@ type FormState = {
     endDate: string;
     limitMode: LimitMode;
     maxPerStudent: string;
+    autoCharge: boolean;
     categoryId: string;
     taxCategoryId: string;
 };
@@ -56,6 +59,7 @@ const fromProduct = (product?: ProductDetails | null): FormState => {
         endDate: product?.rule?.endDate ?? "",
         limitMode: !max ? "unlimited" : max === 1 ? "once" : "custom",
         maxPerStudent: max && max > 1 ? String(max) : "2",
+        autoCharge: Boolean(product?.rule?.autoCharge),
         categoryId: product?.category?.id?.toString() ?? "",
         taxCategoryId: product?.taxCategory?.id?.toString() ?? "",
     };
@@ -92,12 +96,17 @@ export const ProductForm = ({product, onDone, onSaved}: {
         queryKey: queryKeys.taxes,
         queryFn: ({signal}) => taxService.withSignal(signal).list(),
     });
+    const {taxesEnabled} = useBillingSettings();
     const activeTaxes = useMemo(() => taxes.filter((tax) => tax.active || tax.id === product?.taxCategory?.id), [taxes, product]);
 
+    // Sin impuestos activos, todo concepto va exento; con impuestos, el primero activo por defecto.
+    const exempt = activeTaxes.find((tax) => tax.systemKey === "EXEMPT");
     useEffect(() => {
-        if (!values.taxCategoryId && activeTaxes.length)
-            setValues((current) => ({...current, taxCategoryId: String(activeTaxes[0].id)}));
-    }, [activeTaxes, values.taxCategoryId]);
+        if (!taxesEnabled && exempt && values.taxCategoryId !== String(exempt.id) && !product?.taxCategory)
+            setValues((current) => ({...current, taxCategoryId: String(exempt.id)}));
+        else if (!values.taxCategoryId && activeTaxes.length)
+            setValues((current) => ({...current, taxCategoryId: String((exempt ?? activeTaxes[0]).id)}));
+    }, [activeTaxes, exempt, taxesEnabled, product, values.taxCategoryId]);
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setValues((current) => ({...current, [key]: value}));
 
@@ -126,6 +135,7 @@ export const ProductForm = ({product, onDone, onSaved}: {
             startDate: values.startDate || undefined,
             endDate: values.endDate || undefined,
             maxPerStudent: values.limitMode === "unlimited" ? undefined : values.limitMode === "once" ? 1 : max,
+            autoCharge: values.recurring && values.autoCharge,
             categoryId: Number(values.categoryId),
             taxCategoryId: Number(values.taxCategoryId),
         };
@@ -185,13 +195,13 @@ export const ProductForm = ({product, onDone, onSaved}: {
                                        onChange={(event) => set("price", event.target.value)} placeholder="0.00"/>
                             </label>
                         )}
-                        <label className={editing ? "col-span-2 block" : "block"}>
+                        {taxesEnabled && <label className={editing ? "col-span-2 block" : "block"}>
                             <span className="form-label">Impuesto *</span>
                             <select className="select select-sm" value={values.taxCategoryId}
                                     onChange={(event) => set("taxCategoryId", event.target.value)}>
                                 {activeTaxes.map((tax) => <option key={tax.id} value={tax.id}>{formatTaxRate(tax)}</option>)}
                             </select>
-                        </label>
+                        </label>}
                     </div>
                     <label className="block">
                         <span className="form-label">Código</span>
@@ -221,22 +231,32 @@ export const ProductForm = ({product, onDone, onSaved}: {
                                 <input className="input input-sm" type="number" min={1} max={28} value={values.billingDay}
                                        onChange={(event) => set("billingDay", event.target.value)}/>
                             </label>
+                            <label className="col-span-2 flex items-start gap-3 rounded-xl border p-3" style={{borderColor: "var(--border-soft)"}}>
+                                <input type="checkbox" className="checkbox checkbox-sm checkbox-primary mt-0.5" checked={values.autoCharge}
+                                       onChange={(event) => set("autoCharge", event.target.checked)}/>
+                                <span>
+                                    <strong className="block text-sm" style={{color: "var(--text-primary)"}}>Cobro automático</strong>
+                                    <span className="text-xs" style={{color: "var(--text-secondary)"}}>
+                                        Cada día de pago se factura solo a todos los estudiantes inscritos del periodo actual.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     )}
                 </Group>
 
                 <Group title="¿Cuándo se cobra?" hint="Déjalo vacío si se puede cobrar en cualquier fecha.">
                     <div className="grid grid-cols-2 gap-3">
-                        <label className="block">
+                        <div>
                             <span className="form-label">Desde</span>
-                            <input className="input input-sm" type="date" value={values.startDate}
-                                   onChange={(event) => set("startDate", event.target.value)}/>
-                        </label>
-                        <label className="block">
+                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.startDate}
+                                        max={values.endDate || undefined} onChange={(value) => set("startDate", value)}/>
+                        </div>
+                        <div>
                             <span className="form-label">Hasta</span>
-                            <input className="input input-sm" type="date" value={values.endDate} min={values.startDate || undefined}
-                                   onChange={(event) => set("endDate", event.target.value)}/>
-                        </label>
+                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.endDate}
+                                        min={values.startDate || undefined} onChange={(value) => set("endDate", value)}/>
+                        </div>
                     </div>
                     {!datesValid && <p className="text-xs text-[var(--danger)]">La fecha final no puede ser anterior a la inicial.</p>}
                 </Group>

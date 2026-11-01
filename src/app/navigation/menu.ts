@@ -7,6 +7,8 @@ export type NavigationItem = {
     badge?: string;
     action?: "collection";
     authority?: AuthorityKey;
+    /** Solo visible si la organización tiene la función activa. */
+    feature?: "taxes";
 };
 
 /** Color de identidad de cada módulo; ver `[data-tone]` en index.css. */
@@ -60,16 +62,22 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.COLLECTION_CREATE,
             },
             {
-                label: "Facturas",
+                label: "Pagos recibidos",
+                icon: "fa-hand-holding-dollar",
+                to: "/payments/list",
+                authority: AuthorityKey.PAYMENTS_VIEW,
+            },
+            {
+                label: "Facturas emitidas",
                 icon: "fa-file-invoice-dollar",
                 to: "/invoices/list",
                 authority: AuthorityKey.INVOICES_VIEW,
             },
             {
                 label: "Estados de cuenta",
-                icon: "fa-calendar-check",
-                to: "/tuition/list",
-                authority: AuthorityKey.TUITION_VIEW,
+                icon: "fa-scale-balanced",
+                to: "/accounts/list",
+                authority: AuthorityKey.INVOICES_VIEW,
             },
             {
                 label: "Conceptos de pago",
@@ -88,6 +96,7 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-percent",
                 to: "/catalog/taxes",
                 authority: AuthorityKey.CATALOG_VIEW,
+                feature: "taxes",
             },
         ],
     },
@@ -102,7 +111,7 @@ export const navigationSections: NavigationSection[] = [
                 authority: AuthorityKey.ENROLLMENTS_VIEW,
             },
             {
-                label: "Padres / Tutores",
+                label: "Representantes",
                 icon: "fa-people-roof",
                 to: "/guardians/list",
                 authority: AuthorityKey.GUARDIANS_VIEW,
@@ -114,7 +123,7 @@ export const navigationSections: NavigationSection[] = [
         tone: "amber",
         items: [
             {
-                label: "Cursos",
+                label: "Cursos base",
                 icon: "fa-layer-group",
                 to: "/courses/templates",
                 authority: AuthorityKey.COURSE_TEMPLATES_VIEW,
@@ -130,18 +139,6 @@ export const navigationSections: NavigationSection[] = [
                 icon: "fa-shapes",
                 to: "/specializations/list",
                 authority: AuthorityKey.SPECIALIZATIONS_VIEW,
-            },
-            {
-                label: "Precios",
-                icon: "fa-tags",
-                to: "/courses/templates/prices",
-                authority: AuthorityKey.PRICE_TEMPLATES_VIEW,
-            },
-            {
-                label: "Materiales",
-                icon: "fa-boxes-stacked",
-                to: "/courses/templates/materials",
-                authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW,
             },
         ],
     },
@@ -190,8 +187,6 @@ const defaultAuthorizedRoutes: Array<{ to: string; authority: AuthorityKey }> = 
     {to: "/guardians/list", authority: AuthorityKey.GUARDIANS_VIEW},
     {to: "/subjects/list", authority: AuthorityKey.SUBJECTS_VIEW},
     {to: "/courses/templates", authority: AuthorityKey.COURSE_TEMPLATES_VIEW},
-    {to: "/courses/templates/prices", authority: AuthorityKey.PRICE_TEMPLATES_VIEW},
-    {to: "/courses/templates/materials", authority: AuthorityKey.MATERIAL_TEMPLATES_VIEW},
     {to: "/help", authority: AuthorityKey.HELP_VIEW},
     {to: "/organizations", authority: AuthorityKey.ORGANIZATIONS_VIEW},
 ];
