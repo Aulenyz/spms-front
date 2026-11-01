@@ -47,8 +47,14 @@ export class AssistantService extends BaseService<ChatReply> {
     }
 
     /** Descripción escrita por la IA para un registro que se está creando (p. ej. un área especializada). */
-    describe(kind: "specialization", name: string, detail?: string): Promise<{description: string}> {
-        return this.post<{description: string}>("/describe", {kind, name, detail});
+    /** Descripción sugerida por la IA; para materias también un código que no usa otra materia. */
+    /** Nota del recibo escrita por la IA a partir de lo que cubre el pago (sin nombres de personas). */
+    paymentNote(request: {concepts: string[]; invoices: string[]; method: string; discount: boolean; partial: boolean}): Promise<{note: string}> {
+        return this.post<{note: string}>("/payment-note", request);
+    }
+
+    describe(kind: "specialization" | "subject", name: string, detail?: string): Promise<{description: string; code?: string | null}> {
+        return this.post<{description: string; code?: string | null}>("/describe", {kind, name, detail});
     }
 
     chat(messages: ChatMessage[]): Promise<ChatReply> {

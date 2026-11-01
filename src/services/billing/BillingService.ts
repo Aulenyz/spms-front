@@ -27,6 +27,9 @@ const params = (filters: object, pagination: Pagination) => {
     return {page: pagination.page, size: pagination.size, ...clean};
 };
 
+/** Un periodo por cobrar, p. ej. {date: "2026-11-01", description: "Mensualidad noviembre 2026"}. */
+export type UpcomingCharge = {date: string; description: string};
+
 export class InvoiceService extends BaseService<Invoice> {
     private static factory = new InvoiceService();
 
@@ -40,6 +43,11 @@ export class InvoiceService extends BaseService<Invoice> {
 
     search(filters: InvoiceFilters, pagination: Pagination): Promise<Page<Invoice>> {
         return this.get<Page<Invoice>>("/search", params(filters, pagination));
+    }
+
+    /** Periodos de un concepto periódico que aún no se le cobran al estudiante en el periodo escolar. */
+    upcoming(studentId: number, productId: number): Promise<UpcomingCharge[]> {
+        return this.get<UpcomingCharge[]>("/upcoming", {studentId, productId});
     }
 
     /** Facturas con saldo de un estudiante, para registrar un pago. */

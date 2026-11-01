@@ -55,9 +55,8 @@ export enum AuthorityKey {
     COURSE_TEMPLATE_EDIT = "COURSE_TEMPLATE_EDIT",
     COURSE_TEMPLATE_DETAILS_VIEW = "COURSE_TEMPLATE_DETAILS_VIEW",
     COURSE_GENERATE = "COURSE_GENERATE",
+    COURSE_TEMPLATE_STATUS_UPDATE = "COURSE_TEMPLATE_STATUS_UPDATE",
 
-    PRICE_TEMPLATES_VIEW = "PRICE_TEMPLATES_VIEW",
-    MATERIAL_TEMPLATES_VIEW = "MATERIAL_TEMPLATES_VIEW",
 
     SUBJECTS_VIEW = "SUBJECTS_VIEW",
     SUBJECT_CREATE = "SUBJECT_CREATE",
@@ -121,23 +120,22 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.AUTHORITIES_VIEW]: "Permite ver el listado de permisos del sistema.",
     [AuthorityKey.AUTHORITY_CREATE]: "Permite crear nuevos permisos del sistema.",
 
-    [AuthorityKey.GUARDIANS_VIEW]: "Permite ver el listado de padres o tutores.",
-    [AuthorityKey.GUARDIAN_CREATE]: "Permite registrar nuevos padres o tutores.",
-    [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un padre o tutor.",
+    [AuthorityKey.GUARDIANS_VIEW]: "Permite ver el listado de representantes.",
+    [AuthorityKey.GUARDIAN_CREATE]: "Permite registrar nuevos representantes.",
+    [AuthorityKey.GUARDIAN_DETAILS_VIEW]: "Permite acceder a los detalles de un representante.",
 
     [AuthorityKey.TEACHERS_VIEW]: "Permite acceder al módulo de profesores.",
     [AuthorityKey.TEACHER]: "Identifica usuarios elegibles para impartir clases.",
     [AuthorityKey.CATALOG_VIEW]: "Permite ver los conceptos de pago, sus categorías e impuestos.",
     [AuthorityKey.CATALOG_EDIT]: "Permite crear y editar conceptos de pago, categorías, impuestos y precios.",
 
-    [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de plantillas de cursos.",
-    [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevas plantillas de cursos.",
-    [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar plantillas de cursos existentes.",
-    [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de una plantilla de curso.",
-    [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de una plantilla para el período académico actual.",
+    [AuthorityKey.COURSE_TEMPLATES_VIEW]: "Permite ver el listado de cursos base.",
+    [AuthorityKey.COURSE_TEMPLATE_CREATE]: "Permite crear nuevos cursos base.",
+    [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar cursos base existentes.",
+    [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de un curso base.",
+    [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de un curso base para el período académico actual.",
+    [AuthorityKey.COURSE_TEMPLATE_STATUS_UPDATE]: "Permite activar o inactivar cursos base.",
 
-    [AuthorityKey.PRICE_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de precios.",
-    [AuthorityKey.MATERIAL_TEMPLATES_VIEW]: "Permite acceder al listado de plantillas de materiales.",
 
     [AuthorityKey.SUBJECTS_VIEW]: "Permite ver el listado de materias.",
     [AuthorityKey.SUBJECT_CREATE]: "Permite crear nuevas materias.",

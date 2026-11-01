@@ -27,6 +27,7 @@ const useTypeFilter: Array<SelectOption> = [
 
 export type CourseTemplateFilterFormValue = {
     type: GradeType;
+    active: "" | "true" | "false";
     searchBy: string;
     criteria: string;
 }
@@ -35,11 +36,12 @@ export const CourseTemplateFilter = (props: { onFilter: (value: Record<string, s
 
     const {register, control, setValue}: UseForm<CourseTemplateFilterFormValue> = useForm<CourseTemplateFilterFormValue>({
         defaultValues: {
-            searchBy: 'name'
+            searchBy: 'name',
+            active: 'true',
         },
         reValidateMode: 'onChange'
     });
-    const [type, searchBy, criteria] = useWatch({control, name: ['type', 'searchBy', 'criteria']});
+    const [type, searchBy, criteria, active] = useWatch({control, name: ['type', 'searchBy', 'criteria', 'active']});
 
     // Al cambiar tipo o campo de búsqueda se limpia el criterio (no en el montaje).
     const mounted = useRef(false);
@@ -51,17 +53,31 @@ export const CourseTemplateFilter = (props: { onFilter: (value: Record<string, s
         setValue('criteria', '');
     }, [type, searchBy, setValue]);
 
-    // Valor inicial = filtros iniciales de la página ({name: "", type: ""}).
+    // Valor inicial = filtros iniciales de la página ({name: "", type: "", active: "true"}).
     const filters = useMemo(() => {
-        const value: Record<string, string> = {type: type ?? ""};
+        const value: Record<string, string> = {type: type ?? "", active: active ?? "true"};
         value[searchBy] = criteria ?? "";
         return value;
-    }, [type, searchBy, criteria]);
+    }, [type, searchBy, criteria, active]);
 
     useFilterEmitter(filters, props.onFilter);
 
     return (
         <form onSubmit={(event) => event.preventDefault()} className="flex flex-wrap items-end gap-2.5">
+            <div className="w-full sm:w-[140px]">
+                <DropdownSelect
+                    text="Estado"
+                    hasError={false}
+                    value={active}
+                    onSelect={(value) => setValue("active", (value ?? "true") as CourseTemplateFilterFormValue["active"])}
+                    className="w-full"
+                    options={[
+                        {value: "true", description: "Activos"},
+                        {value: "false", description: "Inactivos"},
+                        {value: "", description: "Todos"},
+                    ]}
+                />
+            </div>
             <div className="w-full sm:w-[140px]">
                 <DropdownSelect
                     text="Tipo"

@@ -12,7 +12,7 @@ import {VoidDialog} from "../components/VoidDialog.tsx";
 import {printHtml, receiptHtml} from "../print/printDocuments.ts";
 
 /** Columnas compartidas por el encabezado y las filas: flecha, recibo, fecha, total, estado, acción. */
-export const RECEIPT_COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7rem_6rem_6rem] items-center gap-x-3";
+export const RECEIPT_COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7rem_6rem_3.5rem] items-center gap-x-3";
 
 export const ReceiptListHeader = () => (
     <div className={`${RECEIPT_COLUMNS} border-b px-3 py-3 text-xs font-semibold uppercase tracking-[0.06em]`}
@@ -101,9 +101,9 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                       style={{color: voided ? "var(--text-tertiary)" : "var(--text-primary)"}}>{money.format(receipt.amount)}</span>
                 <span className="ps-3"><ReceiptStatusPill status={receipt.status}/></span>
                 <span className="text-right">
-                    <button type="button" className="btn btn-sm px-3" disabled={printing} onClick={() => void printReceipt()}
+                    <button type="button" className="btn btn-sm btn-square" disabled={printing} title="Imprimir" onClick={() => void printReceipt()}
                             aria-label={`Imprimir recibo ${receipt.number}`}>
-                        <i className={`fa ${printing ? "fa-spinner fa-spin" : "fa-print"}`}/>Imprimir
+                        <i className={`fa ${printing ? "fa-spinner fa-spin" : "fa-print"}`}/>
                     </button>
                 </span>
             </div>
@@ -117,12 +117,7 @@ export const ReceiptAccordionRow = ({receipt, open, onToggle}: {receipt: Receipt
                             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
                                 <Field label="Estudiante">{receipt.student.name}</Field>
                                 <Field label="Documento">{receipt.student.document}</Field>
-                                <Field label="Pagado por">
-                                    {receipt.guardian
-                                        ? <PermittedLink authority={AuthorityKey.GUARDIANS_VIEW} to={`/guardians/${receipt.guardian.id}`}
-                                                         className="hover:text-[var(--accent)] hover:underline">{receipt.guardian.name}</PermittedLink>
-                                        : null}
-                                </Field>
+                                <Field label="Pagado por">{receipt.guardian?.name}</Field>
                                 <Field label="Forma de pago">{PaymentMethodLabel[receipt.method]}</Field>
                                 <Field label="Referencia">{receipt.reference}</Field>
                                 <Field label="Total recibido">{money.format(receipt.amount)}</Field>

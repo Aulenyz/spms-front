@@ -1,8 +1,10 @@
 import {useEffect, useMemo, useState} from "react";
 import {toast} from "react-toastify";
+import {useQuery} from "@tanstack/react-query";
 
 import {Subject, SubjectFormValues} from "../../domain/model/course/Subject.ts";
 import {SubjectService} from "../../services/course/SubjectService.ts";
+import {AssistantService} from "../../services/assistant/AssistantService.ts";
 
 const subjectService = SubjectService.instance;
 
@@ -24,6 +26,32 @@ export const SubjectForm = ({
     });
 
     const isEdit = Boolean(initial?.id);
+
+    // La IA escribe el código y la descripción a partir del nombre solo cuando se pulsa el botón.
+    const {data: assistant} = useQuery({
+        queryKey: ["assistant", "status"],
+        queryFn: ({signal}) => AssistantService.instance.withSignal(signal).status(),
+        staleTime: Infinity,
+        meta: {silent: true},
+    });
+    const [suggesting, setSuggesting] = useState(false);
+    const [suggested, setSuggested] = useState(false);
+    const canSuggest = Boolean(assistant?.enabled) && values.name.trim().length >= 3;
+
+    const suggest = async () => {
+        if (!canSuggest) return;
+        setSuggesting(true);
+        try {
+            const {description, code} = await AssistantService.instance.describe("subject", values.name.trim());
+            setValues((prev) => ({...prev, description, code: code || prev.code}));
+            setErrors((prev) => ({...prev, description: undefined, code: code ? undefined : prev.code}));
+            setSuggested(true);
+        } catch {
+            // Si la IA no responde, la descripción se escribe a mano.
+        } finally {
+            setSuggesting(false);
+        }
+    };
 
     useEffect(() => {
         if (!initial) return;
@@ -142,15 +170,29 @@ export const SubjectForm = ({
                 <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
                     Codigo*
                 </label>
-                <label className="input input-sm w-full">
-                    <i className="fa fa-hashtag me-1"/>
-                    <input
-                        placeholder="Código corto"
-                        value={values.code}
-                        maxLength={24}
-                        onChange={(event) => setField("code", event.target.value)}
-                    />
-                </label>
+                <div className="flex items-center gap-2">
+                    <label className="input input-sm min-w-0 flex-1">
+                        <i className="fa fa-hashtag me-1"/>
+                        <input
+                            placeholder="Código corto"
+                            value={values.code}
+                            maxLength={24}
+                            onChange={(event) => setField("code", event.target.value)}
+                        />
+                    </label>
+                    {assistant?.enabled && (
+                        <button type="button" className="btn btn-sm btn-square shrink-0" disabled={!canSuggest || suggesting}
+                                title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir código y descripción con IA"
+                                onClick={() => void suggest()}>
+                            <i className={`fa ${suggesting ? "fa-spinner fa-spin" : "fa-wand-magic-sparkles"}`} style={{color: "var(--accent)"}}/>
+                        </button>
+                    )}
+                </div>
+                {(suggesting || suggested) && (
+                    <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                        {suggesting ? "La IA está escribiendo el código y la descripción…" : "Código y descripción sugeridos por IA; puedes editarlos."}
+                    </p>
+                )}
                 {errors.code && <p className="mt-1 text-xs font-semibold text-red-500">{errors.code}</p>}
             </div>
 
@@ -159,10 +201,11 @@ export const SubjectForm = ({
                     Descripcion*
                 </label>
                 <textarea
-                    className="input min-h-[120px] w-full resize-none py-3"
+                    className="input h-auto min-h-[120px] w-full resize-none py-3 leading-relaxed"
                     placeholder="Describe la materia"
                     value={values.description}
                     maxLength={255}
+                    rows={4}
                     onChange={(event) => setField("description", event.target.value)}
                 />
                 {errors.description && <p className="mt-1 text-xs font-semibold text-red-500">{errors.description}</p>}

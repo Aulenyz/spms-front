@@ -8,7 +8,7 @@ import {LocalStorage} from '../utils/LocalStorage.ts';
 import {StorageItem} from '../domain/types/StorageItem.ts';
 import {AuthService} from "../services/auth/AuthService.ts";
 import {BaseService, readCompanyId} from "../services/BaseService.ts";
-import {AuthToken, TokenInfo} from "../domain/model/auth/Token.ts";
+import {TokenInfo} from "../domain/model/auth/Token.ts";
 import {useCompany} from "./CompanyContext.tsx";
 import {resolveErrorPath} from "../modules/errors/resolveErrorPath.ts";
 
@@ -105,8 +105,9 @@ export const AuthProvider: FC<AuthProviderParam> = ({children}: AuthProviderPara
 
         authService.currentUser().then(async (user): Promise<void> => {
             setCurrent(user);
-            const currentToken: AuthToken = authService.current;
-            if (readCompanyId() && (!currentToken.authorities || currentToken.authorities.length === 0)) {
+            // Con una organización elegida, el token se renueva al abrir la app: así los permisos del rol
+            // (que pueden haber cambiado, como uno nuevo) llegan sin tener que cerrar sesión.
+            if (readCompanyId()) {
                 try {
                     const refreshed = await authService.refreshToken();
                     validatedToken.current = refreshed.token;

@@ -2,7 +2,7 @@ import {FormEvent, useState} from "react";
 import {toast} from "react-toastify";
 import {StudentService} from "../../../services/student/StudentService.ts";
 import {Gender, Genders} from "../../../domain/model/user/user.ts";
-import {PersonRef} from "../../../domain/billing/Invoice.ts";
+import {localToday, PersonRef} from "../../../domain/billing/Invoice.ts";
 
 type Props = {
     onCreated: (student: PersonRef) => void;
@@ -21,7 +21,7 @@ export const NewStudentForm = ({onCreated, onCancel}: Props) => {
         firstname: values.firstname.trim().length < 2 ? "Escribe el nombre (mínimo 2 letras)." : "",
         lastname: values.lastname.trim().length < 2 ? "Escribe el apellido (mínimo 2 letras)." : "",
         gender: !values.gender ? "Elige el género." : "",
-        birthDate: values.birthDate && values.birthDate > new Date().toISOString().slice(0, 10) ? "La fecha no puede ser futura." : "",
+        birthDate: values.birthDate && values.birthDate > localToday() ? "La fecha no puede ser futura." : "",
     };
     const valid = Object.values(errors).every((error) => !error);
     const set = (key: keyof typeof EMPTY, value: string) => setValues((current) => ({...current, [key]: value}));
@@ -81,7 +81,7 @@ export const NewStudentForm = ({onCreated, onCancel}: Props) => {
                 <label className="block">
                     <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Fecha de nacimiento</span>
                     <input type="date" className="input input-bordered input-sm w-full" value={values.birthDate}
-                           max={new Date().toISOString().slice(0, 10)} onChange={(event) => set("birthDate", event.target.value)}/>
+                           max={localToday()} onChange={(event) => set("birthDate", event.target.value)}/>
                     {field("birthDate")}
                 </label>
             </div>

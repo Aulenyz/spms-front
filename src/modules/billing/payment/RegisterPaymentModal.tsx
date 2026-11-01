@@ -6,11 +6,12 @@ import clsx from "clsx";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {InvoiceService, ReceiptService} from "../../../services/billing/BillingService.ts";
+import {InvoiceService, ReceiptService, UpcomingCharge} from "../../../services/billing/BillingService.ts";
+import {AssistantService} from "../../../services/assistant/AssistantService.ts";
 import {ProductService} from "../../../services/product/ProductService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
-import {ProductStatus} from "../../../domain/model/product/Product.ts";
-import {CheckoutResult, formatDate, money, NEEDS_REFERENCE, PaymentMethod, PaymentMethodIcon, PaymentMethodLabel, PersonRef, invoiceLink} from "../../../domain/billing/Invoice.ts";
+import {Product, ProductStatus, RecurrenceType} from "../../../domain/model/product/Product.ts";
+import {CheckoutResult, formatDate, localToday, money, NEEDS_REFERENCE, PaymentMethod, PaymentMethodIcon, PaymentMethodLabel, PersonRef, invoiceLink} from "../../../domain/billing/Invoice.ts";
 import {InvoiceStatusPill} from "../components/BillingPills.tsx";
 import {StudentPicker} from "../components/StudentPicker.tsx";
 import {printHtml, receiptHtml} from "../print/printDocuments.ts";
@@ -23,8 +24,10 @@ import {GuardiansStep} from "./GuardiansStep.tsx";
 
 const invoiceService = InvoiceService.instance;
 const SYSTEM_ONLY = ["ENROLLMENT", "RE_ENROLLMENT"];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = localToday;
 const round = (value: number) => Math.round(value * 100) / 100;
+/** Concepto que se cobra cada periodo (mensualidad, transporte…): se paga por periodos, no por cantidad. */
+const isPeriodic = (product?: Product) => Boolean(product?.chargeMode && product.chargeMode !== RecurrenceType.NONE);
 
 type Step = "STUDENT" | "GUARDIAN" | "CONCEPTS" | "REVIEW";
 const STEPS: {id: Step; label: string; icon: string}[] = [
@@ -34,7 +37,13 @@ const STEPS: {id: Step; label: string; icon: string}[] = [
     {id: "REVIEW", label: "Revisión", icon: "fa-clipboard-check"},
 ];
 
-type CartLine = {key: string; productId: number; name: string; quantity: number; unitPrice: number};
+/** Una línea del cobro. Si el concepto es periódico, `upcoming` son sus periodos por cobrar y `quantity` cuántos se pagan. */
+type CartLine = {key: string; productId: number; name: string; quantity: number; unitPrice: number; upcoming?: UpcomingCharge[]};
+
+/** Lo que cubre cada línea, como se verá en la factura: "Mensualidad octubre 2026" por cada periodo. */
+const lineDescriptions = (line: CartLine) => line.upcoming
+    ? line.upcoming.slice(0, line.quantity).map((period) => period.description)
+    : [line.quantity > 1 ? `${line.quantity} × ${line.name}` : line.name];
 
 type Props = {
     isOpen: boolean;
@@ -64,12 +73,14 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const [enrollCourse, setEnrollCourse] = useState<Course | null>(null);
     const [choosingCourse, setChoosingCourse] = useState(false);
     const [productId, setProductId] = useState("");
-    const [quantity, setQuantity] = useState("1");
-    const [price, setPrice] = useState("");
     const [method, setMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
     const [reference, setReference] = useState("");
     const [date, setDate] = useState(today());
     const [notes, setNotes] = useState("");
+    // La nota la escribe la IA al llegar a Revisión; si el cajero la edita, ya no se reemplaza sola.
+    const [noteByHand, setNoteByHand] = useState(false);
+    const [noteFor, setNoteFor] = useState("");
+    const [writingNote, setWritingNote] = useState(false);
     const [discount, setDiscount] = useState("0");
     const [received, setReceived] = useState<string | null>(null);
     const [result, setResult] = useState<CheckoutResult | null>(null);
@@ -134,7 +145,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
             studentId: student!.id, guardianId: payer!.id, method, date,
             reference: reference.trim() || undefined, notes: notes.trim() || undefined,
             discount: discountAmount || undefined,
-            items: cart.map((line) => ({productId: line.productId, quantity: line.quantity, unitPrice: line.unitPrice})),
+            items: cart.map((line) => ({productId: line.productId, quantity: line.quantity})),
             invoiceIds: openInvoices.filter((invoice) => pending.includes(invoice.id)).map((invoice) => invoice.id),
             enrollCourseId: notEnrolled && enrollCourse ? enrollCourse.id : undefined,
             received: receivedAmount,
@@ -158,12 +169,12 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         setEnrollCourse(null);
         setChoosingCourse(false);
         setProductId("");
-        setQuantity("1");
-        setPrice("");
         setMethod(PaymentMethod.CASH);
         setReference("");
         setDate(today());
         setNotes("");
+        setNoteByHand(false);
+        setNoteFor("");
         setDiscount("0");
         setReceived(null);
         setResult(null);
@@ -174,30 +185,94 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         onClose();
     };
 
-    const addToCart = (id: number, qty = 1, unitPrice?: number) => {
+    // Un concepto periódico agrega el siguiente periodo por cobrar; uno único suma una unidad. El precio
+    // es el del concepto: se cambia en Conceptos de pago, no en la caja.
+    const addToCart = async (id: number) => {
         const product = products.find((item) => item.id === id);
-        if (!product) return;
-        const amount = unitPrice ?? Number(product.price);
+        if (!product || !student) return;
+        const amount = Number(product.price);
         if (!(amount > 0)) {
-            toast.info(`Indica el precio de ${product.name}.`);
+            toast.info(`${product.name} no tiene precio. Configúralo en Conceptos de pago.`);
             return;
         }
-        setCart((current) => {
-            const existing = current.find((line) => line.productId === id && line.unitPrice === amount);
-            return existing
-                ? current.map((line) => line === existing ? {...line, quantity: line.quantity + qty} : line)
-                : [...current, {key: `${id}-${Date.now()}`, productId: id, name: product.name, quantity: qty, unitPrice: amount}];
-        });
+        const existing = cart.find((line) => line.productId === id && line.unitPrice === amount);
+        if (isPeriodic(product)) {
+            if (existing?.upcoming) return changePeriods(existing, existing.quantity + 1);
+            let upcoming: UpcomingCharge[];
+            try {
+                upcoming = await invoiceService.upcoming(student.id, id);
+            } catch {
+                toast.error(`No se pudieron consultar los periodos de ${product.name}.`);
+                return;
+            }
+            if (upcoming.length === 0) {
+                toast.info(`${product.name} ya está cobrado hasta el final del periodo.`);
+                return;
+            }
+            setCart((current) => [...current, {key: `${id}-${Date.now()}`, productId: id, name: product.name, quantity: 1, unitPrice: amount, upcoming}]);
+        } else {
+            setCart((current) => existing
+                ? current.map((line) => line === existing ? {...line, quantity: line.quantity + 1} : line)
+                : [...current, {key: `${id}-${Date.now()}`, productId: id, name: product.name, quantity: 1, unitPrice: amount}]);
+        }
+        setReceived(null);
+    };
+
+    // Cuántos periodos se pagan: de 1 hasta los que quedan en el periodo escolar.
+    const changePeriods = (line: CartLine, periods: number) => {
+        const max = line.upcoming?.length ?? 1;
+        if (periods > max) toast.info(`De ${line.name} solo ${max === 1 ? "queda 1 periodo" : `quedan ${max} periodos`} por cobrar.`);
+        const value = Math.min(max, Math.max(1, periods));
+        setCart((current) => current.map((item) => item.key === line.key ? {...item, quantity: value} : item));
         setReceived(null);
     };
 
     const addSelected = () => {
         if (!productId) return;
-        addToCart(Number(productId), Math.max(1, Number(quantity) || 1), Number(price) > 0 ? Number(price) : undefined);
+        void addToCart(Number(productId));
         setProductId("");
-        setQuantity("1");
-        setPrice("");
     };
+
+    // Lo que cubre el cobro, sin nombres de personas: es lo que lee la IA para escribir la nota.
+    const noteInput = {
+        concepts: [
+            ...(enrollmentAmount > 0 && standing?.conceptName ? [standing.conceptName] : []),
+            ...cart.flatMap(lineDescriptions),
+        ],
+        invoices: openInvoices.filter((invoice) => pending.includes(invoice.id)).map((invoice) => invoice.description || invoice.number),
+        method: PaymentMethodLabel[method],
+        discount: discountAmount > 0,
+        partial: balance > 0 && receivedAmount > 0,
+    };
+    const noteKey = JSON.stringify(noteInput);
+
+    const writeNote = async () => {
+        setWritingNote(true);
+        try {
+            const {note} = await AssistantService.instance.paymentNote({...noteInput, method});
+            setNotes(note);
+            setNoteByHand(false);
+            setNoteFor(noteKey);
+        } catch {
+            // Sin IA, la nota se escribe a mano.
+        } finally {
+            setWritingNote(false);
+        }
+    };
+
+    const {data: assistant} = useQuery({
+        queryKey: ["assistant", "status"],
+        queryFn: ({signal}) => AssistantService.instance.withSignal(signal).status(),
+        enabled: isOpen,
+        staleTime: Infinity,
+        meta: {silent: true},
+    });
+    useEffect(() => {
+        if (step !== "REVIEW" || !assistant?.enabled || noteByHand || noteFor === noteKey || writingNote) return;
+        if (noteInput.concepts.length === 0 && noteInput.invoices.length === 0) return;
+        void writeNote();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step, assistant?.enabled, noteByHand, noteFor, noteKey]);
 
     const canContinue = (target: Step) => {
         if (target === "STUDENT") return true;
@@ -264,7 +339,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                             )}
                             {cart.map((line) => (
                                 <div key={line.key} className="flex justify-between gap-3">
-                                    <span className="truncate" style={{color: "var(--text-primary)"}}>{line.quantity > 1 && `${line.quantity} × `}{line.name}</span>
+                                    <span className="truncate" style={{color: "var(--text-primary)"}}>{lineDescriptions(line).join(", ")}</span>
                                     <span className="font-semibold" style={{color: "var(--text-primary)"}}>{money.format(line.quantity * line.unitPrice)}</span>
                                 </div>
                             ))}
@@ -504,27 +579,23 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                     </h3>
                                                     <div className="flex flex-wrap gap-2">
                                                         {products.filter((product) => Number(product.price) > 0).map((product) => (
-                                                            <button key={product.id} type="button" onClick={() => addToCart(product.id)} disabled={conceptsLocked}
+                                                            <button key={product.id} type="button" onClick={() => void addToCart(product.id)} disabled={conceptsLocked}
                                                                     className="rounded-full border px-3 py-1.5 text-xs font-semibold"
                                                                     style={{borderColor: "var(--border-soft)", color: "var(--text-secondary)", background: "var(--surface)"}}>
                                                                 + {product.name} · {money.format(Number(product.price))}
                                                             </button>
                                                         ))}
                                                     </div>
-                                                    <div className="grid gap-2 sm:grid-cols-[1fr_80px_130px_auto]">
+                                                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                                                         <select className="select select-bordered select-sm w-full" value={productId} aria-label="Concepto"
-                                                                onChange={(event) => {
-                                                                    setProductId(event.target.value);
-                                                                    const product = products.find((item) => item.id === Number(event.target.value));
-                                                                    setPrice(product && Number(product.price) > 0 ? String(product.price) : "");
-                                                                }}>
+                                                                onChange={(event) => setProductId(event.target.value)}>
                                                             <option value="">Otro concepto…</option>
-                                                            {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
+                                                            {products.map((product) => (
+                                                                <option key={product.id} value={product.id}>
+                                                                    {product.name}{Number(product.price) > 0 ? ` · ${money.format(Number(product.price))}` : " · sin precio"}
+                                                                </option>
+                                                            ))}
                                                         </select>
-                                                        <input type="number" min={1} className="input input-bordered input-sm text-right" aria-label="Cantidad"
-                                                               value={quantity} onChange={(event) => setQuantity(event.target.value)}/>
-                                                        <input type="number" min={0} step="0.01" className="input input-bordered input-sm text-right" aria-label="Precio"
-                                                               placeholder="Precio" value={price} onChange={(event) => setPrice(event.target.value)}/>
                                                         <button type="button" className="btn btn-sm" disabled={!productId} onClick={addSelected}>
                                                             <i className="fa fa-plus"/>Agregar
                                                         </button>
@@ -540,15 +611,27 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                                 <li key={line.key} className="flex items-center gap-3 px-4 py-2.5">
                                                                     <span className="min-w-0 flex-1">
                                                                         <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>{line.name}</strong>
-                                                                        <span className="text-xs" style={{color: "var(--text-tertiary)"}}>{money.format(line.unitPrice)} c/u</span>
+                                                                        <span className="block text-xs" style={{color: "var(--text-tertiary)"}}>
+                                                                            {line.upcoming
+                                                                                ? lineDescriptions(line).map((text) => text.replace(`${line.name} `, "")).join(", ")
+                                                                                : `${line.quantity > 1 ? `${line.quantity} × ` : ""}${money.format(line.unitPrice)}`}
+                                                                        </span>
                                                                     </span>
-                                                                    <input type="number" min={1} className="input input-bordered input-xs w-16 text-right" aria-label={`Cantidad de ${line.name}`}
-                                                                           value={line.quantity}
-                                                                           onChange={(event) => {
-                                                                               const value = Math.max(1, Number(event.target.value) || 1);
-                                                                               setCart((current) => current.map((item) => item.key === line.key ? {...item, quantity: value} : item));
-                                                                               setReceived(null);
-                                                                           }}/>
+                                                                    {line.upcoming && (
+                                                                        <span className="flex items-center gap-1" title="Periodos que se pagan por adelantado">
+                                                                            <button type="button" className="row-action" aria-label={`Un periodo menos de ${line.name}`}
+                                                                                    disabled={line.quantity <= 1} onClick={() => changePeriods(line, line.quantity - 1)}>
+                                                                                <i className="fa fa-minus text-xs"/>
+                                                                            </button>
+                                                                            <span className="w-16 text-center text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
+                                                                                {line.quantity} de {line.upcoming.length}
+                                                                            </span>
+                                                                            <button type="button" className="row-action" aria-label={`Un periodo más de ${line.name}`}
+                                                                                    disabled={line.quantity >= line.upcoming.length} onClick={() => changePeriods(line, line.quantity + 1)}>
+                                                                                <i className="fa fa-plus text-xs"/>
+                                                                            </button>
+                                                                        </span>
+                                                                    )}
                                                                     <strong className="w-28 text-right text-sm" style={{color: "var(--text-primary)"}}>{money.format(line.quantity * line.unitPrice)}</strong>
                                                                     <button type="button" className="row-action" aria-label={`Quitar ${line.name}`}
                                                                             onClick={() => {
@@ -597,7 +680,10 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                     <h4 className="text-sm font-bold" style={{color: "var(--text-primary)"}}>Pago</h4>
                                                     <div className="flex flex-wrap gap-2">
                                                         {Object.values(PaymentMethod).map((value) => (
-                                                            <button key={value} type="button" onClick={() => setMethod(value)}
+                                                            <button key={value} type="button" onClick={() => {
+                                                                setMethod(value);
+                                                                if (!NEEDS_REFERENCE.includes(value)) setReference("");
+                                                            }}
                                                                     className={`btn btn-sm ${method === value ? "btn-primary" : ""}`}>
                                                                 <i className={`fa ${PaymentMethodIcon[value]}`}/>{PaymentMethodLabel[value]}
                                                             </button>
@@ -616,18 +702,16 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                             <input type="number" min={0} step="0.01" className="input input-bordered input-sm w-full text-right"
                                                                    value={received ?? String(total)} onChange={(event) => setReceived(event.target.value)}/>
                                                         </label>
-                                                        <label className="block"><Label>{NEEDS_REFERENCE.includes(method) ? "Referencia*" : "Referencia"}</Label>
-                                                            <input className="input input-bordered input-sm w-full" maxLength={128} value={reference}
-                                                                   placeholder={NEEDS_REFERENCE.includes(method) ? "N.º transferencia o cheque" : "Opcional"}
-                                                                   onChange={(event) => setReference(event.target.value)}/>
-                                                        </label>
+                                                        {NEEDS_REFERENCE.includes(method) ? (
+                                                            <label className="block"><Label>Referencia*</Label>
+                                                                <input className="input input-bordered input-sm w-full" maxLength={128} value={reference}
+                                                                       placeholder={method === PaymentMethod.CHECK ? "N.º de cheque" : "N.º de transferencia"}
+                                                                       onChange={(event) => setReference(event.target.value)}/>
+                                                            </label>
+                                                        ) : null}
                                                         <label className="block"><Label>Fecha</Label>
                                                             <input type="date" className="input input-bordered input-sm w-full" value={date} max={today()}
                                                                    onChange={(event) => setDate(event.target.value)}/>
-                                                        </label>
-                                                        <label className="block sm:col-span-2 xl:col-span-4"><Label>Nota</Label>
-                                                            <input className="input input-bordered input-sm w-full" maxLength={500} value={notes}
-                                                                   placeholder="Opcional" onChange={(event) => setNotes(event.target.value)}/>
                                                         </label>
                                                     </div>
                                                     {overpaidByCard && (
@@ -656,6 +740,28 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                     {balance > 0 && receivedAmount > 0 && <li style={{color: "var(--warning)"}}><i className="fa fa-hourglass-half me-2"/>Quedan {money.format(balance)} pendientes.</li>}
                                                     {balance < 0 && <li style={{color: "var(--success)"}}><i className="fa fa-coins me-2"/>Devuelta: {money.format(-balance)}.</li>}
                                                 </ul>
+                                                <div>
+                                                    <Label>Nota del recibo</Label>
+                                                    <div className="flex items-start gap-2">
+                                                        <textarea className="input h-auto min-h-[5rem] min-w-0 flex-1 resize-none py-2.5 text-sm leading-relaxed" maxLength={500} rows={3}
+                                                                  value={notes} placeholder={assistant?.enabled ? "La IA la escribe; puedes cambiarla" : "Opcional"}
+                                                                  onChange={(event) => {
+                                                                      setNotes(event.target.value);
+                                                                      setNoteByHand(true);
+                                                                  }}/>
+                                                        {assistant?.enabled && (
+                                                            <button type="button" className="btn btn-sm btn-square shrink-0" disabled={writingNote}
+                                                                    title="Escribir otra nota con IA" aria-label="Escribir otra nota con IA" onClick={() => void writeNote()}>
+                                                                <i className={`fa ${writingNote ? "fa-spinner fa-spin" : "fa-wand-magic-sparkles"}`} style={{color: "var(--accent)"}}/>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {assistant?.enabled && (
+                                                        <p className="mt-1 text-xs" style={{color: "var(--text-tertiary)"}}>
+                                                            {writingNote ? "La IA está escribiendo la nota…" : noteByHand ? "Nota escrita a mano." : notes ? "Escrita por IA; puedes editarla o pedir otra." : ""}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </section>

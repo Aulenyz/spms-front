@@ -1,13 +1,17 @@
 import {Specialization} from "../../domain/model/course/Course.ts";
 import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
+import {OptionsMenu} from "../../components/ui/OptionsMenu.tsx";
 
 interface Props {
     specialization: Specialization;
-    /** Abre la edición; sin él la tarjeta no muestra el botón. */
+    /** Abre la edición; sin él el menú no la ofrece. */
     onEdit?: () => void;
+    /** Activa o inactiva el área; sin él el menú no lo ofrece. */
+    onToggleStatus?: () => Promise<unknown>;
 }
 
-export const SpecializationCard = ({specialization, onEdit}: Props) => {
+/** Tarjeta de un área especializada; el engranaje abre Editar y Activar/Inactivar, como en Materias. */
+export const SpecializationCard = ({specialization, onEdit, onToggleStatus}: Props) => {
     const initials = specialization.name
         .split(" ")
         .map((word) => word.charAt(0).toUpperCase())
@@ -21,7 +25,7 @@ export const SpecializationCard = ({specialization, onEdit}: Props) => {
 
     return (
         <article
-            className="group relative flex h-full min-h-[230px] flex-col overflow-hidden rounded-[24px] border transition-all duration-200 hover:-translate-y-1"
+            className="group relative flex h-full min-h-[230px] flex-col overflow-visible rounded-[24px] border transition-all duration-200 hover:-translate-y-1"
             style={{
                 borderColor: "var(--border-soft)",
                 background: "var(--surface)",
@@ -30,7 +34,7 @@ export const SpecializationCard = ({specialization, onEdit}: Props) => {
         >
             {/* Accent strip */}
             <div
-                className="absolute left-0 top-0 h-full w-1.5"
+                className="absolute left-0 top-0 h-full w-1.5 rounded-l-[24px]"
                 style={{
                     background: specialization.active
                         ? "linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 65%, white))"
@@ -64,20 +68,20 @@ export const SpecializationCard = ({specialization, onEdit}: Props) => {
                                 </div>
                             </div>
                         </div>
+
+                        <OptionsMenu label={`Opciones de ${specialization.name}`} items={[
+                            {label: "Editar área", icon: "fa-pen", visible: Boolean(onEdit), onSelect: () => onEdit?.()},
+                            {
+                                label: specialization.active ? "Marcar como inactiva" : "Marcar como activa", icon: "fa-toggle-on",
+                                visible: Boolean(onToggleStatus), onSelect: () => onToggleStatus?.(),
+                            },
+                        ]}/>
                     </div>
 
                     <p className="line-clamp-3 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
                         {specialization.description || "Sin descripción registrada para esta área especializada."}
                     </p>
                 </div>
-
-                {onEdit && (
-                    <div className="pt-1">
-                        <button type="button" className="btn btn-sm" onClick={onEdit}>
-                            <i className="fa fa-pen"/>Editar
-                        </button>
-                    </div>
-                )}
             </div>
         </article>
     );

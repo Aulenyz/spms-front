@@ -1,4 +1,5 @@
 import {
+    BillingTone,
     InvoiceStatus,
     InvoiceStatusLabel,
     InvoiceStatusTone,
@@ -8,8 +9,18 @@ import {
     ReceiptStatus,
 } from "../../../domain/billing/Invoice.ts";
 
+// Nombres completos para que Tailwind conserve cada clase (no detecta las armadas con plantillas).
+const TONE_CLASS: Record<BillingTone, string> = {
+    success: "billing-pill-success",
+    warning: "billing-pill-warning",
+    partial: "billing-pill-partial",
+    danger: "billing-pill-danger",
+    info: "billing-pill-info",
+    muted: "billing-pill-muted",
+};
+
 export const InvoiceStatusPill = ({status}: {status: InvoiceStatus}) => (
-    <span className={`billing-pill billing-pill-${InvoiceStatusTone[status]}`}>{InvoiceStatusLabel[status]}</span>
+    <span className={`billing-pill ${TONE_CLASS[InvoiceStatusTone[status]]}`}>{InvoiceStatusLabel[status]}</span>
 );
 
 export const ReceiptStatusPill = ({status}: {status: ReceiptStatus}) => (

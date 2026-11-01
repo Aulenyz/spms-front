@@ -23,7 +23,7 @@ export const CourseTemplateBreadcrumb = ({onCreate}: {onCreate: () => void}) => 
                 <div className="flex items-center gap-2">
                     <button onClick={onCreate} className="btn btn-sm btn-primary" type="button">
                         <i className="fa fa-plus me-1"/>
-                        Nuevo curso
+                        Nuevo curso base
                     </button>
                 </div>
             )}
