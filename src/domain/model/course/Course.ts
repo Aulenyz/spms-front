@@ -1,5 +1,6 @@
 import {BaseModel} from "../BaseModel.ts";
 import {Subject} from "./Subject.ts";
+import {TemplateSlot} from "../../../modules/course/template/schedule.ts";
 
 export interface Course extends BaseModel {
     name: string;
@@ -13,6 +14,8 @@ export interface Course extends BaseModel {
 export interface CourseAcademicAssignment extends BaseModel {
     subject: Subject;
     teacher?: CourseTeacher | null;
+    /** Clases de la semana según el curso base (sección del curso). */
+    slots?: TemplateSlot[];
 }
 
 export interface CourseTeacher {
