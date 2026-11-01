@@ -2,16 +2,17 @@ import {useMemo, useState} from "react";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {SearchSelect} from "../SearchSelect.tsx";
 import {CourseService} from "../../../../services/course/CourseService.ts";
-import {Course} from "../../../../domain/model/course/Course.ts";
+import {Course, GradeTypeLabel} from "../../../../domain/model/course/Course.ts";
 import {Pagination} from "../../../../domain/filters/Page.ts";
 
 const courseService = CourseService.instance;
 
-/** "Primero A · Ciencias": nombre y sección, y la especialización si la tiene. */
+/** "Tercero A · Primaria · Desarrollo Software": nombre y sección, nivel y área especializada si la tiene. */
 export const courseLabel = (course: Course) => {
-    const base = [course.name, course.division].filter(Boolean).join(" ").trim();
+    const base = [course.name, course.division].filter(Boolean).join(" ").trim() || "Curso";
+    const level = course.type ? GradeTypeLabel[course.type] : "";
     const specialization = (course.specialization?.name ?? "").toString().trim();
-    return base && specialization ? `${base} · ${specialization}` : base || specialization || "Curso";
+    return [base, level, specialization].filter(Boolean).join(" · ");
 };
 
 /** Buscador de cursos del periodo actual con el mismo SearchSelect de los demás formularios. */
