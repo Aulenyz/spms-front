@@ -33,6 +33,11 @@ export class StudentService extends BaseService<Student> {
         return this.get<StudentGuardian[]>(`/${studentId}/guardians`);
     }
 
+    /** Representantes del estudiante página a página (ficha del estudiante). */
+    guardiansPage(studentId: number, pagination: Pagination): Promise<Page<StudentGuardian>> {
+        return this.get<Page<StudentGuardian>>(`/${studentId}/guardians/page`, {page: pagination.page, size: pagination.size});
+    }
+
     /** Vincula un representante (existente o nuevo); devuelve la lista actualizada. */
     linkGuardian(studentId: number, payload: LinkGuardianValues): Promise<StudentGuardian[]> {
         return this.post<StudentGuardian[]>(`/${studentId}/guardians`, payload);
