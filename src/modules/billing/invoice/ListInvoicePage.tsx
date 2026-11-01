@@ -53,12 +53,13 @@ export const ListInvoicePage = () => {
             <PageHeader
                 title="Facturas emitidas"
                 description="Todo lo que se ha cobrado a los estudiantes: inscripciones, mensualidades y ventas."
+                actions={<ExportExcelButton dateRange fileName="facturas"
+                                            fetchFile={(range) => invoiceService.exportExcel({...filters, ...range})}/>}
             />
 
             <DataTableCard
                 title="Facturas"
                 description="Las más recientes primero. Toca una factura para ver sus conceptos y pagos."
-                actions={<ExportExcelButton fileName="facturas" fetchFile={() => invoiceService.exportExcel(filters)}/>}
                 filters={
                     <ListToolbar term={term} placeholder="Factura o estudiante"
                                  onTerm={(value) => {

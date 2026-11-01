@@ -45,7 +45,7 @@ export class InvoiceService extends BaseService<Invoice> {
         return this.get<Page<Invoice>>("/search", params(filters, pagination));
     }
 
-    /** Excel con todas las facturas del filtro. */
+    /** Excel con las facturas del filtro emitidas en el rango `from`–`to` (máximo 3 meses). */
     exportExcel(filters: InvoiceFilters): Promise<Blob> {
         return this.get<Blob>("/export", params(filters, Pagination.first));
     }
@@ -84,7 +84,7 @@ export class ReceiptService extends BaseService<Receipt> {
         return this.get<Page<Receipt>>("/search", params(filters, pagination));
     }
 
-    /** Excel con todos los recibos del filtro. */
+    /** Excel con los recibos del filtro del rango `from`–`to` (máximo 3 meses). */
     exportExcel(filters: ReceiptFilters): Promise<Blob> {
         return this.get<Blob>("/export", params(filters, Pagination.first));
     }
@@ -132,8 +132,9 @@ export class AccountService extends BaseService<AccountBalance> {
         return this.get<Page<AccountMovement>>(`/accounts/${studentId}/movements`, {page: pagination.page, size: pagination.size});
     }
 
-    exportMovements(studentId: number | string): Promise<Blob> {
-        return this.get<Blob>(`/accounts/${studentId}/movements/export`);
+    /** Excel con los movimientos del rango (máximo 3 meses), con su saldo acumulado. */
+    exportMovements(studentId: number | string, range: {from: string; to: string}): Promise<Blob> {
+        return this.get<Blob>(`/accounts/${studentId}/movements/export`, range);
     }
 
     summary(): Promise<BillingSummary> {

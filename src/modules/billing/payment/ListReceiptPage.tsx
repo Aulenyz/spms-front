@@ -56,17 +56,20 @@ export const ListReceiptPage = () => {
             <PageHeader
                 title="Pagos recibidos"
                 description="Cada pago genera un recibo que puedes imprimir o anular si hubo un error."
-                actions={hasAuthority(AuthorityKey.COLLECTION_CREATE) ? (
-                    <button type="button" className="btn btn-sm btn-primary" onClick={() => setPaying(true)}>
-                        <i className="fa fa-receipt"/>Registrar pago
-                    </button>
-                ) : undefined}
+                actions={<>
+                    <ExportExcelButton dateRange fileName="recibos"
+                                       fetchFile={(range) => ReceiptService.instance.exportExcel({...filters, ...range})}/>
+                    {hasAuthority(AuthorityKey.COLLECTION_CREATE) && (
+                        <button type="button" className="btn btn-sm btn-primary" onClick={() => setPaying(true)}>
+                            <i className="fa fa-receipt"/>Registrar pago
+                        </button>
+                    )}
+                </>}
             />
 
             <DataTableCard
                 title="Recibos"
                 description="Los más recientes primero. Toca un pago para ver todo su detalle."
-                actions={<ExportExcelButton fileName="recibos" fetchFile={() => ReceiptService.instance.exportExcel(filters)}/>}
                 filters={
                     <ListToolbar term={term} placeholder="Recibo, estudiante o ref."
                                  onTerm={(value) => {

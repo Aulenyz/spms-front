@@ -144,8 +144,8 @@ export const AccountStatementPage = () => {
             {tab === "movements" && (
                 <PagedSection title="Movimientos" description="Cargos y pagos, del más reciente al más antiguo, con el saldo acumulado."
                               query={movementsQuery} empty="Sin movimientos." onPage={setMovementsPage}
-                              actions={<ExportExcelButton fileName={fileName("movimientos")}
-                                                          fetchFile={() => AccountService.instance.exportMovements(studentId)}/>}>
+                              actions={<ExportExcelButton dateRange fileName={fileName("movimientos")}
+                                                          fetchFile={(range) => AccountService.instance.exportMovements(studentId, range!)}/>}>
                     {(movements) => (
                         <table className="table-shell min-w-[640px]">
                             <thead>
@@ -173,8 +173,8 @@ export const AccountStatementPage = () => {
 
             {tab === "invoices" && (
                 <PagedSection title="Facturas" query={invoicesQuery} empty="Sin facturas." onPage={setInvoicesPage}
-                              actions={<ExportExcelButton fileName={fileName("facturas")}
-                                                          fetchFile={() => InvoiceService.instance.exportExcel(studentFilter)}/>}>
+                              actions={<ExportExcelButton dateRange fileName={fileName("facturas")}
+                                                          fetchFile={(range) => InvoiceService.instance.exportExcel({...studentFilter, ...range})}/>}>
                     {(invoices) => (
                         <table className="table-shell min-w-[640px]">
                             <thead><tr><th>Factura</th><th>Vence</th><th className="text-right">Total</th><th className="text-right">Saldo</th><th>Estado</th></tr></thead>
@@ -199,8 +199,8 @@ export const AccountStatementPage = () => {
 
             {tab === "receipts" && (
                 <PagedSection title="Recibos" query={receiptsQuery} empty="Sin pagos registrados." onPage={setReceiptsPage}
-                              actions={<ExportExcelButton fileName={fileName("recibos")}
-                                                          fetchFile={() => ReceiptService.instance.exportExcel(studentFilter)}/>}>
+                              actions={<ExportExcelButton dateRange fileName={fileName("recibos")}
+                                                          fetchFile={(range) => ReceiptService.instance.exportExcel({...studentFilter, ...range})}/>}>
                     {(receipts) => (
                         <table className="table-shell min-w-[640px]">
                             <thead><tr><th>Recibo</th><th>Fecha</th><th>Forma de pago</th><th className="text-right">Monto</th><th>Estado</th></tr></thead>
