@@ -13,6 +13,7 @@ import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {InfoList} from "../../../components/ui/detail/InfoList.tsx";
 import {Badge, StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
+import {UserChannelsSection} from "./UserChannelsSection.tsx";
 
 const STATUS_ACTIONS: Record<UserStatus, { label: string; icon: string }> = {
     [UserStatus.ACTIVE]: {label: "Activar", icon: "fa-circle-check"},
@@ -96,6 +97,7 @@ export const UserDetailsPage = () => {
 
     const canChangeStatus = hasAuthority(AuthorityKey.USER_STATUS_UPDATE);
     const canViewRole = hasAuthority(AuthorityKey.ROLE_DETAILS_VIEW);
+    const canEditUser = hasAuthority(AuthorityKey.USER_EDIT);
     const permissionCount = roleDetails?.countAuthorities ?? user.role?.countAuthorities;
 
     return (
@@ -139,6 +141,7 @@ export const UserDetailsPage = () => {
                 ]}/>
             </DetailSection>
 
+            {canEditUser && user.id && <UserChannelsSection userId={user.id}/>}
         </div>
     );
 };
