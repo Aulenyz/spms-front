@@ -8,6 +8,12 @@ type DatePickerProps = {
     label?: string;
     value: string;
     min?: string;
+    /** Última fecha que se puede elegir (yyyy-mm-dd). */
+    max?: string;
+    placeholder?: string;
+    /** Permite dejar la fecha vacía (aparece una ✕ para borrarla). */
+    clearable?: boolean;
+    className?: string;
     helper?: string;
     icon?: string;
     required?: boolean;
@@ -67,6 +73,10 @@ export const DatePicker = ({
     label,
     value,
     min,
+    max,
+    placeholder,
+    clearable,
+    className,
     helper,
     icon = "fa-calendar-days",
     required,
@@ -74,12 +84,17 @@ export const DatePicker = ({
     compact,
     onChange,
 }: DatePickerProps) => (
-    <label className={clsx("block", compact && "w-[220px] shrink-0")}>
+    // Compacto mide 220 px salvo que quien lo usa indique otro ancho. Es un div y no un label: un label
+    // reenvía el clic de un día del calendario al botón y lo vuelve a abrir.
+    <div className={clsx("block", compact && !className && "w-[220px] shrink-0", className)}>
         {label && <span className="mb-2 block text-sm font-bold" style={{color: "var(--text-primary)"}}>{label}</span>}
         <ReactDatePicker
             selected={parseDate(value)}
             minDate={parseDate(min) ?? undefined}
-            onChange={(date: Date | null) => date && onChange(serializeDate(date))}
+            maxDate={parseDate(max) ?? undefined}
+            onChange={(date: Date | null) => date ? onChange(serializeDate(date)) : clearable && onChange("")}
+            isClearable={clearable && Boolean(value)}
+            placeholderText={placeholder}
             locale={es}
             dateFormat="dd 'de' MMMM 'de' yyyy"
             calendarStartDay={1}
@@ -88,10 +103,11 @@ export const DatePicker = ({
             showPopperArrow={false}
             popperPlacement="bottom-end"
             popperProps={{strategy: "fixed"}}
+            wrapperClassName={className ? "!block w-full" : undefined}
             calendarClassName="spms-date-calendar"
             popperClassName="spms-date-popper"
-            customInput={<DateTrigger icon={icon} compact={compact} disabled={disabled}/>} 
+            customInput={<DateTrigger icon={icon} compact={compact} disabled={disabled} placeholder={placeholder}/>}
         />
         {helper && <small className="mt-1.5 block px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>{helper}</small>}
-    </label>
+    </div>
 );

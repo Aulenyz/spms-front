@@ -21,6 +21,7 @@ import {courseLabel, CourseSearchSelect} from "../../../components/io/input/busi
 import {Course} from "../../../domain/model/course/Course.ts";
 import {EnrollmentService} from "../../../services/student/enrollment/EnrollmentService.ts";
 import {GuardiansStep} from "./GuardiansStep.tsx";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 
 const invoiceService = InvoiceService.instance;
 const SYSTEM_ONLY = ["ENROLLMENT", "RE_ENROLLMENT"];
@@ -716,10 +717,9 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                                        onChange={(event) => setReference(event.target.value)}/>
                                                             </label>
                                                         ) : null}
-                                                        <label className="block"><Label>Fecha</Label>
-                                                            <input type="date" className="input input-bordered input-sm w-full" value={date} max={today()}
-                                                                   onChange={(event) => setDate(event.target.value)}/>
-                                                        </label>
+                                                        <div><Label>Fecha</Label>
+                                                            <DatePicker compact className="w-full" value={date} max={today()} onChange={setDate}/>
+                                                        </div>
                                                     </div>
                                                     {overpaidByCard && (
                                                         <p className="text-sm" style={{color: "var(--danger)"}}>

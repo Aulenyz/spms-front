@@ -16,6 +16,7 @@ import {ProductService} from "../../../services/product/ProductService.ts";
 import {ProductCategoryService} from "../../../services/product/ProductCategoryService.ts";
 import {TaxCategoryService} from "../../../services/product/TaxCategoryService.ts";
 import {Pagination} from "../../../domain/filters/Page.ts";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 
 const productService = ProductService.instance;
 const categoryService = ProductCategoryService.instance;
@@ -246,16 +247,16 @@ export const ProductForm = ({product, onDone, onSaved}: {
 
                 <Group title="¿Cuándo se cobra?" hint="Déjalo vacío si se puede cobrar en cualquier fecha.">
                     <div className="grid grid-cols-2 gap-3">
-                        <label className="block">
+                        <div>
                             <span className="form-label">Desde</span>
-                            <input className="input input-sm" type="date" value={values.startDate}
-                                   onChange={(event) => set("startDate", event.target.value)}/>
-                        </label>
-                        <label className="block">
+                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.startDate}
+                                        max={values.endDate || undefined} onChange={(value) => set("startDate", value)}/>
+                        </div>
+                        <div>
                             <span className="form-label">Hasta</span>
-                            <input className="input input-sm" type="date" value={values.endDate} min={values.startDate || undefined}
-                                   onChange={(event) => set("endDate", event.target.value)}/>
-                        </label>
+                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.endDate}
+                                        min={values.startDate || undefined} onChange={(value) => set("endDate", value)}/>
+                        </div>
                     </div>
                     {!datesValid && <p className="text-xs text-[var(--danger)]">La fecha final no puede ser anterior a la inicial.</p>}
                 </Group>

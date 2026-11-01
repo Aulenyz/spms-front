@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import {toast} from "react-toastify";
 import {downloadFile} from "../../../utils/Files.ts";
 import {localToday} from "../../../domain/billing/Invoice.ts";
+import {DatePicker} from "../../io/DatePicker.tsx";
 
 /** Rango de fechas de una exportación (yyyy-mm-dd). */
 export type ExportRange = {from: string; to: string};
@@ -102,17 +103,17 @@ export const ExportExcelButton = ({fetchFile, fileName, label = "Exportar", disa
                 <div ref={panelRef} className="floating-panel fixed z-[10000]" style={{top: position.top, left: position.left, width: PANEL_WIDTH}}>
                     <div className="floating-panel-header">Exportar a Excel</div>
                     <div className="space-y-3 p-3">
-                        <div className="grid grid-cols-2 gap-2">
-                            <label className="block">
+                        <div className="space-y-2">
+                            <div>
                                 <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Desde</span>
-                                <input type="date" className="input input-sm w-full" value={range.from} max={range.to}
-                                       onChange={(event) => setRange((current) => ({...current, from: event.target.value}))}/>
-                            </label>
-                            <label className="block">
+                                <DatePicker compact className="w-full" value={range.from} max={range.to} icon="fa-calendar-day"
+                                            onChange={(from) => setRange((current) => ({...current, from}))}/>
+                            </div>
+                            <div>
                                 <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Hasta</span>
-                                <input type="date" className="input input-sm w-full" value={range.to} min={range.from}
-                                       onChange={(event) => setRange((current) => ({...current, to: event.target.value}))}/>
-                            </label>
+                                <DatePicker compact className="w-full" value={range.to} min={range.from} icon="fa-calendar-check"
+                                            onChange={(to) => setRange((current) => ({...current, to}))}/>
+                            </div>
                         </div>
                         <p className="text-xs" style={{color: problem ? "var(--danger)" : "var(--text-tertiary)"}}>
                             {problem ?? `Hasta ${MAX_EXPORT_MONTHS} meses por exportación, con los filtros de la lista.`}

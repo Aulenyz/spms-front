@@ -3,6 +3,7 @@ import {toast} from "react-toastify";
 import {StudentService} from "../../../services/student/StudentService.ts";
 import {Gender, Genders} from "../../../domain/model/user/user.ts";
 import {localToday, PersonRef} from "../../../domain/billing/Invoice.ts";
+import {DatePicker} from "../../../components/io/DatePicker.tsx";
 
 type Props = {
     onCreated: (student: PersonRef) => void;
@@ -78,12 +79,12 @@ export const NewStudentForm = ({onCreated, onCancel}: Props) => {
                     </select>
                     {field("gender")}
                 </label>
-                <label className="block">
+                <div>
                     <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Fecha de nacimiento</span>
-                    <input type="date" className="input input-bordered input-sm w-full" value={values.birthDate}
-                           max={localToday()} onChange={(event) => set("birthDate", event.target.value)}/>
+                    <DatePicker compact className="w-full" value={values.birthDate} max={localToday()}
+                                onChange={(value) => set("birthDate", value)}/>
                     {field("birthDate")}
-                </label>
+                </div>
             </div>
             <div className="flex justify-end gap-2">
                 <button type="button" className="btn btn-sm" onClick={onCancel}>Cancelar</button>
