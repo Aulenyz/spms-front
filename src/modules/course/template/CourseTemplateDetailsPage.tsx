@@ -12,6 +12,7 @@ import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CenterModal} from "../../../components/shared/CenterModal.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
+import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
@@ -40,12 +41,15 @@ export const CourseTemplateDetailsPage = () => {
     const canView = hasAuthority(AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW);
     const canEdit = hasAuthority(AuthorityKey.COURSE_TEMPLATE_EDIT);
     const canGenerate = hasAuthority(AuthorityKey.COURSE_GENERATE);
+    const canChangeStatus = hasAuthority(AuthorityKey.COURSE_TEMPLATE_STATUS_UPDATE);
 
     const [showEdit, setShowEdit] = useState(false);
     const [editing, setEditing] = useState<{subject: TemplateSubject | null; division?: string} | null>(null);
     const [generating, setGenerating] = useState(false);
     const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
     const [removing, setRemoving] = useState(false);
+    const [confirmInactivate, setConfirmInactivate] = useState(false);
+    const [togglingStatus, setTogglingStatus] = useState(false);
 
     const templateKey = [...queryKeys.courseTemplates.all, "detail", id];
     const subjectsKey = [...queryKeys.courseTemplates.all, "subjects", id];
@@ -94,22 +98,45 @@ export const CourseTemplateDetailsPage = () => {
         }
     };
 
+    const toggleStatus = async () => {
+        if (!id) return;
+        setTogglingStatus(true);
+        try {
+            const saved = await service.updateStatus(id);
+            queryClient.setQueryData(templateKey, saved);
+            void queryClient.invalidateQueries({queryKey: queryKeys.courseTemplates.all});
+            setConfirmInactivate(false);
+            toast.success(saved.active ? "Curso base activado." : "Curso base inactivado: ya no genera cursos.");
+        } catch (error) {
+            toast.error(message(error, "No se pudo cambiar el estado del curso base."));
+        } finally {
+            setTogglingStatus(false);
+        }
+    };
+
     if (templateQuery.isLoading) return <LoadingContent loading className="py-16"/>;
     if (!template || !id) return <EmptyState title="No se encontró el curso base"
                                              description="Vuelve al listado e intenta nuevamente." icon="fa-layer-group"/>;
 
     const title = template.name ?? template.specialization?.name ?? "Curso base";
+    const active = template.active !== false;
 
     return <div className="space-y-4">
         <DetailHeader
             avatar={title}
             title={title}
             subtitle={[template.type ? GradeTypeLabel[template.type] : null, template.specialization?.name].filter(Boolean).join(" · ") || "Sin área especializada"}
+            badges={<StatusBadge active={active}/>}
             actions={<>
+                {canChangeStatus && <button type="button" className="btn btn-sm" disabled={togglingStatus}
+                                            onClick={() => active ? setConfirmInactivate(true) : void toggleStatus()}>
+                    <i className={togglingStatus ? "fa fa-spinner fa-spin" : active ? "fa fa-circle-pause" : "fa fa-circle-check"}/>
+                    {active ? "Inactivar" : "Activar"}
+                </button>}
                 {canEdit && <button type="button" className="btn btn-sm" onClick={() => setShowEdit(true)}>
                     <i className="fa fa-pen"/>Editar
                 </button>}
-                {canGenerate && <button type="button" className="btn btn-sm btn-primary" disabled={generating}
+                {canGenerate && active && <button type="button" className="btn btn-sm btn-primary" disabled={generating}
                                         onClick={() => void generateCourses()}>
                     <i className={generating ? "fa fa-spinner fa-spin" : "fa fa-layer-group"}/>
                     {generating ? "Generando..." : "Generar cursos del período"}
@@ -153,6 +180,25 @@ export const CourseTemplateDetailsPage = () => {
                                      }}/>
             )}
         </LeftModal>
+
+        <CenterModal title="Inactivar curso base" isOpen={confirmInactivate}
+                     onClose={() => !togglingStatus && setConfirmInactivate(false)} className="max-w-md">
+            <div className="space-y-5">
+                <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                    <strong style={{color: "var(--text-primary)"}}>{title}</strong> dejará de generar cursos, ni a mano ni al
+                    abrir un nuevo período. Los cursos ya generados no cambian y puedes activarlo de nuevo cuando quieras.
+                </p>
+                <div className="flex justify-end gap-2">
+                    <button type="button" className="btn btn-sm" disabled={togglingStatus} onClick={() => setConfirmInactivate(false)}>
+                        Cancelar
+                    </button>
+                    <button type="button" className="btn btn-sm bg-[var(--danger)] text-white" disabled={togglingStatus}
+                            onClick={() => void toggleStatus()}>
+                        <i className={togglingStatus ? "fa fa-spinner fa-spin" : "fa fa-circle-pause"}/>{togglingStatus ? "Inactivando..." : "Sí, inactivar"}
+                    </button>
+                </div>
+            </div>
+        </CenterModal>
 
         <CenterModal title="Remover materia" isOpen={Boolean(subjectToRemove)}
                      onClose={() => !removing && setSubjectToRemove(null)} className="max-w-md">

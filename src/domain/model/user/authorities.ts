@@ -55,6 +55,7 @@ export enum AuthorityKey {
     COURSE_TEMPLATE_EDIT = "COURSE_TEMPLATE_EDIT",
     COURSE_TEMPLATE_DETAILS_VIEW = "COURSE_TEMPLATE_DETAILS_VIEW",
     COURSE_GENERATE = "COURSE_GENERATE",
+    COURSE_TEMPLATE_STATUS_UPDATE = "COURSE_TEMPLATE_STATUS_UPDATE",
 
 
     SUBJECTS_VIEW = "SUBJECTS_VIEW",
@@ -133,6 +134,7 @@ export const AuthorityDescriptionMap: Record<AuthorityKey, string> = {
     [AuthorityKey.COURSE_TEMPLATE_EDIT]: "Permite editar cursos base existentes.",
     [AuthorityKey.COURSE_TEMPLATE_DETAILS_VIEW]: "Permite acceder a los detalles de un curso base.",
     [AuthorityKey.COURSE_GENERATE]: "Permite generar los cursos de un curso base para el período académico actual.",
+    [AuthorityKey.COURSE_TEMPLATE_STATUS_UPDATE]: "Permite activar o inactivar cursos base.",
 
 
     [AuthorityKey.SUBJECTS_VIEW]: "Permite ver el listado de materias.",

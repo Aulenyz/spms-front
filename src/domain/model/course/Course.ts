@@ -27,6 +27,8 @@ export interface CourseTemplate extends BaseModel {
     count: number;
     type?: GradeType;
     specialization: Specialization | null;
+    /** Un curso base inactivo ya no genera cursos. */
+    active?: boolean;
 }
 
 export interface Specialization extends BaseModel {

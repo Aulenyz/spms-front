@@ -14,6 +14,7 @@ import {CourseTemplateBreadcrumb} from "../../breadcrumb/CourseTemplateBreadcrum
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
 import {TableDetailAction} from "../../../components/ui/data/TableDetailAction.tsx";
+import {CourseActivePill} from "../../../components/io/output/pill/CourseActivePill.tsx";
 
 const courseTemplateService: CourseTemplateService = CourseTemplateService.instance;
 const EMPTY_PAGE: Page<CourseTemplate> = Pagination.empty<CourseTemplate>();
@@ -24,6 +25,7 @@ export const ListCourseTemplatePage = () => {
     const [filters, setFilters] = useState<Record<string, any>>({
         name: "",
         type: "",
+        active: "true",
     });
     const queryClient = useQueryClient();
     const {data: courseTemplates = EMPTY_PAGE} = useQuery({
@@ -75,6 +77,7 @@ export const ListCourseTemplatePage = () => {
                             <th scope="col">Tipo</th>
                             <th scope="col">Secciones</th>
                             <th scope="col">Área especializada</th>
+                            <th scope="col">Estado</th>
                             <th scope="col"></th>
                         </tr>
                         </thead>
@@ -85,6 +88,7 @@ export const ListCourseTemplatePage = () => {
                                 <td><GradeTypePill type={template.type}/></td>
                                 <td>{template.count}</td>
                                 <td>{template.specialization?.name ?? "Sin área especializada"}</td>
+                                <td><CourseActivePill active={template.active !== false}/></td>
                                 <td className="text-right">
                                     <TableDetailAction to={`/courses/templates/${template.id}`}/>
                                 </td>

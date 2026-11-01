@@ -30,6 +30,11 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
         super('/course/templates');
     }
 
+    /** Activa o inactiva el curso base; inactivo ya no genera cursos. */
+    updateStatus(id: string | number): Promise<CourseTemplate> {
+        return this.put<CourseTemplate>(`/${id}/status`);
+    }
+
     generateCourses(id: string | number): Promise<unknown[]> {
         return this.post<unknown[]>(`/${id}/courses`);
     }
