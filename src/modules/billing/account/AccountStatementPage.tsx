@@ -16,6 +16,9 @@ import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {InvoiceStatusPill, PaymentMethodTag, ReceiptStatusPill} from "../components/BillingPills.tsx";
 import {RegisterPaymentModal} from "../payment/RegisterPaymentModal.tsx";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
+import {StudentService} from "../../../services/student/StudentService.ts";
+import {RelationshipLabel} from "../../../domain/student/Guardian.ts";
 
 type Tab = "movements" | "invoices" | "receipts";
 const TABS: {key: Tab; label: string; icon: string}[] = [
@@ -67,6 +70,12 @@ export const AccountStatementPage = () => {
     const studentFilter = {studentId: Number(studentId)};
     const pageOf = (page: number): Pagination => ({...Pagination.ofSize(PAGE_SIZE), page});
 
+    // Un estudiante puede tener varios representantes: se muestran todos con su parentesco
+    const guardiansQuery = useQuery({
+        queryKey: [...queryKeys.students.all, "guardians", studentId],
+        queryFn: ({signal}) => StudentService.instance.withSignal(signal).guardians(Number(studentId)),
+        meta: {silent: true},
+    });
     const statementQuery = useQuery({
         queryKey: queryKeys.accounts.statement(studentId),
         queryFn: ({signal}) => AccountService.instance.withSignal(signal).statement(studentId),
@@ -105,7 +114,17 @@ export const AccountStatementPage = () => {
             <DetailHeader
                 avatar={statement.student.name}
                 title={statement.student.name}
-                subtitle={<>{statement.student.document}{statement.guardian && ` · Representante: ${statement.guardian.name}`}</>}
+                subtitle={<>
+                    <PermittedLink authority={AuthorityKey.STUDENTS_VIEW} to={`/students/${statement.student.id}`}
+                                   className="hover:text-[var(--accent)] hover:underline">Matrícula {statement.student.document}</PermittedLink>
+                    {(guardiansQuery.data ?? []).length > 0 && (
+                        <span className="block">
+                            {(guardiansQuery.data ?? []).length === 1 ? "Representante: " : "Representantes: "}
+                            {(guardiansQuery.data ?? []).map(({guardian, relationship}) =>
+                                `${guardian.firstname} ${guardian.lastname} (${RelationshipLabel[relationship] ?? relationship})`).join(" · ")}
+                        </span>
+                    )}
+                </>}
                 badges={Number(statement.due) > 0
                     ? <span className={`billing-pill billing-pill-${Number(statement.overdue) > 0 ? "danger" : "warning"}`}>
                         {Number(statement.overdue) > 0 ? "Con atraso" : "Con saldo"}
