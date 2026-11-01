@@ -125,20 +125,20 @@ export const ListEnrollmentPage = () => {
                                     {/* Lleva a la ficha del estudiante (su estado de cuenta) */}
                                     <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${enrollment.student.id}`}
                                                    title="Ver estado de cuenta del estudiante"
-                                                   className="font-semibold hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-primary)"}}>
+                                                   className="whitespace-nowrap font-semibold hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-primary)"}}>
                                         {[enrollment.student.firstname, enrollment.student.lastname].filter(Boolean).join(" ")}
                                     </PermittedLink>
                                 </td>
                                 <td>
-                                    <span className="font-semibold" style={{color: "var(--text-primary)"}}>
-                                        {enrollment.course.name} {enrollment.course.division}
-                                    </span>
-                                    <span className="mt-1 flex flex-wrap items-center gap-2">
+                                    <span className="flex items-center gap-2 whitespace-nowrap">
+                                        <span className="font-semibold" style={{color: "var(--text-primary)"}}>
+                                            {enrollment.course.name} {enrollment.course.division}
+                                        </span>
                                         {enrollment.course.type && <GradeTypePill type={enrollment.course.type}/>}
-                                        {enrollment.course.specialization?.name && (
-                                            <span className="text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
-                                        )}
                                     </span>
+                                    {enrollment.course.specialization?.name && (
+                                        <span className="block text-xs text-[var(--text-tertiary)]">{enrollment.course.specialization.name}</span>
+                                    )}
                                 </td>
                                 <td><EnrollmentStatusPill status={enrollment.status}/></td>
                             </tr>
