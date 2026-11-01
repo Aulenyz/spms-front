@@ -95,7 +95,7 @@ export const ListStudentPage = () => {
                             <td><StudentGenderPill gender={student.gender}/></td>
                             <td><StudentStatusPill status={student.status}/></td>
                             <td className="text-right">
-                                <TableDetailAction disabled/>
+                                <TableDetailAction to={`/students/${student.id}`}/>
                             </td>
                         </tr>
                     ))}

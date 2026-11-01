@@ -122,9 +122,8 @@ export const ListEnrollmentPage = () => {
                                 <td>{enrollment.date ? new Date(enrollment.date).toLocaleDateString() : "---"}</td>
                                 <td><strong>{enrollment.student.document}</strong></td>
                                 <td>
-                                    {/* Lleva a la ficha del estudiante (su estado de cuenta) */}
-                                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${enrollment.student.id}`}
-                                                   title="Ver estado de cuenta del estudiante"
+                                    <PermittedLink authority={AuthorityKey.STUDENTS_VIEW} to={`/students/${enrollment.student.id}`}
+                                                   title="Ver el detalle del estudiante"
                                                    className="whitespace-nowrap font-semibold hover:text-[var(--accent)] hover:underline" style={{color: "var(--text-primary)"}}>
                                         {[enrollment.student.firstname, enrollment.student.lastname].filter(Boolean).join(" ")}
                                     </PermittedLink>

@@ -138,6 +138,7 @@ const buildBreadcrumbs = (pathname: string): Array<{label: string; to?: string}>
         return [{label: "Estados de cuenta", to: "/accounts/list"}, {label: "Estado de cuenta", to: pathname}];
     }
     if (pathname.startsWith("/enrollments")) return [{label: "Inscripciones", to: pathname}];
+    if (/^\/students\/\d+/.test(pathname)) return [{label: "Estudiantes", to: "/students/list"}, {label: "Detalles", to: pathname}];
     if (pathname.startsWith("/students")) return [{label: "Estudiantes", to: pathname}];
     if (pathname.startsWith("/guardians")) {
         return [{label: "Representantes", to: "/guardians/list"}];
