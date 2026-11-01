@@ -126,6 +126,10 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     const pendingEnrollmentInvoice = standing?.state === "PENDING" ? standing.invoiceId : undefined;
     const conceptsLocked = notEnrolled && !enrollCourse;
     const enrollmentAmount = notEnrolled && enrollCourse ? round(Number(standing?.conceptPrice ?? 0)) : 0;
+    // La inscripción puede costar 0: se inscribe igual, sin cobro.
+    const enrolling = notEnrolled && Boolean(enrollCourse);
+    const enrollmentPriceSet = standing?.conceptPrice != null && Number(standing.conceptPrice) >= 0;
+    const enrollmentPriceLabel = Number(standing?.conceptPrice ?? 0) > 0 ? money.format(Number(standing?.conceptPrice)) : "Sin costo";
     useEffect(() => {
         if (pendingEnrollmentInvoice) setPending((current) => current.includes(pendingEnrollmentInvoice) ? current : [pendingEnrollmentInvoice, ...current]);
     }, [pendingEnrollmentInvoice]);
@@ -152,7 +156,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         }),
         onSuccess: (saved) => {
             setResult(saved);
-            toast.success(saved.receipt ? `Cobro registrado. Recibo ${saved.receipt.receipt.number}.` : "Factura creada sin pago.");
+            toast.success(saved.receipt ? `Cobro registrado. Recibo ${saved.receipt.receipt.number}.`
+                : saved.invoice ? "Factura creada sin pago." : "Inscripción registrada sin costo.");
             [queryKeys.invoices.all, queryKeys.payments.all, queryKeys.accounts.all, queryKeys.enrollments.all]
                 .forEach((queryKey) => void queryClient.invalidateQueries({queryKey}));
         },
@@ -236,7 +241,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
     // Lo que cubre el cobro, sin nombres de personas: es lo que lee la IA para escribir la nota.
     const noteInput = {
         concepts: [
-            ...(enrollmentAmount > 0 && standing?.conceptName ? [standing.conceptName] : []),
+            ...(enrolling && standing?.conceptName ? [standing.conceptName] : []),
             ...cart.flatMap(lineDescriptions),
         ],
         invoices: openInvoices.filter((invoice) => pending.includes(invoice.id)).map((invoice) => invoice.description || invoice.number),
@@ -284,7 +289,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
         if (target === "CONCEPTS") return true;
         // Sin inscripción, el curso se elige en Conceptos y la inscripción entra como primera línea
         if (notEnrolled && !enrollCourse) return false;
-        return total > 0 && !needsReference && !overpaidByCard;
+        // Una inscripción sin costo se puede registrar aunque el total sea 0
+        return (total > 0 || enrolling) && !needsReference && !overpaidByCard;
     };
     const currentIndex = STEPS.findIndex((item) => item.id === step);
     const next = STEPS[currentIndex + 1]?.id;
@@ -324,17 +330,17 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                 </div>
                 <div className="rounded-2xl px-3 py-3" style={{background: "var(--surface-muted)"}}>
                     <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em]" style={{color: "var(--text-tertiary)"}}>
-                        <span>Conceptos</span><span className="font-semibold">{cart.length + pending.length + (enrollmentAmount > 0 ? 1 : 0)}</span>
+                        <span>Conceptos</span><span className="font-semibold">{cart.length + pending.length + (enrolling ? 1 : 0)}</span>
                     </div>
-                    {cart.length + pending.length + (enrollmentAmount > 0 ? 1 : 0) === 0 ? (
+                    {cart.length + pending.length + (enrolling ? 1 : 0) === 0 ? (
                         <p className="mt-2" style={{color: "var(--text-tertiary)"}}>Sin conceptos</p>
                     ) : (
                         <div className="mt-2 space-y-1.5">
-                            {enrollmentAmount > 0 && enrollCourse && (
+                            {enrolling && enrollCourse && (
                                 <div className="flex justify-between gap-3">
                                     <span className="truncate" style={{color: "var(--text-primary)"}}>{standing?.conceptName}
                                         <span className="ms-1 text-xs" style={{color: "var(--text-tertiary)"}}>({[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")})</span></span>
-                                    <span className="font-semibold" style={{color: "var(--text-primary)"}}>{money.format(enrollmentAmount)}</span>
+                                    <span className="font-semibold" style={{color: "var(--text-primary)"}}>{enrollmentAmount > 0 ? money.format(enrollmentAmount) : "Sin costo"}</span>
                                 </div>
                             )}
                             {cart.map((line) => (
@@ -403,7 +409,8 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                   style={{background: "var(--success-soft)", color: "var(--success)"}}><i className="fa fa-check"/></span>
                             <div className="space-y-1">
                                 <h3 className="text-lg font-bold" style={{color: "var(--text-primary)"}}>
-                                    {result.receipt ? `Recibo ${result.receipt.receipt.number} por ${money.format(result.receipt.receipt.amount)}` : "Factura creada sin pago"}
+                                    {result.receipt ? `Recibo ${result.receipt.receipt.number} por ${money.format(result.receipt.receipt.amount)}`
+                                        : result.invoice ? "Factura creada sin pago" : "Inscripción registrada sin costo"}
                                 </h3>
                                 {result.invoice && (
                                     <p className="text-sm" style={{color: "var(--text-secondary)"}}>
@@ -526,10 +533,10 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                             <i className={`fa ${enrollCourse ? "fa-circle-check" : "fa-user-clock"} me-2`}
                                                                style={{color: enrollCourse ? "var(--success)" : "var(--warning)"}}/>
                                                             {enrollCourse
-                                                                ? <>{standing?.conceptName} agregada: se inscribe en este pago ({standing?.periodName}) y se cobra primero.</>
+                                                                ? <>{standing?.conceptName} agregada: se inscribe en este pago ({standing?.periodName}){Number(standing?.conceptPrice ?? 0) > 0 ? " y se cobra primero" : ", sin costo"}.</>
                                                                 : <>No está inscrito en <strong>{standing?.periodName}</strong>. Elige el curso: la {(standing?.conceptName ?? "inscripción").toLowerCase()} se agrega sola como primer concepto.</>}
                                                         </p>
-                                                        {Number(standing?.conceptPrice ?? 0) > 0 ? (
+                                                        {enrollmentPriceSet ? (
                                                             enrollCourse ? (
                                                                 <div className="flex flex-wrap items-center gap-3">
                                                                     <span className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm font-semibold"
@@ -541,7 +548,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                                         setChoosingCourse(true);
                                                                     }}>Cambiar</button>
                                                                     <strong className="ms-auto whitespace-nowrap text-sm" style={{color: "var(--text-primary)"}}>
-                                                                        {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
+                                                                        {standing?.conceptName} · {enrollmentPriceLabel}
                                                                     </strong>
                                                                 </div>
                                                             ) : choosingCourse ? (
@@ -562,7 +569,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                                         <i className="fa fa-graduation-cap"/>Curso para la inscripción
                                                                     </button>
                                                                     <strong className="ms-auto whitespace-nowrap text-sm" style={{color: "var(--text-primary)"}}>
-                                                                        {standing?.conceptName} · {money.format(Number(standing?.conceptPrice))}
+                                                                        {standing?.conceptName} · {enrollmentPriceLabel}
                                                                     </strong>
                                                                 </div>
                                                             )
@@ -733,10 +740,10 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                 <h3 className="text-base font-bold" style={{color: "var(--text-primary)"}}>Revisa antes de cobrar</h3>
                                                 <ul className="space-y-2 text-sm" style={{color: "var(--text-secondary)"}}>
                                                     <li><i className="fa fa-id-card me-2"/>{student?.name}{guardian && ` · paga ${guardian.firstname} ${guardian.lastname}`}</li>
-                                                    {notEnrolled && enrollCourse && <li><i className="fa fa-user-check me-2"/>Se inscribe en {[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")} con {standing?.conceptName} por {money.format(enrollmentAmount)}.</li>}
+                                                    {notEnrolled && enrollCourse && <li><i className="fa fa-user-check me-2"/>Se inscribe en {[enrollCourse.name, enrollCourse.division].filter(Boolean).join(" ")} con {standing?.conceptName} {enrollmentAmount > 0 ? `por ${money.format(enrollmentAmount)}` : "sin costo"}.</li>}
                                                     {cart.length > 0 && <li><i className="fa fa-file-invoice-dollar me-2"/>Se crea una factura por {money.format(subtotal - discountAmount)} con {cart.length} {cart.length === 1 ? "concepto" : "conceptos"}{discountAmount > 0 && ` (descuento ${money.format(discountAmount)})`}.</li>}
                                                     {pending.length > 0 && <li><i className="fa fa-clock-rotate-left me-2"/>Se pagan {pending.length} {pending.length === 1 ? "factura pendiente" : "facturas pendientes"} por {money.format(pendingTotal)}.</li>}
-                                                    <li><i className={`fa ${PaymentMethodIcon[method]} me-2`}/>{receivedAmount > 0 ? `Se reciben ${money.format(receivedAmount)} en ${PaymentMethodLabel[method].toLowerCase()}.` : "No se recibe dinero: todo queda pendiente."}</li>
+                                                    <li><i className={`fa ${PaymentMethodIcon[method]} me-2`}/>{receivedAmount > 0 ? `Se reciben ${money.format(receivedAmount)} en ${PaymentMethodLabel[method].toLowerCase()}.` : total === 0 ? "No hay nada que cobrar." : "No se recibe dinero: todo queda pendiente."}</li>
                                                     {balance > 0 && receivedAmount > 0 && <li style={{color: "var(--warning)"}}><i className="fa fa-hourglass-half me-2"/>Quedan {money.format(balance)} pendientes.</li>}
                                                     {balance < 0 && <li style={{color: "var(--success)"}}><i className="fa fa-coins me-2"/>Devuelta: {money.format(-balance)}.</li>}
                                                 </ul>
@@ -784,7 +791,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                 <button type="button" className="btn btn-sm btn-primary" disabled={!canContinue("REVIEW") || checkout.isPending}
                                         onClick={() => checkout.mutate()}>
                                     {checkout.isPending ? <i className="fa fa-spinner fa-spin"/> : <i className="fa fa-check"/>}
-                                    {receivedAmount > 0 ? `Cobrar ${money.format(Math.min(receivedAmount, total))}` : "Crear factura sin pago"}
+                                    {receivedAmount > 0 ? `Cobrar ${money.format(Math.min(receivedAmount, total))}` : total === 0 && enrolling ? "Inscribir sin costo" : "Crear factura sin pago"}
                                 </button>
                             )}
                         </footer>
