@@ -17,7 +17,7 @@ import {RegisterPaymentModal} from "../payment/RegisterPaymentModal.tsx";
 const OPEN = [InvoiceStatus.PENDING, InvoiceStatus.PARTIAL, InvoiceStatus.OVERDUE];
 
 /** Columnas compartidas por el encabezado y las filas: flecha, factura, vence, total, saldo, estado, acción. */
-const COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7.5rem_6.5rem_6rem] items-center gap-x-3";
+const COLUMNS = "grid grid-cols-[1.5rem_minmax(7rem,1.3fr)_minmax(6rem,1fr)_7.5rem_6.5rem_3.5rem] items-center gap-x-3";
 
 export const InvoiceListHeader = () => (
     <div className={`${COLUMNS} border-b px-3 py-3 text-xs font-semibold uppercase tracking-[0.06em]`}
@@ -113,9 +113,9 @@ export const InvoiceAccordionRow = ({invoice, open, onToggle}: {invoice: Invoice
                 </span>
                 <span className="ps-3"><InvoiceStatusPill status={invoice.status}/></span>
                 <span className="text-right">
-                    <button type="button" className="btn btn-sm px-3" disabled={printing} onClick={() => void print()}
+                    <button type="button" className="btn btn-sm btn-square" disabled={printing} title="Imprimir" onClick={() => void print()}
                             aria-label={`Imprimir factura ${invoice.number}`}>
-                        <i className={`fa ${printing ? "fa-spinner fa-spin" : "fa-print"}`}/>Imprimir
+                        <i className={`fa ${printing ? "fa-spinner fa-spin" : "fa-print"}`}/>
                     </button>
                 </span>
             </div>

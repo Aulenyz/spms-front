@@ -57,14 +57,14 @@ export const InvoiceStatusLabel: Record<InvoiceStatus, string> = {
 /** Tono visual de cada estado (clases `billing-pill-*`). */
 export const InvoiceStatusTone: Record<InvoiceStatus, BillingTone> = {
     [InvoiceStatus.PENDING]: "warning",
-    [InvoiceStatus.PARTIAL]: "info",
+    [InvoiceStatus.PARTIAL]: "partial",
     [InvoiceStatus.PAID]: "success",
     [InvoiceStatus.OVERDUE]: "danger",
     [InvoiceStatus.VOIDED]: "muted",
     [InvoiceStatus.CANCELLED]: "muted",
 };
 
-export type BillingTone = "success" | "warning" | "danger" | "info" | "muted";
+export type BillingTone = "success" | "warning" | "partial" | "danger" | "info" | "muted";
 
 export enum PaymentMethod {
     CASH = "CASH",
