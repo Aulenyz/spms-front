@@ -5,12 +5,11 @@ import clsx from "clsx";
 import {queryKeys} from "../../app/query/queryKeys.ts";
 import {StudentService} from "../../services/student/StudentService.ts";
 import {EnrollmentService} from "../../services/student/enrollment/EnrollmentService.ts";
-import {AccountService} from "../../services/billing/BillingService.ts";
 import {Pagination} from "../../domain/filters/Page.ts";
 import {Student} from "../../domain/student/Student.ts";
 import {RelationshipLabel} from "../../domain/student/Guardian.ts";
 import {Gender, Genders} from "../../domain/model/user/user.ts";
-import {formatDate, money} from "../../domain/billing/Invoice.ts";
+import {formatDate} from "../../domain/billing/Invoice.ts";
 import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 import {PermittedLink} from "../../components/auth/PermittedLink.tsx";
@@ -24,7 +23,7 @@ import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 
 /** El estudiante como lo devuelve el detalle: incluye la fecha de nacimiento. */
 type StudentDetails = Student & {birthDate?: string};
-type Tab = "guardians" | "enrollments" | "account";
+type Tab = "guardians" | "enrollments";
 
 const yearsOld = (birthDate: string) => {
     const [year, month, day] = birthDate.split("-").map(Number);
@@ -34,7 +33,8 @@ const yearsOld = (birthDate: string) => {
 
 /**
  * Ficha del estudiante. El resumen (matrícula, género, nacimiento y estado) va en el encabezado y se ve
- * en todas las pestañas; representantes, inscripciones y cuenta van cada uno en su pestaña.
+ * en todas las pestañas, junto al botón del estado de cuenta; representantes e inscripciones van cada
+ * uno en su pestaña.
  */
 export const StudentDetailsPage = () => {
     const {id = ""} = useParams();
@@ -43,7 +43,6 @@ export const StudentDetailsPage = () => {
     const tabs: {key: Tab; label: string; icon: string; visible: boolean}[] = [
         {key: "guardians", label: "Representantes", icon: "fa-user-group", visible: true},
         {key: "enrollments", label: "Inscripciones", icon: "fa-file-signature", visible: hasAuthority(AuthorityKey.ENROLLMENTS_VIEW)},
-        {key: "account", label: "Cuenta", icon: "fa-scale-balanced", visible: hasAuthority(AuthorityKey.INVOICES_VIEW)},
     ];
     const [tab, setTab] = useState<Tab>("guardians");
 
@@ -64,12 +63,6 @@ export const StudentDetailsPage = () => {
         enabled: tab === "enrollments",
         meta: {errorMessage: "No se pudieron cargar las inscripciones."},
     });
-    const accountQuery = useQuery({
-        queryKey: queryKeys.accounts.statement(id),
-        queryFn: ({signal}) => AccountService.instance.withSignal(signal).statement(id),
-        enabled: tab === "account",
-        meta: {errorMessage: "No se pudo cargar la cuenta."},
-    });
 
     const student = studentQuery.data;
     if (studentQuery.isPending) return <LoadingContent loading className="min-h-[320px]"><span/></LoadingContent>;
@@ -78,7 +71,6 @@ export const StudentDetailsPage = () => {
     const name = [student.firstname, student.lastname].filter(Boolean).join(" ");
     const guardians = guardiansQuery.data ?? [];
     const enrollments = [...(enrollmentsQuery.data?.content ?? [])].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
-    const account = accountQuery.data;
 
     return (
         <div className="space-y-6">
@@ -91,6 +83,11 @@ export const StudentDetailsPage = () => {
                     student.birthDate ? `Nació el ${formatDate(student.birthDate)} (${yearsOld(student.birthDate)} años)` : null,
                 ].filter(Boolean).join(" · ")}
                 badges={<StudentStatusPill status={student.status}/>}
+                actions={hasAuthority(AuthorityKey.INVOICES_VIEW) ? (
+                    <PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${student.id}`} className="btn btn-sm whitespace-nowrap">
+                        <i className="fa fa-scale-balanced"/>Estado de cuenta
+                    </PermittedLink>
+                ) : undefined}
             />
 
             <nav className="section-tabs w-fit">
@@ -160,29 +157,6 @@ export const StudentDetailsPage = () => {
                                 </table>
                             </div>
                         )}
-                </DetailSection>
-            )}
-
-            {tab === "account" && (
-                <DetailSection title="Cuenta" description="Lo facturado y pagado por el estudiante."
-                               actions={<PermittedLink authority={AuthorityKey.INVOICES_VIEW} to={`/accounts/${student.id}`} className="btn btn-sm">
-                                   <i className="fa fa-arrow-up-right-from-square"/>Ver estado de cuenta
-                               </PermittedLink>}>
-                    {accountQuery.isPending || !account ? <LoadingContent loading className="py-8"><span/></LoadingContent> : (
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            {[
-                                {label: "Facturado", value: account.billed, tone: undefined},
-                                {label: "Pagado", value: account.paid, tone: "var(--success)"},
-                                {label: "Saldo", value: account.due, tone: Number(account.due) > 0 ? "var(--text-primary)" : undefined},
-                                {label: "Vencido", value: account.overdue, tone: Number(account.overdue) > 0 ? "var(--danger)" : undefined},
-                            ].map((item) => (
-                                <div key={item.label} className="rounded-[20px] border px-5 py-4" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                    <span className="text-xs font-semibold uppercase tracking-[0.08em]" style={{color: "var(--text-tertiary)"}}>{item.label}</span>
-                                    <strong className="mt-1 block text-2xl" style={{color: item.tone ?? "var(--text-secondary)"}}>{money.format(item.value)}</strong>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </DetailSection>
             )}
         </div>
