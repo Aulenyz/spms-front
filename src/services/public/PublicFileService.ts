@@ -1,4 +1,4 @@
-import {environment} from "../../environment/environment.ts";
+import {channelHeaders, environment} from "../../environment/environment.ts";
 import {readStoredToken} from "../BaseService.ts";
 
 type ResultResponse<T> = {
@@ -26,7 +26,7 @@ export class PublicFileService {
             const response = await fetch(`${environment.apiURL}/files/upload`, {
                 method: "POST",
                 body: formData,
-                headers: sessionToken ? {authorization: `Bearer ${sessionToken}`} : undefined,
+                headers: sessionToken ? {...channelHeaders(), authorization: `Bearer ${sessionToken}`} : channelHeaders(),
             });
 
             if (!response.ok) {
