@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useParams} from "react-router-dom";
-import {useQuery} from "@tanstack/react-query";
+import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import clsx from "clsx";
 import {queryKeys} from "../../app/query/queryKeys.ts";
 import {StudentService} from "../../services/student/StudentService.ts";
@@ -16,6 +16,7 @@ import {PermittedLink} from "../../components/auth/PermittedLink.tsx";
 import {DetailHeader} from "../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {LoadingContent} from "../../components/io/output/LoadingContent.tsx";
+import {Pager} from "../../components/io/input/Pager.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {StudentStatusPill} from "../../components/io/output/pill/StudentStatusPill.tsx";
 import {EnrollmentStatusPill} from "../../components/io/output/pill/EnrollmentStatusPill.tsx";
@@ -24,6 +25,8 @@ import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 /** El estudiante como lo devuelve el detalle: incluye la fecha de nacimiento. */
 type StudentDetails = Student & {birthDate?: string};
 type Tab = "guardians" | "enrollments";
+const GUARDIANS_PAGE = 6;
+const ENROLLMENTS_PAGE = 10;
 
 const yearsOld = (birthDate: string) => {
     const [year, month, day] = birthDate.split("-").map(Number);
@@ -45,6 +48,9 @@ export const StudentDetailsPage = () => {
         {key: "enrollments", label: "Inscripciones", icon: "fa-file-signature", visible: hasAuthority(AuthorityKey.ENROLLMENTS_VIEW)},
     ];
     const [tab, setTab] = useState<Tab>("guardians");
+    // Las dos listas pueden crecer: se piden de a página
+    const [guardiansPage, setGuardiansPage] = useState(0);
+    const [enrollmentsPage, setEnrollmentsPage] = useState(0);
 
     const studentQuery = useQuery({
         queryKey: [...queryKeys.students.all, "details", id],
@@ -52,15 +58,19 @@ export const StudentDetailsPage = () => {
         meta: {errorMessage: "No se pudo cargar el estudiante."},
     });
     const guardiansQuery = useQuery({
-        queryKey: [...queryKeys.students.all, "guardians", id],
-        queryFn: ({signal}) => StudentService.instance.withSignal(signal).guardians(studentId),
+        queryKey: [...queryKeys.students.all, "guardians", id, guardiansPage],
+        queryFn: ({signal}) => StudentService.instance.withSignal(signal)
+            .guardiansPage(studentId, {...Pagination.ofSize(GUARDIANS_PAGE), page: guardiansPage}),
         enabled: tab === "guardians",
+        placeholderData: keepPreviousData,
         meta: {errorMessage: "No se pudieron cargar los representantes."},
     });
     const enrollmentsQuery = useQuery({
-        queryKey: [...queryKeys.enrollments.all, "by-student", id],
-        queryFn: ({signal}) => EnrollmentService.instance.withSignal(signal).getAll({studentId}, Pagination.ofSize(20)),
+        queryKey: [...queryKeys.enrollments.all, "by-student", id, enrollmentsPage],
+        queryFn: ({signal}) => EnrollmentService.instance.withSignal(signal)
+            .getAll({studentId, sort: "date,desc"}, {...Pagination.ofSize(ENROLLMENTS_PAGE), page: enrollmentsPage}),
         enabled: tab === "enrollments",
+        placeholderData: keepPreviousData,
         meta: {errorMessage: "No se pudieron cargar las inscripciones."},
     });
 
@@ -69,8 +79,8 @@ export const StudentDetailsPage = () => {
     if (!student) return <EmptyState title="Estudiante no encontrado" icon="fa-user-graduate" description="Vuelve al listado e intenta de nuevo."/>;
 
     const name = [student.firstname, student.lastname].filter(Boolean).join(" ");
-    const guardians = guardiansQuery.data ?? [];
-    const enrollments = [...(enrollmentsQuery.data?.content ?? [])].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+    const guardians = guardiansQuery.data?.content ?? [];
+    const enrollments = enrollmentsQuery.data?.content ?? [];
 
     return (
         <div className="space-y-6">
@@ -121,6 +131,11 @@ export const StudentDetailsPage = () => {
                                 ))}
                             </div>
                         )}
+                    {guardiansQuery.data && guardians.length > 0 && (
+                        <div className="mt-4">
+                            <Pager page={guardiansQuery.data} onChange={setGuardiansPage}/>
+                        </div>
+                    )}
                 </DetailSection>
             )}
 
@@ -157,6 +172,11 @@ export const StudentDetailsPage = () => {
                                 </table>
                             </div>
                         )}
+                    {enrollmentsQuery.data && enrollments.length > 0 && (
+                        <div className="border-t px-4 py-3" style={{borderColor: "var(--border-soft)"}}>
+                            <Pager page={enrollmentsQuery.data} onChange={setEnrollmentsPage}/>
+                        </div>
+                    )}
                 </DetailSection>
             )}
         </div>
