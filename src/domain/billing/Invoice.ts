@@ -37,6 +37,12 @@ export interface EnrollmentResult {
     invoice: InvoiceSummary;
 }
 
+/** Fecha de hoy en la hora local (yyyy-mm-dd); toISOString daría el día siguiente por la noche. */
+export const localToday = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
+
 export const money = new Intl.NumberFormat("es-DO", {style: "currency", currency: "DOP", minimumFractionDigits: 2});
 
 export const InvoiceStatusLabel: Record<InvoiceStatus, string> = {
@@ -258,7 +264,8 @@ export interface CheckoutValues {
     date?: string;
     notes?: string;
     discount?: number;
-    items: {productId: number; quantity: number; unitPrice?: number}[];
+    /** Al precio del concepto; en la caja no se cambia. Un concepto periódico usa `quantity` como periodos. */
+    items: {productId: number; quantity: number}[];
     invoiceIds: number[];
     /** Inscribe al estudiante en este curso y cobra la inscripción primero. */
     enrollCourseId?: number;
