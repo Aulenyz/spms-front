@@ -23,6 +23,8 @@ export const ListSpecializationPage = () => {
     const {hasAuthority} = useAuthContext();
     const [pagination, setPagination] = useState(Pagination.ofSize(8));
     const [showModal, setShowModal] = useState(false);
+    const [editing, setEditing] = useState<Specialization | null>(null);
+    const canEdit = hasAuthority(AuthorityKey.SPECIALIZATION_EDIT);
     // Debe coincidir con SPECIALIZATION_FILTER_DEFAULTS: el filtro no emite su valor inicial.
     const [filters, setFilters] = useState<Record<string, any>>(SPECIALIZATION_FILTER_DEFAULTS);
     const queryClient = useQueryClient();
@@ -102,11 +104,25 @@ export const ListSpecializationPage = () => {
                         {[...specializations.content]
                             .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
                             .map((spec) => (
-                                <SpecializationCard key={spec.id} specialization={spec}/>
+                                <SpecializationCard key={spec.id} specialization={spec} onEdit={canEdit ? () => setEditing(spec) : undefined}/>
                             ))}
                     </div>
                 )}
             </DataTableCard>
+
+            <LeftModal
+                title="Editar área"
+                isOpen={canEdit && editing !== null}
+                onClose={() => setEditing(null)}
+                className="w-[400px] h-full z-[9999]"
+            >
+                {editing && (
+                    <SpecializationForm key={editing.id} specialization={editing} onSubmit={() => {
+                        setEditing(null);
+                        void queryClient.invalidateQueries({queryKey: queryKeys.specializations.all});
+                    }}/>
+                )}
+            </LeftModal>
         </div>
     );
 };

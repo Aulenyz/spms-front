@@ -1,12 +1,13 @@
-import {Link} from "react-router-dom";
 import {Specialization} from "../../domain/model/course/Course.ts";
 import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
 
 interface Props {
     specialization: Specialization;
+    /** Abre la edición; sin él la tarjeta no muestra el botón. */
+    onEdit?: () => void;
 }
 
-export const SpecializationCard = ({specialization}: Props) => {
+export const SpecializationCard = ({specialization, onEdit}: Props) => {
     const initials = specialization.name
         .split(" ")
         .map((word) => word.charAt(0).toUpperCase())
@@ -70,15 +71,13 @@ export const SpecializationCard = ({specialization}: Props) => {
                     </p>
                 </div>
 
-                <div className="pt-1">
-                    <Link
-                        to={`/specializations/${specialization.id}`}
-                        className="table-link inline-flex items-center gap-2"
-                    >
-                        <span>Detalles</span>
-                        <i className="fa fa-chevron-right text-2xs transition-transform duration-200 group-hover:translate-x-0.5"/>
-                    </Link>
-                </div>
+                {onEdit && (
+                    <div className="pt-1">
+                        <button type="button" className="btn btn-sm" onClick={onEdit}>
+                            <i className="fa fa-pen"/>Editar
+                        </button>
+                    </div>
+                )}
             </div>
         </article>
     );
