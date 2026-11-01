@@ -13,6 +13,7 @@ import {CenterModal} from "../../../components/shared/CenterModal.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
+import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
@@ -45,7 +46,6 @@ export const CourseTemplateDetailsPage = () => {
 
     const [showEdit, setShowEdit] = useState(false);
     const [editing, setEditing] = useState<{subject: TemplateSubject | null; division?: string} | null>(null);
-    const [generating, setGenerating] = useState(false);
     const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
     const [removing, setRemoving] = useState(false);
     const [confirmInactivate, setConfirmInactivate] = useState(false);
@@ -86,15 +86,12 @@ export const CourseTemplateDetailsPage = () => {
 
     const generateCourses = async () => {
         if (!id) return;
-        setGenerating(true);
         try {
             await service.generateCourses(id);
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
             toast.success("Cursos del período actualizados con las materias y profesores del curso base.");
         } catch (error) {
             toast.error(message(error, "No se pudieron generar los cursos."));
-        } finally {
-            setGenerating(false);
         }
     };
 
@@ -127,21 +124,14 @@ export const CourseTemplateDetailsPage = () => {
             title={title}
             subtitle={[template.type ? GradeTypeLabel[template.type] : null, template.specialization?.name].filter(Boolean).join(" · ") || "Sin área especializada"}
             badges={<StatusBadge active={active}/>}
-            actions={<>
-                {canChangeStatus && <button type="button" className="btn btn-sm" disabled={togglingStatus}
-                                            onClick={() => active ? setConfirmInactivate(true) : void toggleStatus()}>
-                    <i className={togglingStatus ? "fa fa-spinner fa-spin" : active ? "fa fa-circle-pause" : "fa fa-circle-check"}/>
-                    {active ? "Inactivar" : "Activar"}
-                </button>}
-                {canEdit && <button type="button" className="btn btn-sm" onClick={() => setShowEdit(true)}>
-                    <i className="fa fa-pen"/>Editar
-                </button>}
-                {canGenerate && active && <button type="button" className="btn btn-sm btn-primary" disabled={generating}
-                                        onClick={() => void generateCourses()}>
-                    <i className={generating ? "fa fa-spinner fa-spin" : "fa fa-layer-group"}/>
-                    {generating ? "Generando..." : "Generar cursos del período"}
-                </button>}
-            </>}
+            actions={<OptionsMenu label={`Opciones de ${title}`} items={[
+                {label: "Editar curso base", icon: "fa-pen", visible: canEdit, onSelect: () => setShowEdit(true)},
+                {label: "Generar cursos del período", icon: "fa-layer-group", visible: canGenerate && active, onSelect: generateCourses},
+                {
+                    label: active ? "Marcar como inactivo" : "Marcar como activo", icon: "fa-toggle-on", visible: canChangeStatus,
+                    onSelect: () => active ? setConfirmInactivate(true) : toggleStatus(),
+                },
+            ]}/>}
         />
 
         <DetailSection title="Materias"

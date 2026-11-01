@@ -1,6 +1,6 @@
-import {useEffect, useRef, useState} from "react";
 import {Specialization} from "../../domain/model/course/Course.ts";
 import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
+import {OptionsMenu} from "../../components/ui/OptionsMenu.tsx";
 
 interface Props {
     specialization: Specialization;
@@ -12,25 +12,6 @@ interface Props {
 
 /** Tarjeta de un área especializada; el engranaje abre Editar y Activar/Inactivar, como en Materias. */
 export const SpecializationCard = ({specialization, onEdit, onToggleStatus}: Props) => {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [toggling, setToggling] = useState(false);
-    const menuRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        if (!menuOpen) return;
-        const handler = (event: MouseEvent) => {
-            if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
-        };
-        document.addEventListener("mousedown", handler);
-        return () => document.removeEventListener("mousedown", handler);
-    }, [menuOpen]);
-
-    const toggleStatus = () => {
-        if (!onToggleStatus) return;
-        setToggling(true);
-        onToggleStatus().then(() => setMenuOpen(false)).finally(() => setToggling(false));
-    };
-
     const initials = specialization.name
         .split(" ")
         .map((word) => word.charAt(0).toUpperCase())
@@ -88,38 +69,13 @@ export const SpecializationCard = ({specialization, onEdit, onToggleStatus}: Pro
                             </div>
                         </div>
 
-                        {(onEdit || onToggleStatus) && (
-                            <div className="relative flex-shrink-0" ref={menuRef}>
-                                <button type="button" className="icon-button h-9 w-9" title="Opciones"
-                                        aria-label={`Opciones de ${specialization.name}`} aria-expanded={menuOpen}
-                                        onClick={() => setMenuOpen((open) => !open)}>
-                                    <i className="fa fa-gear text-sm"/>
-                                </button>
-                                {menuOpen && (
-                                    <div className="floating-panel right-0 top-full z-20 mt-2 w-64">
-                                        <div className="floating-panel-header">Opciones</div>
-                                        <div className="space-y-1 p-2">
-                                            {onEdit && (
-                                                <button type="button" className="profile-menu-item w-full"
-                                                        onClick={() => {
-                                                            setMenuOpen(false);
-                                                            onEdit();
-                                                        }}>
-                                                    <i className="fa fa-pen text-[var(--accent)]"/>
-                                                    <span>Editar área</span>
-                                                </button>
-                                            )}
-                                            {onToggleStatus && (
-                                                <button type="button" className="profile-menu-item w-full" disabled={toggling} onClick={toggleStatus}>
-                                                    <i className={`fa ${toggling ? "fa-spinner fa-spin" : "fa-toggle-on"} text-[var(--accent)]`}/>
-                                                    <span>{specialization.active ? "Marcar como inactiva" : "Marcar como activa"}</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        <OptionsMenu label={`Opciones de ${specialization.name}`} items={[
+                            {label: "Editar área", icon: "fa-pen", visible: Boolean(onEdit), onSelect: () => onEdit?.()},
+                            {
+                                label: specialization.active ? "Marcar como inactiva" : "Marcar como activa", icon: "fa-toggle-on",
+                                visible: Boolean(onToggleStatus), onSelect: () => onToggleStatus?.(),
+                            },
+                        ]}/>
                     </div>
 
                     <p className="line-clamp-3 text-sm leading-6" style={{color: "var(--text-secondary)"}}>
