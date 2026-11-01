@@ -1,8 +1,9 @@
-import {environment} from "../../environment/environment.ts";
+import {channelHeaders, environment} from "../../environment/environment.ts";
 import {DocumentType, PublicRegisterUserFormValues} from "../../domain/model/user/user.ts";
 
 const jsonHeaders = {
     "Content-Type": "application/json",
+    ...channelHeaders(),
 };
 
 const normalizeFetchError = (error: unknown) => {

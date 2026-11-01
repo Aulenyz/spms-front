@@ -1,4 +1,4 @@
-import {environment} from "../environment/environment";
+import {channelHeaders, environment} from "../environment/environment";
 import {getURI, joinURLParts} from "../utils/URIs";
 import {isNil} from "../utils/lang.ts";
 import {KeyValue, KeyValueOf, nonEmpty, Nullable, PlainValue} from "../domain/types/steoreotype.ts";
@@ -99,6 +99,7 @@ export abstract class BaseService<R = unknown> {
             options.headers = {'authorization': 'Bearer ' + token?.token, ...options.headers};
         }
         if (companyId) options.headers = {'X-Auth-Company': companyId, ...options.headers};
+        options.headers = {...channelHeaders(), ...options.headers};
         if (this.requestSignal) options.signal = this.requestSignal;
 
         let response: Response;
