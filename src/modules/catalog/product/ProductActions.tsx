@@ -1,3 +1,4 @@
+import {ExportExcelButton} from "../../../components/ui/data/ExportExcelButton.tsx";
 import {ProductStatus, ProductStatusLabel} from "../../../domain/model/product/Product.ts";
 
 const statusStyle: Record<ProductStatus, {bg: string; color: string; border: string}> = {
@@ -24,7 +25,8 @@ export const ProductActions = ({
     onCreate,
 }: {
     counts: Record<string, number>;
-    onExport: () => void;
+    /** Trae el Excel con los conceptos del filtro actual. */
+    onExport: () => Promise<Blob>;
     /** Ausente cuando el usuario no puede crear conceptos. */
     onCreate?: () => void;
 }) => {
@@ -54,10 +56,7 @@ export const ProductActions = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-                <button type="button" className="btn btn-sm" onClick={onExport}>
-                    <i className="fa fa-file-excel"/>
-                    Exportar
-                </button>
+                <ExportExcelButton fileName="conceptos-de-pago" fetchFile={onExport}/>
                 {onCreate && (
                     <button type="button" className="btn btn-sm btn-primary" onClick={onCreate}>
                         <i className="fa fa-plus"/>

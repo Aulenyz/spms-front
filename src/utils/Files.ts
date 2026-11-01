@@ -22,3 +22,12 @@ export const sanitizeFilename = (filename: string) => {
     const sanitized: string = name.replace(/[\/\\:*?"<>|]/g, '_').trim(); // Replace illegal characters
     return extension ? `${sanitized}.${extension}` : sanitized;
 };
+/** Descarga un archivo recibido del servidor (por ejemplo, un Excel) con el nombre indicado. */
+export const downloadFile = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = sanitizeFilename(filename);
+    link.click();
+    URL.revokeObjectURL(url);
+};

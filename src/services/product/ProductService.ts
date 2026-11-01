@@ -68,19 +68,14 @@ export class ProductService extends BaseService<Product> {
         return this.put<Product>(`/${id}/price`, payload);
     }
 
-    async export(filters: ProductSearchFilters = {}): Promise<void> {
+    /** Excel con todos los conceptos del filtro. */
+    exportExcel(filters: ProductSearchFilters = {}): Promise<Blob> {
         const params: KeyValue = {term: filters.term?.trim() ?? ""};
         if (filters.status) params.status = filters.status;
         if (filters.type) params.type = filters.type;
         if (filters.categoryId) params.categoryId = filters.categoryId;
         if (filters.chargeMode) params.chargeMode = filters.chargeMode;
 
-        const blob = await this.get<Blob>("/export", params);
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "conceptos-de-pago.xlsx";
-        link.click();
-        URL.revokeObjectURL(url);
+        return this.get<Blob>("/export", params);
     }
 }

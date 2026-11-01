@@ -2,13 +2,13 @@ import {BaseService} from "../BaseService.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {
     AccountBalance,
+    AccountMovement,
     AccountStatement,
     BillingSummary,
     CheckoutResult,
     CheckoutValues,
     Invoice,
     InvoiceDetails,
-    InvoiceFormValues,
     InvoiceStatus,
     PaymentFormValues,
     PaymentMethod,
@@ -45,6 +45,11 @@ export class InvoiceService extends BaseService<Invoice> {
         return this.get<Page<Invoice>>("/search", params(filters, pagination));
     }
 
+    /** Excel con todas las facturas del filtro. */
+    exportExcel(filters: InvoiceFilters): Promise<Blob> {
+        return this.get<Blob>("/export", params(filters, Pagination.first));
+    }
+
     /** Periodos de un concepto periódico que aún no se le cobran al estudiante en el periodo escolar. */
     upcoming(studentId: number, productId: number): Promise<UpcomingCharge[]> {
         return this.get<UpcomingCharge[]>("/upcoming", {studentId, productId});
@@ -57,10 +62,6 @@ export class InvoiceService extends BaseService<Invoice> {
 
     details(id: number | string): Promise<InvoiceDetails> {
         return this.get<InvoiceDetails>(`/${id}`);
-    }
-
-    createInvoice(values: InvoiceFormValues): Promise<InvoiceDetails> {
-        return this.post<InvoiceDetails>("", values);
     }
 
     voidInvoice(id: number, reason: string): Promise<InvoiceDetails> {
@@ -81,6 +82,11 @@ export class ReceiptService extends BaseService<Receipt> {
 
     search(filters: ReceiptFilters, pagination: Pagination): Promise<Page<Receipt>> {
         return this.get<Page<Receipt>>("/search", params(filters, pagination));
+    }
+
+    /** Excel con todos los recibos del filtro. */
+    exportExcel(filters: ReceiptFilters): Promise<Blob> {
+        return this.get<Blob>("/export", params(filters, Pagination.first));
     }
 
     details(id: number | string): Promise<ReceiptDetails> {
@@ -116,8 +122,18 @@ export class AccountService extends BaseService<AccountBalance> {
         return this.get<Page<AccountBalance>>("/accounts", {term, withDebt, page: pagination.page, size: pagination.size});
     }
 
+    /** Solo los totales de la cuenta; las listas se piden aparte, página a página. */
     statement(studentId: number | string): Promise<AccountStatement> {
         return this.get<AccountStatement>(`/accounts/${studentId}`);
+    }
+
+    /** Cargos y pagos del estudiante, del más reciente al más antiguo, con el saldo acumulado. */
+    movements(studentId: number | string, pagination: Pagination): Promise<Page<AccountMovement>> {
+        return this.get<Page<AccountMovement>>(`/accounts/${studentId}/movements`, {page: pagination.page, size: pagination.size});
+    }
+
+    exportMovements(studentId: number | string): Promise<Blob> {
+        return this.get<Blob>(`/accounts/${studentId}/movements/export`);
     }
 
     summary(): Promise<BillingSummary> {

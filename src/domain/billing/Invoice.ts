@@ -223,9 +223,6 @@ export interface AccountStatement {
     paid: number;
     due: number;
     overdue: number;
-    invoices: Invoice[];
-    receipts: Receipt[];
-    movements: AccountMovement[];
 }
 
 export interface BillingSummary {
@@ -290,13 +287,6 @@ export interface CheckoutResult {
     invoice?: InvoiceDetails;
     receipt?: ReceiptDetails;
     change: number;
-}
-
-export interface InvoiceFormValues {
-    studentId: number;
-    dueDate?: string;
-    notes?: string;
-    items: {productId: number; quantity: number; unitPrice?: number}[];
 }
 
 export const formatDate = (value?: string) =>

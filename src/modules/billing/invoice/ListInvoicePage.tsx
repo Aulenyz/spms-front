@@ -1,29 +1,24 @@
 import {useEffect, useState} from "react";
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
-import {useNavigate, useSearchParams} from "react-router-dom";
+import {useSearchParams} from "react-router-dom";
 import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {InvoiceService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
-import {Invoice, InvoiceStatus, InvoiceStatusLabel, invoiceLink} from "../../../domain/billing/Invoice.ts";
+import {Invoice, InvoiceStatus, InvoiceStatusLabel} from "../../../domain/billing/Invoice.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {Pager} from "../../../components/io/input/Pager.tsx";
 import {useDebouncedValue} from "../../../hooks/useDebouncedValue.ts";
-import {useAuthContext} from "../../../contexts/AuthContext.tsx";
-import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {FilterDropdown, ListToolbar} from "../components/ListToolbar.tsx";
-import {NewInvoiceModal} from "./NewInvoiceModal.tsx";
+import {ExportExcelButton} from "../../../components/ui/data/ExportExcelButton.tsx";
 import {InvoiceAccordionRow, InvoiceListHeader} from "./InvoiceAccordionRow.tsx";
 
 const invoiceService = InvoiceService.instance;
 const EMPTY_PAGE: Page<Invoice> = Pagination.empty<Invoice>();
 
 export const ListInvoicePage = () => {
-    const {hasAuthority} = useAuthContext();
-    const canCreate = hasAuthority(AuthorityKey.INVOICE_CREATE);
-    const navigate = useNavigate();
     // ?q=NÚMERO llega desde otros enlaces: filtra por ese número y lo abre.
     const [searchParams] = useSearchParams();
     const linked = searchParams.get("q") ?? "";
@@ -34,7 +29,6 @@ export const ListInvoicePage = () => {
     const [status, setStatus] = useState<InvoiceStatus | "">("");
     const [open, setOpen] = useState(false);
     const [pagination, setPagination] = useState<Pagination>(Pagination.ofSize(10));
-    const [creating, setCreating] = useState(false);
     const [openId, setOpenId] = useState<number | null>(null);
     const debouncedTerm = useDebouncedValue(term);
     const filters = {term: debouncedTerm, status: status || undefined, open: open || undefined};
@@ -59,16 +53,12 @@ export const ListInvoicePage = () => {
             <PageHeader
                 title="Facturas emitidas"
                 description="Todo lo que se ha cobrado a los estudiantes: inscripciones, mensualidades y ventas."
-                actions={canCreate ? (
-                    <button type="button" className="btn btn-sm btn-primary" onClick={() => setCreating(true)}>
-                        <i className="fa fa-plus"/>Nueva factura
-                    </button>
-                ) : undefined}
             />
 
             <DataTableCard
                 title="Facturas"
                 description="Las más recientes primero. Toca una factura para ver sus conceptos y pagos."
+                actions={<ExportExcelButton fileName="facturas" fetchFile={() => invoiceService.exportExcel(filters)}/>}
                 filters={
                     <ListToolbar term={term} placeholder="Factura o estudiante"
                                  onTerm={(value) => {
@@ -115,9 +105,6 @@ export const ListInvoicePage = () => {
                     )}
                 </LoadingContent>
             </DataTableCard>
-
-            <NewInvoiceModal isOpen={creating} onClose={() => setCreating(false)}
-                             onCreated={(invoice) => navigate(invoiceLink(invoice.number))}/>
         </div>
     );
 };

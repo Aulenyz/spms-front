@@ -6,6 +6,7 @@ import {ReceiptService} from "../../../services/billing/BillingService.ts";
 import {Page, Pagination} from "../../../domain/filters/Page.ts";
 import {PaymentMethod, PaymentMethodLabel, Receipt, ReceiptStatus} from "../../../domain/billing/Invoice.ts";
 import {PageHeader} from "../../../components/ui/layout/PageHeader.tsx";
+import {ExportExcelButton} from "../../../components/ui/data/ExportExcelButton.tsx";
 import {DataTableCard} from "../../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../../components/ui/feedback/EmptyState.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
@@ -65,6 +66,7 @@ export const ListReceiptPage = () => {
             <DataTableCard
                 title="Recibos"
                 description="Los más recientes primero. Toca un pago para ver todo su detalle."
+                actions={<ExportExcelButton fileName="recibos" fetchFile={() => ReceiptService.instance.exportExcel(filters)}/>}
                 filters={
                     <ListToolbar term={term} placeholder="Recibo, estudiante o ref."
                                  onTerm={(value) => {
