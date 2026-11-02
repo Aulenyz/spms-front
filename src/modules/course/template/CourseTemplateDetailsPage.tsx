@@ -28,7 +28,7 @@ const service = CourseTemplateService.instance;
 type TabKey = "subjects" | "evaluations";
 const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
     {key: "subjects", label: "Materias y profesores", icon: "fa-book-open"},
-    {key: "evaluations", label: "Evaluaciones", icon: "fa-clipboard-check"},
+    {key: "evaluations", label: "Períodos de evaluación", icon: "fa-clipboard-check"},
 ];
 const message = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as { message?: unknown }).message === "string"
