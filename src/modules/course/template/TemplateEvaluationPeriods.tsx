@@ -3,7 +3,7 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 
 import {queryKeys} from "../../../app/query/queryKeys.ts";
-import {TemplatePeriod} from "../../../domain/model/course/EvaluationPeriod.ts";
+import {TemplateCloneTarget, TemplatePeriod} from "../../../domain/model/course/EvaluationPeriod.ts";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {useCurrentPeriod} from "../../../hooks/queries/useCurrentPeriod.ts";
@@ -313,6 +313,12 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     </>;
 };
 
+const describeTarget = (target: TemplateCloneTarget) => [
+    target.specialization,
+    !target.active && "Inactivo",
+    target.periods ? `Ya tiene ${target.periods} ${target.periods === 1 ? "período" : "períodos"}: se reemplazan` : "Sin períodos",
+].filter(Boolean).join(" · ");
+
 /** Elige a qué cursos base del mismo tipo se copian los períodos; los que ya tenían se reemplazan. */
 const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; periods: TemplatePeriod[]; onDone: VoidFunction }) => {
     const queryClient = useQueryClient();
@@ -326,7 +332,17 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
     const [busy, setBusy] = useState(false);
     const replacing = targets.filter((target) => selected.includes(target.id) && target.periods > 0).length;
 
-    const toggle = (id: number) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    const [term, setTerm] = useState("");
+    const chosen = selected.map((id) => targets.find((target) => target.id === id)).filter((target) => target !== undefined);
+    const available = targets.filter((target) => !selected.includes(target.id));
+    const search = term.trim().toLowerCase();
+    const matches = available.filter((target) => !search
+        || target.name.toLowerCase().includes(search) || (target.specialization ?? "").toLowerCase().includes(search));
+
+    const add = (id: number) => {
+        setSelected((current) => [...current, id]);
+        setTerm("");
+    };
 
     const clone = async () => {
         setBusy(true);
@@ -361,40 +377,70 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
                        style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
                         No hay otros cursos base del mismo tipo.
                     </p>
-                ) : (
+                ) : <>
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
-                                Cursos base del mismo tipo
-                            </span>
-                            <button type="button" className="btn btn-xs btn-ghost"
-                                    onClick={() => setSelected(selected.length === targets.length ? [] : targets.map((target) => target.id))}>
-                                {selected.length === targets.length ? "Quitar todos" : "Elegir todos"}
-                            </button>
-                        </div>
-                        <ul className="space-y-2">
-                            {targets.map((target) => (
-                                <li key={target.id}>
-                                    <label className="flex cursor-pointer items-center gap-3 rounded-[16px] border p-3"
-                                           style={{borderColor: selected.includes(target.id) ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                        <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={selected.includes(target.id)}
-                                               onChange={() => toggle(target.id)}/>
+                        <label className="input input-sm w-full">
+                            <i className="fa fa-search me-1 text-[var(--text-tertiary)]"/>
+                            <input value={term} placeholder="Buscar curso base por nombre o área" autoFocus
+                                   onChange={(event) => setTerm(event.target.value)}/>
+                        </label>
+                        {matches.length === 0 ? (
+                            <p className="px-1 text-xs" style={{color: "var(--text-tertiary)"}}>
+                                {available.length === 0 ? "Ya agregaste todos los cursos base del mismo tipo." : "Ningún curso base coincide con la búsqueda."}
+                            </p>
+                        ) : (
+                            <ul className="max-h-56 overflow-y-auto rounded-[14px] border" style={{borderColor: "var(--border-soft)"}}>
+                                {matches.map((target) => (
+                                    <li key={target.id}>
+                                        <button type="button" onClick={() => add(target.id)}
+                                                className="flex w-full items-center gap-3 border-b px-3 py-2.5 text-left last:border-b-0 hover:bg-[var(--surface-muted)]"
+                                                style={{borderColor: "var(--border-soft)"}}>
+                                            <span className="min-w-0 flex-1">
+                                                <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>{target.name}</strong>
+                                                <span className="text-xs" style={{color: "var(--text-secondary)"}}>{describeTarget(target)}</span>
+                                            </span>
+                                            <i className="fa fa-plus text-xs" style={{color: "var(--accent)"}}/>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <span className="block text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
+                            Se clonará a ({chosen.length})
+                        </span>
+                        {chosen.length === 0 ? (
+                            <p className="rounded-[16px] border border-dashed px-4 py-5 text-center text-sm"
+                               style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
+                                Busca y elige los cursos base; se irán agregando aquí.
+                            </p>
+                        ) : (
+                            <ul className="space-y-2">
+                                {chosen.map((target) => (
+                                    <li key={target.id} className="flex items-center gap-3 rounded-[16px] border p-3"
+                                        style={{borderColor: "var(--accent)", background: "var(--surface-muted)"}}>
+                                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]"
+                                              style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                            <i className="fa fa-layer-group"/>
+                                        </span>
                                         <span className="min-w-0 flex-1">
-                                            <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>
-                                                {target.name}{!target.active && <span className="ms-2 text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>Inactivo</span>}
-                                            </strong>
+                                            <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>{target.name}</strong>
                                             <span className="text-xs" style={{color: target.periods ? "var(--warning)" : "var(--text-secondary)"}}>
-                                                {[target.specialization, target.periods
-                                                    ? `Ya tiene ${target.periods} ${target.periods === 1 ? "período" : "períodos"}: se reemplazan`
-                                                    : "Sin períodos"].filter(Boolean).join(" · ")}
+                                                {describeTarget(target)}
                                             </span>
                                         </span>
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
+                                        <button type="button" className="row-action" title="Quitar" aria-label={`Quitar ${target.name}`}
+                                                onClick={() => setSelected((current) => current.filter((id) => id !== target.id))}>
+                                            <i className="fa fa-times"/>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
-                )}
+                </>}
                 {replacing > 0 && (
                     <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
                         <i className="fa fa-triangle-exclamation me-1"/>
