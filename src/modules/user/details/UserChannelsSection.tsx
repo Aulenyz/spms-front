@@ -1,22 +1,6 @@
-import {useEffect, useState} from "react";
-import {toast} from "react-toastify";
-
-import {UserChannel} from "../../../domain/model/user/UserChannel.ts";
-import {UserService} from "../../../services/user/UserService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
-
-const userService = UserService.instance;
-
-const errorMessage = (error: unknown, fallback: string): string => {
-    const message = typeof error === "object" && error !== null ? (error as {message?: unknown}).message : undefined;
-    return typeof message === "string" && message.trim() ? message : fallback;
-};
-
-const CHANNEL_ICON: Record<string, string> = {
-    WEB: "fa-desktop",
-    TEACHER_APP: "fa-mobile-screen-button",
-};
+import {CHANNEL_ICON, useUserChannels} from "./useUserChannels.ts";
 
 /**
  * Apps que el administrador habilita a este usuario en la organización activa (panel web, app de profesores).
@@ -24,34 +8,7 @@ const CHANNEL_ICON: Record<string, string> = {
  * solo se puede habilitar si su rol tiene el permiso de docente; al quitar una app, deja de poder entrar en la
  * siguiente petición.
  */
-export const UserChannelsSection = ({userId}: {userId: number | string}) => {
-    const [channels, setChannels] = useState<UserChannel[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState<string | null>(null);
-
-    useEffect(() => {
-        setLoading(true);
-        userService.channels(userId)
-            .then((response) => setChannels(response ?? []))
-            .catch((error) => toast.error(errorMessage(error, "No se pudieron cargar las aplicaciones del usuario.")))
-            .finally(() => setLoading(false));
-    }, [userId]);
-
-    const toggle = async (channel: UserChannel, enabled: boolean) => {
-        setSaving(channel.key);
-        try {
-            const updated = enabled
-                ? await userService.grantChannel(userId, channel.key)
-                : await userService.revokeChannel(userId, channel.key);
-            setChannels((current) => current.map((item) => item.key === updated.key ? updated : item));
-            toast.success(enabled ? `${channel.name} habilitada. Le enviamos un correo al usuario.` : `${channel.name} deshabilitada.`);
-        } catch (error) {
-            toast.error(errorMessage(error, "No se pudo actualizar el acceso."));
-        } finally {
-            setSaving(null);
-        }
-    };
-
+export const UserChannelsSection = ({channels, loading, saving, toggle}: ReturnType<typeof useUserChannels>) => {
     if (!loading && channels.length === 0) return null;
 
     return (

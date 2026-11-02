@@ -14,12 +14,21 @@ import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {InfoList} from "../../../components/ui/detail/InfoList.tsx";
 import {Badge, StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
+import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
+import {CenterModal} from "../../../components/shared/CenterModal.tsx";
 import {UserChannelsSection} from "./UserChannelsSection.tsx";
+import {CHANNEL_ICON, useUserChannels} from "./useUserChannels.ts";
 
 const STATUS_ACTIONS: Record<UserStatus, { label: string; icon: string }> = {
-    [UserStatus.ACTIVE]: {label: "Activar", icon: "fa-circle-check"},
-    [UserStatus.INACTIVE]: {label: "Inactivar", icon: "fa-circle-pause"},
+    [UserStatus.ACTIVE]: {label: "Activar usuario", icon: "fa-circle-check"},
+    [UserStatus.INACTIVE]: {label: "Inactivar usuario", icon: "fa-circle-pause"},
     [UserStatus.CANCELLED]: {label: "Cancelar usuario", icon: "fa-ban"},
+};
+
+/** Lo que pasa al inactivar o cancelar, para confirmarlo antes. */
+const STATUS_CONFIRM: Partial<Record<UserStatus, string>> = {
+    [UserStatus.INACTIVE]: "No podrá entrar al panel ni a las aplicaciones hasta que lo actives de nuevo.",
+    [UserStatus.CANCELLED]: "El usuario queda cancelado y pierde el acceso al panel y a las aplicaciones.",
 };
 
 type TabKey = "info" | "role" | "apps";
@@ -50,6 +59,8 @@ export const UserDetailsPage = () => {
     const [roleLoading, setRoleLoading] = useState(false);
     const [roleDetails, setRoleDetails] = useState<User["role"] | null>(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [confirmStatus, setConfirmStatus] = useState<UserStatus | null>(null);
+    const apps = useUserChannels(user?.id);
     const [tab, setTab] = useState<TabKey>(() => {
         const saved = id ? localStorage.getItem(`user-details-tab-${id}`) : null;
         return TABS.some((item) => item.key === saved) ? saved as TabKey : "info";
@@ -101,6 +112,7 @@ export const UserDetailsPage = () => {
             .updateStatus(user.id, status)
             .then(() => {
                 toast.success("Estado actualizado.");
+                setConfirmStatus(null);
                 void refresh();
             })
             .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar el estado."))
@@ -128,16 +140,19 @@ export const UserDetailsPage = () => {
                 badges={user.status === UserStatus.CANCELLED
                     ? <Badge>{UserStatusLabel.CANCELLED}</Badge>
                     : <StatusBadge active={user.status === UserStatus.ACTIVE}/>}
-                actions={<>
-                    {canChangeStatus && ([UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.CANCELLED] as const)
-                        .filter((status) => status !== user.status)
-                        .map((status) => (
-                            <button key={status} type="button" className="btn btn-sm" disabled={updatingStatus}
-                                    onClick={() => changeStatus(status)}>
-                                <i className={`fa ${STATUS_ACTIONS[status].icon}`}/>{STATUS_ACTIONS[status].label}
-                            </button>
-                        ))}
-                </>}
+                actions={<OptionsMenu label={`Opciones de ${name}`} items={[
+                    ...([UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.CANCELLED] as const).map((status) => ({
+                        ...STATUS_ACTIONS[status],
+                        visible: canChangeStatus && status !== user.status,
+                        onSelect: () => STATUS_CONFIRM[status] ? setConfirmStatus(status) : changeStatus(status),
+                    })),
+                    ...apps.channels.map((channel) => ({
+                        label: channel.granted ? `Quitar acceso a ${channel.name}` : `Habilitar ${channel.name}`,
+                        icon: channel.granted ? "fa-lock" : CHANNEL_ICON[channel.key] ?? "fa-unlock",
+                        visible: canEditUser && (channel.granted || channel.eligible),
+                        onSelect: () => apps.toggle(channel, !channel.granted),
+                    })),
+                ]}/>}
             />
 
             <nav className="section-tabs w-fit">
@@ -168,7 +183,24 @@ export const UserDetailsPage = () => {
                 ]}/>
             </DetailSection>}
 
-            {current === "apps" && user.id && <UserChannelsSection userId={user.id}/>}
+            {current === "apps" && <UserChannelsSection {...apps}/>}
+
+            <CenterModal title={confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""} isOpen={confirmStatus !== null}
+                         onClose={() => !updatingStatus && setConfirmStatus(null)} className="max-w-md">
+                <div className="space-y-5">
+                    <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                        {confirmStatus && STATUS_CONFIRM[confirmStatus]} ¿Seguro que quieres continuar con {name}?
+                    </p>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" className="btn btn-sm" disabled={updatingStatus} onClick={() => setConfirmStatus(null)}>Volver</button>
+                        <button type="button" className="btn btn-sm btn-error" disabled={updatingStatus}
+                                onClick={() => confirmStatus && changeStatus(confirmStatus)}>
+                            <i className={updatingStatus ? "fa fa-spinner fa-spin" : `fa ${confirmStatus ? STATUS_ACTIONS[confirmStatus].icon : ""}`}/>
+                            {confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""}
+                        </button>
+                    </div>
+                </div>
+            </CenterModal>
         </div>
     );
 };
