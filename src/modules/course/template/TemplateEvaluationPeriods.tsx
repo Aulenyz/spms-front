@@ -31,6 +31,11 @@ const PRESETS: Record<string, TemplatePeriod[]> = {
     ],
 };
 
+const PRESET_DESCRIPTIONS: Record<string, string> = {
+    "3 períodos (ago–jun)": "Año escolar en trimestres.",
+    "4 períodos (ago–jun)": "Año escolar en cuatro cortes de notas.",
+};
+
 const message = (error: unknown, fallback: string): string => {
     const text = typeof error === "object" && error !== null ? (error as { message?: unknown }).message : undefined;
     return typeof text === "string" && text.trim() ? text : fallback;
@@ -192,7 +197,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                     <span className="min-w-0">
                                         <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{label}</strong>
                                         <span className="text-xs" style={{color: "var(--text-secondary)"}}>
-                                            {periods.map((period) => `${formatDay(period.startDay, period.startMonth)}–${formatDay(period.endDay, period.endMonth)}`).join(" · ")}
+                                            {PRESET_DESCRIPTIONS[label]}
                                         </span>
                                     </span>
                                 </button>
