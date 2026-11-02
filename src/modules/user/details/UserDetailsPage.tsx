@@ -16,7 +16,6 @@ import {InfoList} from "../../../components/ui/detail/InfoList.tsx";
 import {Badge, StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
 import {CenterModal} from "../../../components/shared/CenterModal.tsx";
-import {UserChannelsSection} from "./UserChannelsSection.tsx";
 import {CHANNEL_ICON, useUserChannels} from "./useUserChannels.ts";
 
 const STATUS_ACTIONS: Record<UserStatus, { label: string; icon: string }> = {
@@ -31,11 +30,9 @@ const STATUS_CONFIRM: Partial<Record<UserStatus, string>> = {
     [UserStatus.CANCELLED]: "El usuario queda cancelado y pierde el acceso al panel y a las aplicaciones.",
 };
 
-type TabKey = "info" | "role" | "apps";
+type TabKey = "info";
 const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
     {key: "info", label: "Datos del usuario", icon: "fa-id-card"},
-    {key: "role", label: "Rol y permisos", icon: "fa-user-shield"},
-    {key: "apps", label: "Aplicaciones", icon: "fa-mobile-screen"},
 ];
 
 const userService = UserService.instance;
@@ -127,8 +124,6 @@ export const UserDetailsPage = () => {
     const canViewRole = hasAuthority(AuthorityKey.ROLE_DETAILS_VIEW);
     const canEditUser = hasAuthority(AuthorityKey.USER_EDIT);
     const permissionCount = roleDetails?.countAuthorities ?? user.role?.countAuthorities;
-    const tabs = TABS.filter((item) => item.key !== "apps" || (canEditUser && user.id));
-    const current = tabs.some((item) => item.key === tab) ? tab : "info";
 
     return (
         <div className="space-y-4">
@@ -156,34 +151,34 @@ export const UserDetailsPage = () => {
             />
 
             <nav className="section-tabs w-fit">
-                {tabs.map((item) => (
+                {TABS.map((item) => (
                     <button key={item.key} type="button" onClick={() => setTab(item.key)}
-                            className={clsx("section-tab", current === item.key && "section-tab-active")}>
+                            className={clsx("section-tab", tab === item.key && "section-tab-active")}>
                         <i className={`fa ${item.icon}`}/><span>{item.label}</span>
                     </button>
                 ))}
             </nav>
 
-            {current === "info" && <DetailSection title="Datos del usuario">
-                <InfoList items={[
-                    {label: "Correo", value: user.email},
-                    {label: "Documento", value: user.document},
-                    {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
-                ]}/>
-            </DetailSection>}
+            {tab === "info" && <>
+                <DetailSection title="Datos del usuario">
+                    <InfoList items={[
+                        {label: "Correo", value: user.email},
+                        {label: "Documento", value: user.document},
+                        {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
+                    ]}/>
+                </DetailSection>
 
-            {current === "role" && <DetailSection title="Rol"
-                           actions={canViewRole && user.role?.id && <Link to={`/users/roles/${user.role.id}`} className="btn btn-sm">
-                               <i className="fa fa-arrow-up-right-from-square"/>Ver rol
-                           </Link>}>
-                <InfoList items={[
-                    {label: "Rol asignado", value: user.role?.name},
-                    {label: "Permisos", value: roleLoading ? "Cargando..." : permissionCount},
-                    {label: "Descripción", value: roleLoading ? "Cargando..." : roleDetails?.description, full: true},
-                ]}/>
-            </DetailSection>}
-
-            {current === "apps" && <UserChannelsSection {...apps}/>}
+                <DetailSection title="Rol"
+                               actions={canViewRole && user.role?.id && <Link to={`/users/roles/${user.role.id}`} className="btn btn-sm">
+                                   <i className="fa fa-arrow-up-right-from-square"/>Ver rol
+                               </Link>}>
+                    <InfoList items={[
+                        {label: "Rol asignado", value: user.role?.name},
+                        {label: "Permisos", value: roleLoading ? "Cargando..." : permissionCount},
+                        {label: "Descripción", value: roleLoading ? "Cargando..." : roleDetails?.description, full: true},
+                    ]}/>
+                </DetailSection>
+            </>}
 
             <CenterModal title={confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""} isOpen={confirmStatus !== null}
                          onClose={() => !updatingStatus && setConfirmStatus(null)} className="max-w-md">
