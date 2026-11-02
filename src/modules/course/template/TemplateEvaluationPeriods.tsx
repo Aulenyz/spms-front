@@ -235,7 +235,6 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                     summary={draft.length ? `${draft.length} ${draft.length === 1 ? "período" : "períodos"} · ${formatDay(draft[0].startDay, draft[0].startMonth)} – ${formatDay(draft[draft.length - 1].endDay, draft[draft.length - 1].endMonth)}` : "Sin períodos todavía"}
                                     onToggle={() => setSection(section === "periods" ? "presets" : "periods")}>
                         <div className="space-y-4">
-
                             {draft.length === 0 ? (
                                 <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
                                    style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
