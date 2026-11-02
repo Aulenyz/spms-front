@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {ReactNode, useEffect, useState} from "react";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 
@@ -64,6 +64,8 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState<TemplatePeriod[]>([]);
     const [busy, setBusy] = useState(false);
+    const [section, setSection] = useState<"presets" | "periods">("presets");
+    const [chosen, setChosen] = useState<string | null>(null);
 
     useEffect(() => {
         if (!editing) setDraft(saved.map((period) => ({...period})));
@@ -71,6 +73,12 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
 
     const update = (index: number, change: Partial<TemplatePeriod>) =>
         setDraft((current) => current.map((period, position) => position === index ? {...period, ...change} : period));
+
+    const choosePreset = (label: string, periods: TemplatePeriod[]) => {
+        setDraft(periods.map((period) => ({...period})));
+        setChosen(label);
+        setSection("periods");
+    };
 
     const addPeriod = () => setDraft((current) => {
         const last = current[current.length - 1];
@@ -113,6 +121,8 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
 
     const openEditor = () => {
         setDraft(saved.map((period) => ({...period})));
+        setChosen(null);
+        setSection(saved.length ? "periods" : "presets");
         setEditing(true);
     };
 
@@ -181,15 +191,14 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                     <p className="text-sm" style={{color: "var(--text-secondary)"}}>
                         Indica el día y el mes en que empieza y termina cada período. El año lo pone cada año escolar.
                     </p>
-                    <div className="space-y-2">
-                        <span className="block text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
-                            Empieza rápido
-                        </span>
+                    <AccordionPanel step={1} title="Usar un ejemplo" open={section === "presets"}
+                                    summary={chosen ?? "Opcional: arranca con un calendario ya armado"}
+                                    onToggle={() => setSection(section === "presets" ? "periods" : "presets")}>
                         <div className="grid gap-2">
                             {Object.entries(PRESETS).map(([label, periods]) => (
-                                <button key={label} type="button" onClick={() => setDraft(periods.map((period) => ({...period})))}
+                                <button key={label} type="button" onClick={() => choosePreset(label, periods)}
                                         className="flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
-                                        style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                        style={{borderColor: chosen === label ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
                                     <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
                                           style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
                                         <i className="fa fa-wand-magic-sparkles"/>
@@ -203,55 +212,61 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </AccordionPanel>
 
-                    {draft.length > 0 && <Timeline periods={draft}/>}
+                    <AccordionPanel step={2} title="Ajustar los períodos" open={section === "periods"}
+                                    summary={draft.length ? `${draft.length} ${draft.length === 1 ? "período" : "períodos"} · ${formatDay(draft[0].startDay, draft[0].startMonth)} – ${formatDay(draft[draft.length - 1].endDay, draft[draft.length - 1].endMonth)}` : "Sin períodos todavía"}
+                                    onToggle={() => setSection(section === "periods" ? "presets" : "periods")}>
+                        <div className="space-y-4">
+                            {draft.length > 0 && <Timeline periods={draft}/>}
 
-                    {draft.length === 0 ? (
-                        <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
-                           style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
-                            Sin períodos todavía. Usa una de las opciones de arriba o agrega el primero.
-                        </p>
-                    ) : (
-                        <ol className="space-y-3">
-                            {draft.map((period, index) => (
-                                <li key={index} className="space-y-3 rounded-[18px] border p-4"
-                                    style={{borderColor: problems[index] ? "var(--danger)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                    <div className="flex items-center gap-3">
-                                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-sm font-extrabold"
-                                              style={{background: "var(--accent-soft)", color: "var(--accent)"}}>P{index + 1}</span>
-                                        <label className="input input-sm min-w-0 flex-1">
-                                            <input maxLength={64} value={period.name} placeholder={`Período ${index + 1}`} aria-label={`Nombre de P${index + 1}`}
-                                                   onChange={(event) => update(index, {name: event.target.value})}/>
-                                        </label>
-                                        <span className="hidden text-xs font-semibold sm:inline" style={{color: "var(--text-tertiary)"}}>
-                                            {lengthOf(period)} días
-                                        </span>
-                                        <button type="button" className="row-action" title={index === draft.length - 1 ? "Quitar" : "Solo se puede quitar el último"}
-                                                aria-label={`Quitar P${index + 1}`} disabled={index !== draft.length - 1}
-                                                onClick={() => setDraft((current) => current.slice(0, -1))}>
-                                            <i className="fa fa-trash"/>
-                                        </button>
-                                    </div>
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                        <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
-                                                       onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
-                                        <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
-                                                       onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
-                                    </div>
-                                    {problems[index] && (
-                                        <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
-                                            <i className="fa fa-triangle-exclamation me-1"/>{problems[index]}
-                                        </p>
-                                    )}
-                                </li>
-                            ))}
-                        </ol>
-                    )}
+                            {draft.length === 0 ? (
+                                <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
+                                   style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
+                                    Sin períodos todavía. Usa un ejemplo o agrega el primero.
+                                </p>
+                            ) : (
+                                <ol className="space-y-3">
+                                    {draft.map((period, index) => (
+                                        <li key={index} className="space-y-3 rounded-[18px] border p-4"
+                                            style={{borderColor: problems[index] ? "var(--danger)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                            <div className="flex items-center gap-3">
+                                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-sm font-extrabold"
+                                                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>P{index + 1}</span>
+                                                <label className="input input-sm min-w-0 flex-1">
+                                                    <input maxLength={64} value={period.name} placeholder={`Período ${index + 1}`} aria-label={`Nombre de P${index + 1}`}
+                                                           onChange={(event) => update(index, {name: event.target.value})}/>
+                                                </label>
+                                                <span className="hidden text-xs font-semibold sm:inline" style={{color: "var(--text-tertiary)"}}>
+                                                    {lengthOf(period)} días
+                                                </span>
+                                                <button type="button" className="row-action" title={index === draft.length - 1 ? "Quitar" : "Solo se puede quitar el último"}
+                                                        aria-label={`Quitar P${index + 1}`} disabled={index !== draft.length - 1}
+                                                        onClick={() => setDraft((current) => current.slice(0, -1))}>
+                                                    <i className="fa fa-trash"/>
+                                                </button>
+                                            </div>
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
+                                                               onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
+                                                <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
+                                                               onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
+                                            </div>
+                                            {problems[index] && (
+                                                <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
+                                                    <i className="fa fa-triangle-exclamation me-1"/>{problems[index]}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ol>
+                            )}
 
-                    <button type="button" className="btn btn-sm w-full border-dashed" disabled={draft.length >= 12} onClick={addPeriod}>
-                        <i className="fa fa-plus"/>Agregar período {draft.length ? `P${draft.length + 1}` : "P1"}
-                    </button>
+                            <button type="button" className="btn btn-sm w-full border-dashed" disabled={draft.length >= 12} onClick={addPeriod}>
+                                <i className="fa fa-plus"/>Agregar período {draft.length ? `P${draft.length + 1}` : "P1"}
+                            </button>
+                        </div>
+                    </AccordionPanel>
 
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
                         <i className="fa fa-circle-info me-1"/>
@@ -322,6 +337,30 @@ const Timeline = ({periods}: { periods: TemplatePeriod[] }) => {
         </div>
     );
 };
+
+/** Bloque plegable del editor: solo uno queda abierto, el otro muestra un resumen para volver a él. */
+const AccordionPanel = ({step, title, summary, open, onToggle, children}: {
+    step: number;
+    title: string;
+    summary: string;
+    open: boolean;
+    onToggle: VoidFunction;
+    children: ReactNode;
+}) => (
+    <section className="overflow-hidden rounded-[18px] border" style={{borderColor: open ? "var(--accent)" : "var(--border-soft)"}}>
+        <button type="button" onClick={onToggle} aria-expanded={open}
+                className="flex w-full items-center gap-3 p-4 text-left" style={{background: open ? "var(--accent-soft)" : "var(--surface)"}}>
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold"
+                  style={{background: open ? "var(--accent)" : "var(--surface-muted)", color: open ? "white" : "var(--text-secondary)"}}>{step}</span>
+            <span className="min-w-0 flex-1">
+                <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{title}</strong>
+                {!open && <span className="block truncate text-xs" style={{color: "var(--text-secondary)"}}>{summary}</span>}
+            </span>
+            <i className={`fa fa-chevron-${open ? "up" : "down"} text-xs`} style={{color: "var(--text-tertiary)"}}/>
+        </button>
+        {open && <div className="p-4">{children}</div>}
+    </section>
+);
 
 /** Día y mes (sin año). */
 const DayMonthField = ({label, day, month, onChange}: {
