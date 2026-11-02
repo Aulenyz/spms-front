@@ -179,7 +179,6 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                 </div>
             ) : (
                 <div className="space-y-4">
-                    <Timeline periods={saved}/>
                     <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {saved.map((period) => (
                             <li key={period.id} className="flex items-center gap-3 rounded-[16px] border p-4"
