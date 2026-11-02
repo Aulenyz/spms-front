@@ -53,7 +53,6 @@ export const UserDetailsPage = () => {
     const {id} = useParams<{id: string}>();
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<User | null>(null);
-    const [roleLoading, setRoleLoading] = useState(false);
     const [roleDetails, setRoleDetails] = useState<User["role"] | null>(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [confirmStatus, setConfirmStatus] = useState<UserStatus | null>(null);
@@ -94,12 +93,10 @@ export const UserDetailsPage = () => {
 
     useEffect(() => {
         if (!user?.role?.id) return;
-        setRoleLoading(true);
         roleService
             .getOne(user.role.id)
             .then((res) => setRoleDetails(res ?? null))
-            .catch(() => setRoleDetails(null))
-            .finally(() => setRoleLoading(false));
+            .catch(() => setRoleDetails(null));
     }, [user?.role?.id]);
 
     const changeStatus = (status: UserStatus) => {
@@ -123,7 +120,6 @@ export const UserDetailsPage = () => {
     const canChangeStatus = hasAuthority(AuthorityKey.USER_STATUS_UPDATE);
     const canViewRole = hasAuthority(AuthorityKey.ROLE_DETAILS_VIEW);
     const canEditUser = hasAuthority(AuthorityKey.USER_EDIT);
-    const permissionCount = roleDetails?.countAuthorities ?? user.role?.countAuthorities;
 
     return (
         <div className="space-y-4">
@@ -159,26 +155,27 @@ export const UserDetailsPage = () => {
                 ))}
             </nav>
 
-            {tab === "info" && <>
+            {tab === "info" && (
                 <DetailSection title="Datos del usuario">
                     <InfoList items={[
                         {label: "Correo", value: user.email},
                         {label: "Documento", value: user.document},
                         {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
+                        {
+                            label: "Rol", value: user.role?.name && (canViewRole && user.role.id
+                                ? <Link to={`/users/roles/${user.role.id}`} className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold"
+                                        style={{background: "var(--accent-soft)", color: "var(--accent)"}} title="Ver rol">
+                                    <i className="fa fa-user-shield"/>{user.role.name}<i className="fa fa-arrow-up-right-from-square text-[10px] opacity-70"/>
+                                </Link>
+                                : <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold"
+                                        style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                    <i className="fa fa-user-shield"/>{user.role.name}
+                                </span>),
+                        },
+                        ...(roleDetails?.description ? [{label: "Sobre su rol", value: roleDetails.description, full: true}] : []),
                     ]}/>
                 </DetailSection>
-
-                <DetailSection title="Rol"
-                               actions={canViewRole && user.role?.id && <Link to={`/users/roles/${user.role.id}`} className="btn btn-sm">
-                                   <i className="fa fa-arrow-up-right-from-square"/>Ver rol
-                               </Link>}>
-                    <InfoList items={[
-                        {label: "Rol asignado", value: user.role?.name},
-                        {label: "Permisos", value: roleLoading ? "Cargando..." : permissionCount},
-                        {label: "Descripción", value: roleLoading ? "Cargando..." : roleDetails?.description, full: true},
-                    ]}/>
-                </DetailSection>
-            </>}
+            )}
 
             <CenterModal title={confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""} isOpen={confirmStatus !== null}
                          onClose={() => !updatingStatus && setConfirmStatus(null)} className="max-w-md">
