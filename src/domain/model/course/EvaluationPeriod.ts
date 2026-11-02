@@ -1,3 +1,6 @@
+import {GradeType} from "./Course.ts";
+
+
 /** Estado del período respecto a hoy. */
 export type EvaluationPeriodState = "UPCOMING" | "OPEN" | "ENDED";
 
@@ -39,10 +42,11 @@ export type TemplatePeriod = {
     endDay: number;
 };
 
-/** Curso base del mismo tipo al que se pueden clonar los períodos, con cuántos tiene ahora. */
+/** Curso base al que se pueden clonar los períodos, con cuántos tiene ahora. */
 export type TemplateCloneTarget = {
     id: number;
     name: string;
+    type?: GradeType | null;
     specialization?: string | null;
     active: boolean;
     periods: number;

@@ -76,7 +76,7 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
         return this.post<string[]>(`/${id}/evaluation-periods/apply`);
     }
 
-    /** Otros cursos base del mismo tipo a los que se pueden clonar los períodos. */
+    /** Los otros cursos base de la organización, a los que se pueden clonar los períodos. */
     evaluationPeriodCloneTargets(id: string | number): Promise<TemplateCloneTarget[]> {
         return this.get<TemplateCloneTarget[]>(`/${id}/evaluation-periods/clone-targets`);
     }

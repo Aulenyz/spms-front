@@ -3,6 +3,7 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 
 import {queryKeys} from "../../../app/query/queryKeys.ts";
+import {GradeTypeLabel} from "../../../domain/model/course/Course.ts";
 import {TemplateCloneTarget, TemplatePeriod} from "../../../domain/model/course/EvaluationPeriod.ts";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
@@ -138,7 +139,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const actions = canEdit && <>
         {saved.length > 0 && (
             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setCloning(true)}
-                    title="Copia estos períodos a otros cursos base del mismo tipo">
+                    title="Copia estos períodos a otros cursos base">
                 <i className="fa fa-clone"/>Clonar a otros cursos base
             </button>
         )}
@@ -314,12 +315,13 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
 };
 
 const describeTarget = (target: TemplateCloneTarget) => [
+    target.type ? GradeTypeLabel[target.type] : null,
     target.specialization,
     !target.active && "Inactivo",
     target.periods ? `Ya tiene ${target.periods} ${target.periods === 1 ? "período" : "períodos"}: se reemplazan` : "Sin períodos",
 ].filter(Boolean).join(" · ");
 
-/** Elige a qué cursos base del mismo tipo se copian los períodos; los que ya tenían se reemplazan. */
+/** Busca y elige a qué cursos base se copian los períodos; los que ya tenían se reemplazan. */
 const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; periods: TemplatePeriod[]; onDone: VoidFunction }) => {
     const queryClient = useQueryClient();
     const targetsQuery = useQuery({
@@ -337,7 +339,7 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
     const available = targets.filter((target) => !selected.includes(target.id));
     const search = term.trim().toLowerCase();
     const matches = available.filter((target) => !search
-        || target.name.toLowerCase().includes(search) || (target.specialization ?? "").toLowerCase().includes(search));
+        || describeTarget(target).toLowerCase().includes(search) || target.name.toLowerCase().includes(search));
 
     const add = (id: number) => {
         setSelected((current) => [...current, id]);
@@ -362,7 +364,7 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
         <div className="-mx-4 flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4">
                 <p className="text-sm" style={{color: "var(--text-secondary)"}}>
-                    Copia estos períodos a otros cursos base del mismo tipo. Los cursos que se generen con ellos nacerán con los mismos períodos.
+                    Busca los cursos base a los que quieres copiar estos períodos. Los cursos que se generen con ellos nacerán con los mismos períodos.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                     {periods.map((period) => (
@@ -372,21 +374,16 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
                         </span>
                     ))}
                 </div>
-                {targetsQuery.isLoading ? <LoadingContent loading className="py-10"/> : targets.length === 0 ? (
-                    <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
-                       style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
-                        No hay otros cursos base del mismo tipo.
-                    </p>
-                ) : <>
+                {targetsQuery.isLoading ? <LoadingContent loading className="py-10"/> : <>
                     <div className="space-y-2">
                         <label className="input input-sm w-full">
                             <i className="fa fa-search me-1 text-[var(--text-tertiary)]"/>
-                            <input value={term} placeholder="Buscar curso base por nombre o área" autoFocus
+                            <input value={term} placeholder="Buscar curso base por nombre, tipo o área" autoFocus
                                    onChange={(event) => setTerm(event.target.value)}/>
                         </label>
                         {matches.length === 0 ? (
                             <p className="px-1 text-xs" style={{color: "var(--text-tertiary)"}}>
-                                {available.length === 0 ? "Ya agregaste todos los cursos base del mismo tipo." : "Ningún curso base coincide con la búsqueda."}
+                                {targets.length === 0 ? "No hay otros cursos base en esta organización." : available.length === 0 ? "Ya agregaste todos los cursos base." : "Ningún curso base coincide con la búsqueda."}
                             </p>
                         ) : (
                             <ul className="max-h-56 overflow-y-auto rounded-[14px] border" style={{borderColor: "var(--border-soft)"}}>
