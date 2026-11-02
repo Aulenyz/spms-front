@@ -19,13 +19,15 @@ import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {Badge, StatusBadge} from "../../components/ui/detail/StatusBadge.tsx";
 import {CourseAssignmentModal} from "./CourseQuickForms.tsx";
 import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
+import {CourseEvaluationPeriods} from "./CourseEvaluationPeriods.tsx";
 import {describeSlots} from "./template/schedule.ts";
 
-type TabKey = "subjects" | "schedule" | "students";
+type TabKey = "subjects" | "schedule" | "evaluations" | "students";
 
 const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
     {key: "subjects", label: "Materias y profesores", icon: "fa-book-open"},
     {key: "schedule", label: "Horario", icon: "fa-calendar-week"},
+    {key: "evaluations", label: "Evaluaciones", icon: "fa-clipboard-check"},
     {key: "students", label: "Estudiantes", icon: "fa-user-graduate"},
 ];
 
@@ -170,6 +172,8 @@ export const CourseDetailsPage = () => {
                     )}
                 </DetailSection>
             )}
+
+            {tab === "evaluations" && id && <CourseEvaluationPeriods courseId={id} hasSections={Boolean(course.templateId)}/>}
 
             {tab === "students" && (
                 <DetailSection title="Estudiantes inscritos" flush
