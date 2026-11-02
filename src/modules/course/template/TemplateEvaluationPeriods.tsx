@@ -91,6 +91,11 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
         setSection("periods");
     };
 
+    /** Quita un período; los siguientes se renumeran y, si conservan el nombre por defecto, también se renombran. */
+    const remove = (index: number) => setDraft((current) => current
+        .filter((_, position) => position !== index)
+        .map((period, position) => /^Período \d+$/.test(period.name.trim()) ? {...period, name: `Período ${position + 1}`} : period));
+
     const addPeriod = () => setDraft((current) => {
         const last = current[current.length - 1];
         const start = last ? nextDay(last) : {month: 8, day: 1};
@@ -255,9 +260,8 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                                 <span className="hidden text-xs font-semibold sm:inline" style={{color: "var(--text-tertiary)"}}>
                                                     {lengthOf(period)} días
                                                 </span>
-                                                <button type="button" className="row-action" title={index === draft.length - 1 ? "Quitar" : "Solo se puede quitar el último"}
-                                                        aria-label={`Quitar P${index + 1}`} disabled={index !== draft.length - 1}
-                                                        onClick={() => setDraft((current) => current.slice(0, -1))}>
+                                                <button type="button" className="row-action" title="Quitar" aria-label={`Quitar P${index + 1}`}
+                                                        onClick={() => remove(index)}>
                                                     <i className="fa fa-trash"/>
                                                 </button>
                                             </div>
