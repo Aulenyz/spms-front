@@ -1,4 +1,5 @@
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
+import clsx from "clsx";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {useParams} from "react-router-dom";
 import {toast} from "react-toastify";
@@ -23,6 +24,12 @@ import {TemplateSubjectForm} from "./TemplateSubjectForm.tsx";
 import {describeSlots, divisionsOf} from "./schedule.ts";
 
 const service = CourseTemplateService.instance;
+
+type TabKey = "subjects" | "evaluations";
+const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
+    {key: "subjects", label: "Materias y profesores", icon: "fa-book-open"},
+    {key: "evaluations", label: "Evaluaciones", icon: "fa-clipboard-check"},
+];
 const message = (error: unknown, fallback: string) =>
     typeof error === "object" && error && typeof (error as { message?: unknown }).message === "string"
         ? (error as { message: string }).message : fallback;
@@ -51,6 +58,14 @@ export const CourseTemplateDetailsPage = () => {
     const [removing, setRemoving] = useState(false);
     const [confirmInactivate, setConfirmInactivate] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
+    const [tab, setTab] = useState<TabKey>(() => {
+        const saved = id ? localStorage.getItem(`course-template-tab-${id}`) : null;
+        return TABS.some((item) => item.key === saved) ? saved as TabKey : "subjects";
+    });
+
+    useEffect(() => {
+        if (id) localStorage.setItem(`course-template-tab-${id}`, tab);
+    }, [id, tab]);
 
     const templateKey = [...queryKeys.courseTemplates.all, "detail", id];
     const subjectsKey = [...queryKeys.courseTemplates.all, "subjects", id];
@@ -135,7 +150,16 @@ export const CourseTemplateDetailsPage = () => {
             ]}/>}
         />
 
-        <DetailSection title="Materias"
+        <nav className="section-tabs w-fit">
+            {TABS.map((item) => (
+                <button key={item.key} type="button" onClick={() => setTab(item.key)}
+                        className={clsx("section-tab", tab === item.key && "section-tab-active")}>
+                    <i className={`fa ${item.icon}`}/><span>{item.label}</span>
+                </button>
+            ))}
+        </nav>
+
+        {tab === "subjects" && <DetailSection title="Materias"
                        description="Cada materia con el profesor, los días y el horario de cada sección."
                        actions={canEdit && <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditing({subject: null})}>
                            <i className="fa fa-plus"/>Agregar materia
@@ -151,9 +175,9 @@ export const CourseTemplateDetailsPage = () => {
                     ))}
                 </ul>
             )}
-        </DetailSection>
+        </DetailSection>}
 
-        {canView && <TemplateEvaluationPeriods templateId={id} canEdit={canEdit}/>}
+        {tab === "evaluations" && canView && <TemplateEvaluationPeriods templateId={id} canEdit={canEdit}/>}
 
         <RightModal title="Editar curso base" isOpen={canEdit && showEdit} onClose={() => setShowEdit(false)}
                     className="h-full w-[420px] z-[9999]">
