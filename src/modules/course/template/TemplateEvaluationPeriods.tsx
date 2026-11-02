@@ -72,6 +72,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const yearStart = parseDate(currentPeriod?.start);
     const yearEnd = parseDate(currentPeriod?.end);
     const schoolYear: SchoolYear | undefined = yearStart && yearEnd ? {name: currentPeriod?.name, start: yearStart, end: yearEnd} : undefined;
+    const [cloning, setCloning] = useState(false);
     const [section, setSection] = useState<"presets" | "periods">("presets");
     const [chosen, setChosen] = useState<string | null>(null);
 
@@ -135,6 +136,12 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     };
 
     const actions = canEdit && <>
+        {saved.length > 0 && (
+            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setCloning(true)}
+                    title="Copia estos períodos a otros cursos base del mismo tipo">
+                <i className="fa fa-clone"/>Clonar a otros cursos base
+            </button>
+        )}
         {saved.length > 0 && (
             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void apply()}
                     title="Da estos períodos a los cursos del año actual que todavía no tienen">
@@ -300,7 +307,111 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                 </footer>
             </div>
         </LeftModal>
+
+        <LeftModal title="Clonar períodos" isOpen={canEdit && cloning} onClose={() => setCloning(false)} className="h-full w-[min(480px,100vw)]">
+            {cloning && <ClonePeriods templateId={templateId} periods={saved} onDone={() => setCloning(false)}/>}
+        </LeftModal>
     </>;
+};
+
+/** Elige a qué cursos base del mismo tipo se copian los períodos; los que ya tenían se reemplazan. */
+const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; periods: TemplatePeriod[]; onDone: VoidFunction }) => {
+    const queryClient = useQueryClient();
+    const targetsQuery = useQuery({
+        queryKey: [...queryKeys.courseTemplates.all, "evaluation-periods", templateId, "clone-targets"],
+        queryFn: () => service.evaluationPeriodCloneTargets(templateId),
+        meta: {errorMessage: "No se pudieron cargar los cursos base."},
+    });
+    const targets = targetsQuery.data ?? [];
+    const [selected, setSelected] = useState<number[]>([]);
+    const [busy, setBusy] = useState(false);
+    const replacing = targets.filter((target) => selected.includes(target.id) && target.periods > 0).length;
+
+    const toggle = (id: number) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+
+    const clone = async () => {
+        setBusy(true);
+        try {
+            const names = await service.cloneEvaluationPeriods(templateId, selected);
+            void queryClient.invalidateQueries({queryKey: [...queryKeys.courseTemplates.all, "evaluation-periods"]});
+            toast.success(`Períodos clonados a ${names.join(", ")}.`);
+            onDone();
+        } catch (error) {
+            toast.error(message(error, "No se pudieron clonar los períodos."));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <div className="-mx-4 flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4">
+                <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                    Copia estos períodos a otros cursos base del mismo tipo. Los cursos que se generen con ellos nacerán con los mismos períodos.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                    {periods.map((period) => (
+                        <span key={period.id} className="rounded-full px-2.5 py-1 text-xs font-bold"
+                              style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                            {period.code} · {formatDay(period.startDay, period.startMonth)} – {formatDay(period.endDay, period.endMonth)}
+                        </span>
+                    ))}
+                </div>
+                {targetsQuery.isLoading ? <LoadingContent loading className="py-10"/> : targets.length === 0 ? (
+                    <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
+                       style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
+                        No hay otros cursos base del mismo tipo.
+                    </p>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
+                                Cursos base del mismo tipo
+                            </span>
+                            <button type="button" className="btn btn-xs btn-ghost"
+                                    onClick={() => setSelected(selected.length === targets.length ? [] : targets.map((target) => target.id))}>
+                                {selected.length === targets.length ? "Quitar todos" : "Elegir todos"}
+                            </button>
+                        </div>
+                        <ul className="space-y-2">
+                            {targets.map((target) => (
+                                <li key={target.id}>
+                                    <label className="flex cursor-pointer items-center gap-3 rounded-[16px] border p-3"
+                                           style={{borderColor: selected.includes(target.id) ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                        <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={selected.includes(target.id)}
+                                               onChange={() => toggle(target.id)}/>
+                                        <span className="min-w-0 flex-1">
+                                            <strong className="block truncate text-sm" style={{color: "var(--text-primary)"}}>
+                                                {target.name}{!target.active && <span className="ms-2 text-xs font-semibold" style={{color: "var(--text-tertiary)"}}>Inactivo</span>}
+                                            </strong>
+                                            <span className="text-xs" style={{color: target.periods ? "var(--warning)" : "var(--text-secondary)"}}>
+                                                {[target.specialization, target.periods
+                                                    ? `Ya tiene ${target.periods} ${target.periods === 1 ? "período" : "períodos"}: se reemplazan`
+                                                    : "Sin períodos"].filter(Boolean).join(" · ")}
+                                            </span>
+                                        </span>
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {replacing > 0 && (
+                    <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
+                        <i className="fa fa-triangle-exclamation me-1"/>
+                        {replacing === 1 ? "1 curso base perderá sus períodos actuales." : `${replacing} cursos base perderán sus períodos actuales.`}
+                    </p>
+                )}
+            </div>
+            <footer className="flex justify-end gap-2 border-t px-4 pt-4" style={{borderColor: "var(--border-soft)"}}>
+                <button type="button" className="btn btn-sm" disabled={busy} onClick={onDone}>Cancelar</button>
+                <button type="button" className="btn btn-sm btn-primary" disabled={busy || selected.length === 0} onClick={() => void clone()}>
+                    <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-clone"}/>
+                    {busy ? "Clonando..." : selected.length ? `Clonar a ${selected.length}` : "Clonar"}
+                </button>
+            </footer>
+        </div>
+    );
 };
 
 /** Día del año en un año bisiesto de referencia (1 ene = 0). */

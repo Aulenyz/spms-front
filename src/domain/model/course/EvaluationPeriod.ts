@@ -38,3 +38,12 @@ export type TemplatePeriod = {
     endMonth: number;
     endDay: number;
 };
+
+/** Curso base del mismo tipo al que se pueden clonar los períodos, con cuántos tiene ahora. */
+export type TemplateCloneTarget = {
+    id: number;
+    name: string;
+    specialization?: string | null;
+    active: boolean;
+    periods: number;
+};
