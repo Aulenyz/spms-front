@@ -7,7 +7,7 @@ import {TemplatePeriod} from "../../../domain/model/course/EvaluationPeriod.ts";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
-import {CenterModal} from "../../../components/shared/CenterModal.tsx";
+import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 
 const service = CourseTemplateService.instance;
 
@@ -169,98 +169,101 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
             )}
         </DetailSection>
 
-        <CenterModal title={saved.length ? "Editar períodos de evaluación" : "Definir períodos de evaluación"}
-                     description="Indica el día y el mes en que empieza y termina cada período. El año lo pone cada año escolar."
-                     isOpen={canEdit && editing} onClose={() => !busy && setEditing(false)}
-                     className="max-w-3xl" contentClassName="p-0">
-            <div className="space-y-5 p-6">
-                <div className="space-y-2">
-                    <span className="block text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
-                        Empieza rápido
-                    </span>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {Object.entries(PRESETS).map(([label, periods]) => (
-                            <button key={label} type="button" onClick={() => setDraft(periods.map((period) => ({...period})))}
-                                    className="flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
-                                    style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
-                                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
-                                    <i className="fa fa-wand-magic-sparkles"/>
-                                </span>
-                                <span className="min-w-0">
-                                    <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{label}</strong>
-                                    <span className="text-xs" style={{color: "var(--text-secondary)"}}>
-                                        {periods.map((period) => `${formatDay(period.startDay, period.startMonth)}–${formatDay(period.endDay, period.endMonth)}`).join(" · ")}
+        <LeftModal title={saved.length ? "Editar períodos de evaluación" : "Definir períodos de evaluación"}
+                   isOpen={canEdit && editing} onClose={() => !busy && setEditing(false)} className="h-full w-[min(520px,100vw)]">
+            <div className="-mx-4 flex min-h-0 flex-1 flex-col">
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
+                    <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                        Indica el día y el mes en que empieza y termina cada período. El año lo pone cada año escolar.
+                    </p>
+                    <div className="space-y-2">
+                        <span className="block text-xs font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
+                            Empieza rápido
+                        </span>
+                        <div className="grid gap-2">
+                            {Object.entries(PRESETS).map(([label, periods]) => (
+                                <button key={label} type="button" onClick={() => setDraft(periods.map((period) => ({...period})))}
+                                        className="flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
+                                        style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
+                                          style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                        <i className="fa fa-wand-magic-sparkles"/>
                                     </span>
-                                </span>
-                            </button>
-                        ))}
+                                    <span className="min-w-0">
+                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{label}</strong>
+                                        <span className="text-xs" style={{color: "var(--text-secondary)"}}>
+                                            {periods.map((period) => `${formatDay(period.startDay, period.startMonth)}–${formatDay(period.endDay, period.endMonth)}`).join(" · ")}
+                                        </span>
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
+
+                    {draft.length > 0 && <Timeline periods={draft}/>}
+
+                    {draft.length === 0 ? (
+                        <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
+                           style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
+                            Sin períodos todavía. Usa una de las opciones de arriba o agrega el primero.
+                        </p>
+                    ) : (
+                        <ol className="space-y-3">
+                            {draft.map((period, index) => (
+                                <li key={index} className="space-y-3 rounded-[18px] border p-4"
+                                    style={{borderColor: problems[index] ? "var(--danger)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                    <div className="flex items-center gap-3">
+                                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-sm font-extrabold"
+                                              style={{background: "var(--accent-soft)", color: "var(--accent)"}}>P{index + 1}</span>
+                                        <label className="input input-sm min-w-0 flex-1">
+                                            <input maxLength={64} value={period.name} placeholder={`Período ${index + 1}`} aria-label={`Nombre de P${index + 1}`}
+                                                   onChange={(event) => update(index, {name: event.target.value})}/>
+                                        </label>
+                                        <span className="hidden text-xs font-semibold sm:inline" style={{color: "var(--text-tertiary)"}}>
+                                            {lengthOf(period)} días
+                                        </span>
+                                        <button type="button" className="row-action" title={index === draft.length - 1 ? "Quitar" : "Solo se puede quitar el último"}
+                                                aria-label={`Quitar P${index + 1}`} disabled={index !== draft.length - 1}
+                                                onClick={() => setDraft((current) => current.slice(0, -1))}>
+                                            <i className="fa fa-trash"/>
+                                        </button>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
+                                                       onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
+                                        <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
+                                                       onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
+                                    </div>
+                                    {problems[index] && (
+                                        <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
+                                            <i className="fa fa-triangle-exclamation me-1"/>{problems[index]}
+                                        </p>
+                                    )}
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+
+                    <button type="button" className="btn btn-sm w-full border-dashed" disabled={draft.length >= 12} onClick={addPeriod}>
+                        <i className="fa fa-plus"/>Agregar período {draft.length ? `P${draft.length + 1}` : "P1"}
+                    </button>
+
+                    <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
+                        <i className="fa fa-circle-info me-1"/>
+                        Cada período empieza después de que termina el anterior y todos caben en un año. Al generar los cursos se ubican en el
+                        año escolar; si el primero empieza poco antes que el año, arranca con el año.
+                    </p>
                 </div>
 
-                {draft.length > 0 && <Timeline periods={draft}/>}
-
-                {draft.length === 0 ? (
-                    <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
-                       style={{borderColor: "var(--border-strong)", color: "var(--text-secondary)"}}>
-                        Sin períodos todavía. Usa una de las opciones de arriba o agrega el primero.
-                    </p>
-                ) : (
-                    <ol className="space-y-3">
-                        {draft.map((period, index) => (
-                            <li key={index} className="space-y-3 rounded-[18px] border p-4"
-                                style={{borderColor: problems[index] ? "var(--danger)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                <div className="flex items-center gap-3">
-                                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-sm font-extrabold"
-                                          style={{background: "var(--accent-soft)", color: "var(--accent)"}}>P{index + 1}</span>
-                                    <label className="input input-sm min-w-0 flex-1">
-                                        <input maxLength={64} value={period.name} placeholder={`Período ${index + 1}`} aria-label={`Nombre de P${index + 1}`}
-                                               onChange={(event) => update(index, {name: event.target.value})}/>
-                                    </label>
-                                    <span className="hidden text-xs font-semibold sm:inline" style={{color: "var(--text-tertiary)"}}>
-                                        {lengthOf(period)} días
-                                    </span>
-                                    <button type="button" className="row-action" title={index === draft.length - 1 ? "Quitar" : "Solo se puede quitar el último"}
-                                            aria-label={`Quitar P${index + 1}`} disabled={index !== draft.length - 1}
-                                            onClick={() => setDraft((current) => current.slice(0, -1))}>
-                                        <i className="fa fa-trash"/>
-                                    </button>
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
-                                                   onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
-                                    <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
-                                                   onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
-                                </div>
-                                {problems[index] && (
-                                    <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
-                                        <i className="fa fa-triangle-exclamation me-1"/>{problems[index]}
-                                    </p>
-                                )}
-                            </li>
-                        ))}
-                    </ol>
-                )}
-
-                <button type="button" className="btn btn-sm w-full border-dashed" disabled={draft.length >= 12} onClick={addPeriod}>
-                    <i className="fa fa-plus"/>Agregar período {draft.length ? `P${draft.length + 1}` : "P1"}
-                </button>
-
-                <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
-                    <i className="fa fa-circle-info me-1"/>
-                    Cada período empieza después de que termina el anterior y todos caben en un año. Al generar los cursos se ubican en el
-                    año escolar; si el primero empieza poco antes que el año, arranca con el año.
-                </p>
+                <footer className="flex justify-end gap-2 border-t px-4 pt-4"
+                        style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
+                    <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setEditing(false)}>Cancelar</button>
+                    <button type="button" className="btn btn-sm btn-primary" disabled={busy || invalid} onClick={() => void save()}>
+                        <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-check"}/>{busy ? "Guardando..." : "Guardar períodos"}
+                    </button>
+                </footer>
             </div>
-
-            <footer className="sticky bottom-0 flex justify-end gap-2 border-t px-6 py-4"
-                    style={{borderColor: "var(--border-soft)", background: "var(--surface)"}}>
-                <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setEditing(false)}>Cancelar</button>
-                <button type="button" className="btn btn-sm btn-primary" disabled={busy || invalid} onClick={() => void save()}>
-                    <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-check"}/>{busy ? "Guardando..." : "Guardar períodos"}
-                </button>
-            </footer>
-        </CenterModal>
+        </LeftModal>
     </>;
 };
 
