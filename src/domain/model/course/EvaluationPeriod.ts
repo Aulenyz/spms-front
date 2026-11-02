@@ -26,3 +26,15 @@ export const EvaluationPeriodStateLabel: Record<EvaluationPeriodState, string> =
     OPEN: "En curso",
     ENDED: "Finalizado",
 };
+
+/** Período planificado en un curso base: día y mes, sin año, para que sirva cada año escolar. */
+export type TemplatePeriod = {
+    id?: number;
+    code?: string;
+    name: string;
+    sequence?: number;
+    startMonth: number;
+    startDay: number;
+    endMonth: number;
+    endDay: number;
+};

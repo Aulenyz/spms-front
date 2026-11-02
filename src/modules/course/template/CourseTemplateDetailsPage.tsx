@@ -15,6 +15,7 @@ import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
+import {TemplateEvaluationPeriods} from "./TemplateEvaluationPeriods.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
 import {AuthorityKey} from "../../../domain/model/user/authorities.ts";
 import {CourseTemplateForm} from "./CourseTemplateForm.tsx";
@@ -151,6 +152,8 @@ export const CourseTemplateDetailsPage = () => {
                 </ul>
             )}
         </DetailSection>
+
+        {canView && <TemplateEvaluationPeriods templateId={id} canEdit={canEdit}/>}
 
         <RightModal title="Editar curso base" isOpen={canEdit && showEdit} onClose={() => setShowEdit(false)}
                     className="h-full w-[420px] z-[9999]">

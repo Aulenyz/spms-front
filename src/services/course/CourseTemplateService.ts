@@ -1,5 +1,6 @@
 import {BaseService} from "../BaseService.ts";
 import {CourseTemplate} from "../../domain/model/course/Course.ts";
+import {TemplatePeriod} from "../../domain/model/course/EvaluationPeriod.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TemplateSlot} from "../../modules/course/template/schedule.ts";
 
@@ -58,5 +59,20 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
 
     deleteTemplateSubject(templateSubjectId: number): Promise<unknown> {
         return this.delete<unknown>(`/template-subjects/${templateSubjectId}`);
+    }
+
+    /** Períodos de evaluación planificados en el curso base (día y mes). */
+    evaluationPeriods(id: string | number): Promise<TemplatePeriod[]> {
+        return this.get<TemplatePeriod[]>(`/${id}/evaluation-periods`);
+    }
+
+    /** Reemplaza todos los períodos del curso base, en orden. */
+    saveEvaluationPeriods(id: string | number, periods: TemplatePeriod[]): Promise<TemplatePeriod[]> {
+        return this.put<TemplatePeriod[]>(`/${id}/evaluation-periods`, {periods});
+    }
+
+    /** Da los períodos a los cursos del año actual de este curso base que no tengan; devuelve esas secciones. */
+    applyEvaluationPeriods(id: string | number): Promise<string[]> {
+        return this.post<string[]>(`/${id}/evaluation-periods/apply`);
     }
 }

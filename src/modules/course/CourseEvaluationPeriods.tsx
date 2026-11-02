@@ -97,7 +97,7 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
     return (
         <DetailSection
             title="Períodos de evaluación"
-            description="Los profesores califican cada materia por período y publican las notas desde la app."
+            description="Vienen del curso base al generar el curso; aquí puedes ajustarlos. Los profesores califican y publican desde la app."
             actions={periods.length > 0 && <>
                 {hasSections && (
                     <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void copyToSections()}>
@@ -119,7 +119,8 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                     <div>
                         <strong className="block text-base" style={{color: "var(--text-primary)"}}>Este curso aún no tiene períodos</strong>
                         <p className="mt-1 max-w-md text-sm" style={{color: "var(--text-secondary)"}}>
-                            Reparte el año escolar en períodos iguales con un clic, o créalos uno por uno con sus fechas.
+                            Lo ideal es definirlos en el curso base para que todos sus cursos nazcan con ellos. También puedes
+                            repartir el año aquí con un clic o crearlos uno por uno.
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center justify-center gap-2">
