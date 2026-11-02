@@ -9,6 +9,7 @@ import {CourseTemplateService} from "../../../services/course/CourseTemplateServ
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {useCurrentPeriod} from "../../../hooks/queries/useCurrentPeriod.ts";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
+import {DateRangePicker} from "../../../components/io/DateRangePicker.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 
 const service = CourseTemplateService.instance;
@@ -154,6 +155,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
         </button>
     </>;
 
+    const placed = schoolYear ? placeInYear(draft, schoolYear) : [];
     const problems = draft.map((_, index) => problemOf(draft, index, schoolYear));
     const invalid = problems.some(Boolean) || draft.some((period) => !period.name.trim());
 
@@ -269,12 +271,22 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                                     <i className="fa fa-trash"/>
                                                 </button>
                                             </div>
-                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
-                                                               onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
-                                                <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
-                                                               onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
-                                            </div>
+                                            {schoolYear ? (
+                                                <DateRangePicker label="Desde – hasta" start={placed[index].start} end={placed[index].end}
+                                                                 min={index === 0 ? schoolYear.start : minDate(addDays(placed[index - 1].end, 1), schoolYear.end)}
+                                                                 max={schoolYear.end}
+                                                                 onChange={(start, end) => update(index, {
+                                                                     startDay: start.getDate(), startMonth: start.getMonth() + 1,
+                                                                     endDay: end.getDate(), endMonth: end.getMonth() + 1,
+                                                                 })}/>
+                                            ) : (
+                                                <div className="grid gap-3 sm:grid-cols-2">
+                                                    <DayMonthField label="Empieza" day={period.startDay} month={period.startMonth}
+                                                                   onChange={(day, month) => update(index, {startDay: day, startMonth: month})}/>
+                                                    <DayMonthField label="Termina" day={period.endDay} month={period.endMonth}
+                                                                   onChange={(day, month) => update(index, {endDay: day, endMonth: month})}/>
+                                                </div>
+                                            )}
                                             {problems[index] && (
                                                 <p className="text-xs font-semibold" style={{color: "var(--danger)"}}>
                                                     <i className="fa fa-triangle-exclamation me-1"/>{problems[index]}
@@ -493,6 +505,7 @@ const parseDate = (value?: string) => {
     return year && month && day ? new Date(year, month - 1, day) : null;
 };
 const formatDate = (date: Date) => `${date.getDate()} ${MONTH_SHORT[date.getMonth()]} ${date.getFullYear()}`;
+const minDate = (first: Date, second: Date) => first < second ? first : second;
 const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 
 /** Primera fecha desde {@code from} con ese día y mes (el 29 feb cae en 28 en años no bisiestos), como en la API. */
