@@ -1,6 +1,5 @@
 import {GradeType} from "./Course.ts";
 
-
 /** Estado del período respecto a hoy. */
 export type EvaluationPeriodState = "UPCOMING" | "OPEN" | "ENDED";
 
