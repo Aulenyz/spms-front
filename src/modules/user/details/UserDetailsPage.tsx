@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
 import {Link, useParams} from "react-router-dom";
+import clsx from "clsx";
 import {toast} from "react-toastify";
 
 import {Genders, User, UserStatus, UserStatusLabel} from "../../../domain/model/user/user.ts";
@@ -20,6 +21,13 @@ const STATUS_ACTIONS: Record<UserStatus, { label: string; icon: string }> = {
     [UserStatus.INACTIVE]: {label: "Inactivar", icon: "fa-circle-pause"},
     [UserStatus.CANCELLED]: {label: "Cancelar usuario", icon: "fa-ban"},
 };
+
+type TabKey = "info" | "role" | "apps";
+const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
+    {key: "info", label: "Datos del usuario", icon: "fa-id-card"},
+    {key: "role", label: "Rol y permisos", icon: "fa-user-shield"},
+    {key: "apps", label: "Aplicaciones", icon: "fa-mobile-screen"},
+];
 
 const userService = UserService.instance;
 const roleService = RoleService.instance;
@@ -42,6 +50,14 @@ export const UserDetailsPage = () => {
     const [roleLoading, setRoleLoading] = useState(false);
     const [roleDetails, setRoleDetails] = useState<User["role"] | null>(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [tab, setTab] = useState<TabKey>(() => {
+        const saved = id ? localStorage.getItem(`user-details-tab-${id}`) : null;
+        return TABS.some((item) => item.key === saved) ? saved as TabKey : "info";
+    });
+
+    useEffect(() => {
+        if (id) localStorage.setItem(`user-details-tab-${id}`, tab);
+    }, [id, tab]);
 
     const name = useMemo(() => {
         if (!user) return "Usuario";
@@ -99,6 +115,8 @@ export const UserDetailsPage = () => {
     const canViewRole = hasAuthority(AuthorityKey.ROLE_DETAILS_VIEW);
     const canEditUser = hasAuthority(AuthorityKey.USER_EDIT);
     const permissionCount = roleDetails?.countAuthorities ?? user.role?.countAuthorities;
+    const tabs = TABS.filter((item) => item.key !== "apps" || (canEditUser && user.id));
+    const current = tabs.some((item) => item.key === tab) ? tab : "info";
 
     return (
         <div className="space-y-4">
@@ -122,15 +140,24 @@ export const UserDetailsPage = () => {
                 </>}
             />
 
-            <DetailSection title="Datos del usuario">
+            <nav className="section-tabs w-fit">
+                {tabs.map((item) => (
+                    <button key={item.key} type="button" onClick={() => setTab(item.key)}
+                            className={clsx("section-tab", current === item.key && "section-tab-active")}>
+                        <i className={`fa ${item.icon}`}/><span>{item.label}</span>
+                    </button>
+                ))}
+            </nav>
+
+            {current === "info" && <DetailSection title="Datos del usuario">
                 <InfoList items={[
                     {label: "Correo", value: user.email},
                     {label: "Documento", value: user.document},
                     {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
                 ]}/>
-            </DetailSection>
+            </DetailSection>}
 
-            <DetailSection title="Rol"
+            {current === "role" && <DetailSection title="Rol"
                            actions={canViewRole && user.role?.id && <Link to={`/users/roles/${user.role.id}`} className="btn btn-sm">
                                <i className="fa fa-arrow-up-right-from-square"/>Ver rol
                            </Link>}>
@@ -139,9 +166,9 @@ export const UserDetailsPage = () => {
                     {label: "Permisos", value: roleLoading ? "Cargando..." : permissionCount},
                     {label: "Descripción", value: roleLoading ? "Cargando..." : roleDetails?.description, full: true},
                 ]}/>
-            </DetailSection>
+            </DetailSection>}
 
-            {canEditUser && user.id && <UserChannelsSection userId={user.id}/>}
+            {current === "apps" && user.id && <UserChannelsSection userId={user.id}/>}
         </div>
     );
 };
