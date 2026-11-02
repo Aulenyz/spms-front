@@ -6,6 +6,7 @@ import {queryKeys} from "../../../app/query/queryKeys.ts";
 import {TemplatePeriod} from "../../../domain/model/course/EvaluationPeriod.ts";
 import {CourseTemplateService} from "../../../services/course/CourseTemplateService.ts";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
+import {useCurrentPeriod} from "../../../hooks/queries/useCurrentPeriod.ts";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
 
@@ -36,6 +37,9 @@ const PRESET_DESCRIPTIONS: Record<string, string> = {
     "4 períodos (ago–jun)": "Año escolar en cuatro cortes de notas.",
 };
 
+/** Cuánto antes del año escolar puede empezar P1 y aun así arrancar con el año (igual que en la API). */
+const FIRST_PERIOD_TOLERANCE_DAYS = 62;
+
 const message = (error: unknown, fallback: string): string => {
     const text = typeof error === "object" && error !== null ? (error as { message?: unknown }).message : undefined;
     return typeof text === "string" && text.trim() ? text : fallback;
@@ -64,6 +68,10 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState<TemplatePeriod[]>([]);
     const [busy, setBusy] = useState(false);
+    const currentPeriod = useCurrentPeriod({silent: true}).data;
+    const yearStart = parseDate(currentPeriod?.start);
+    const yearEnd = parseDate(currentPeriod?.end);
+    const schoolYear: SchoolYear | undefined = yearStart && yearEnd ? {name: currentPeriod?.name, start: yearStart, end: yearEnd} : undefined;
     const [section, setSection] = useState<"presets" | "periods">("presets");
     const [chosen, setChosen] = useState<string | null>(null);
 
@@ -138,7 +146,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
         </button>
     </>;
 
-    const problems = draft.map((_, index) => problemOf(draft, index));
+    const problems = draft.map((_, index) => problemOf(draft, index, schoolYear));
     const invalid = problems.some(Boolean) || draft.some((period) => !period.name.trim());
 
     return <>
@@ -218,6 +226,14 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                     summary={draft.length ? `${draft.length} ${draft.length === 1 ? "período" : "períodos"} · ${formatDay(draft[0].startDay, draft[0].startMonth)} – ${formatDay(draft[draft.length - 1].endDay, draft[draft.length - 1].endMonth)}` : "Sin períodos todavía"}
                                     onToggle={() => setSection(section === "periods" ? "presets" : "periods")}>
                         <div className="space-y-4">
+                            {schoolYear && (
+                                <p className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-xs font-semibold"
+                                   style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                                    <i className="fa fa-calendar" style={{color: "var(--accent)"}}/>
+                                    Año escolar {schoolYear.name ? `${schoolYear.name}: ` : ""}{formatDate(schoolYear.start)} – {formatDate(schoolYear.end)}.
+                                    Ningún período puede terminar después.
+                                </p>
+                            )}
                             {draft.length > 0 && <Timeline periods={draft}/>}
 
                             {draft.length === 0 ? (
@@ -294,10 +310,18 @@ const offset = (from: number, month: number, day: number) => (dayOfYear(month, d
 const lengthOf = (period: TemplatePeriod) => offset(dayOfYear(period.startMonth, period.startDay), period.endMonth, period.endDay) + 1;
 
 /** Qué le falta a un período para ser válido: debe seguir al anterior y caber en el año junto con los demás. */
-const problemOf = (periods: TemplatePeriod[], index: number): string | null => {
+const problemOf = (periods: TemplatePeriod[], index: number, year?: SchoolYear): string | null => {
     const period = periods[index];
     if (!period.name.trim()) return "Ponle un nombre al período.";
-    if (index === 0) return null;
+    const sequenceProblem = index === 0 ? null : orderProblemOf(periods, index);
+    if (sequenceProblem || !year) return sequenceProblem;
+    const end = placeInYear(periods, year)[index].end;
+    if (end > year.end) return `Termina el ${formatDate(end)}, después del fin del año escolar (${formatDate(year.end)}).`;
+    return null;
+};
+
+const orderProblemOf = (periods: TemplatePeriod[], index: number): string | null => {
+    const period = periods[index];
     const from = dayOfYear(periods[0].startMonth, periods[0].startDay);
     const previous = periods[index - 1];
     const previousEnd = offset(from, previous.endMonth, previous.endDay);
@@ -306,6 +330,35 @@ const problemOf = (periods: TemplatePeriod[], index: number): string | null => {
     if (start <= previousEnd) return `Debe empezar después del ${formatDay(previous.endDay, previous.endMonth)}, cuando termina P${index}.`;
     if (end < start) return "Termina antes de empezar o se pasa del año desde P1.";
     return null;
+};
+
+type SchoolYear = { name?: string; start: Date; end: Date };
+
+/** Fecha local a partir de "aaaa-mm-dd". */
+const parseDate = (value?: string) => {
+    const [year, month, day] = (value ?? "").split("-").map(Number);
+    return year && month && day ? new Date(year, month - 1, day) : null;
+};
+const formatDate = (date: Date) => `${date.getDate()} ${MONTH_SHORT[date.getMonth()]} ${date.getFullYear()}`;
+const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
+/** Primera fecha desde {@code from} con ese día y mes (el 29 feb cae en 28 en años no bisiestos), como en la API. */
+const nextDate = (month: number, day: number, from: Date) => {
+    const at = (year: number) => new Date(year, month - 1, Math.min(day, new Date(year, month, 0).getDate()));
+    const candidate = at(from.getFullYear());
+    return candidate < from ? at(from.getFullYear() + 1) : candidate;
+};
+
+/** Fechas reales de cada período dentro del año escolar, igual que al generar los cursos (sin recortar al final). */
+const placeInYear = (periods: TemplatePeriod[], year: SchoolYear) => {
+    let cursor = year.start;
+    return periods.map((period, index) => {
+        let start = nextDate(period.startMonth, period.startDay, index === 0 ? addDays(year.start, -FIRST_PERIOD_TOLERANCE_DAYS) : cursor);
+        if (start < year.start) start = year.start;
+        const end = nextDate(period.endMonth, period.endDay, start);
+        cursor = addDays(end, 1);
+        return {start, end};
+    });
 };
 
 /** Franja proporcional del año escolar con cada período. */
@@ -319,7 +372,7 @@ const Timeline = ({periods}: { periods: TemplatePeriod[] }) => {
                 {periods.map((period, index) => {
                     const start = offset(from, period.startMonth, period.startDay);
                     const width = offset(from, period.endMonth, period.endDay) - start + 1;
-                    if (index > 0 && problemOf(periods, index)) return null;
+                    if (index > 0 && orderProblemOf(periods, index)) return null;
                     return (
                         <span key={index} className="absolute inset-y-1 flex items-center justify-center overflow-hidden rounded-[9px] text-xs font-extrabold"
                               title={`${period.name}: ${formatDay(period.startDay, period.startMonth)} – ${formatDay(period.endDay, period.endMonth)}`}
