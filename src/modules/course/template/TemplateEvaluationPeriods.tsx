@@ -235,15 +235,6 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                     summary={draft.length ? `${draft.length} ${draft.length === 1 ? "período" : "períodos"} · ${formatDay(draft[0].startDay, draft[0].startMonth)} – ${formatDay(draft[draft.length - 1].endDay, draft[draft.length - 1].endMonth)}` : "Sin períodos todavía"}
                                     onToggle={() => setSection(section === "periods" ? "presets" : "periods")}>
                         <div className="space-y-4">
-                            {schoolYear && (
-                                <p className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-xs font-semibold"
-                                   style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
-                                    <i className="fa fa-calendar" style={{color: "var(--accent)"}}/>
-                                    Año escolar {schoolYear.name ? `${schoolYear.name}: ` : ""}{formatDate(schoolYear.start)} – {formatDate(schoolYear.end)}.
-                                    Ningún período puede terminar después.
-                                </p>
-                            )}
-                            {draft.length > 0 && <Timeline periods={draft}/>}
 
                             {draft.length === 0 ? (
                                 <p className="rounded-[16px] border border-dashed px-4 py-6 text-center text-sm"
@@ -525,36 +516,6 @@ const placeInYear = (periods: TemplatePeriod[], year: SchoolYear) => {
         cursor = addDays(end, 1);
         return {start, end};
     });
-};
-
-/** Franja proporcional del año escolar con cada período. */
-const Timeline = ({periods}: { periods: TemplatePeriod[] }) => {
-    const from = dayOfYear(periods[0].startMonth, periods[0].startDay);
-    const last = periods[periods.length - 1];
-    const total = Math.max(offset(from, last.endMonth, last.endDay) + 1, 1);
-    return (
-        <div className="space-y-1.5">
-            <div className="relative h-9 overflow-hidden rounded-[12px]" style={{background: "var(--surface-muted)"}}>
-                {periods.map((period, index) => {
-                    const start = offset(from, period.startMonth, period.startDay);
-                    const width = offset(from, period.endMonth, period.endDay) - start + 1;
-                    if (index > 0 && orderProblemOf(periods, index)) return null;
-                    return (
-                        <span key={index} className="absolute inset-y-1 flex items-center justify-center overflow-hidden rounded-[9px] text-xs font-extrabold"
-                              title={`${period.name}: ${formatDay(period.startDay, period.startMonth)} – ${formatDay(period.endDay, period.endMonth)}`}
-                              style={{
-                                  left: `calc(${(start / total) * 100}% + 2px)`, width: `calc(${(width / total) * 100}% - 4px)`,
-                                  background: index % 2 ? "var(--accent-soft)" : "var(--accent)", color: index % 2 ? "var(--accent)" : "white",
-                              }}>P{index + 1}</span>
-                    );
-                })}
-            </div>
-            <div className="flex justify-between text-[11px] font-semibold" style={{color: "var(--text-tertiary)"}}>
-                <span>{formatDay(periods[0].startDay, periods[0].startMonth)}</span>
-                <span>{formatDay(last.endDay, last.endMonth)}</span>
-            </div>
-        </div>
-    );
 };
 
 /** Bloque plegable del editor: solo uno queda abierto, el otro muestra un resumen para volver a él. */
