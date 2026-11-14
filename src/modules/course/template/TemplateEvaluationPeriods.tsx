@@ -28,22 +28,22 @@ const named = (name: string, ranges: Array<[number, number, number, number]>): T
 const PRESETS: Preset[] = [
     {
         label: "4 períodos",
-        description: "Cuatro cortes de notas, como el calendario escolar del MINERD.",
+        description: "El año dividido en cuatro partes, como lo trabaja el MINERD.",
         periods: named("Período", [[8, 1, 10, 31], [11, 1, 1, 31], [2, 1, 3, 31], [4, 1, 6, 30]]),
     },
     {
         label: "3 trimestres",
-        description: "Un boletín por trimestre; común en colegios privados.",
+        description: "El año dividido en tres partes; común en colegios privados.",
         periods: named("Trimestre", [[8, 1, 11, 30], [12, 1, 2, 29], [3, 1, 6, 30]]),
     },
     {
         label: "2 semestres",
-        description: "Dos cortes al año, con el cambio en enero.",
+        description: "El año dividido en dos mitades.",
         periods: named("Semestre", [[8, 1, 12, 31], [1, 1, 6, 30]]),
     },
     {
         label: "5 bimestres",
-        description: "Un corte cada dos meses, para seguir de cerca las notas.",
+        description: "El año dividido en cinco partes, para entregar notas más seguido.",
         periods: named("Bimestre", [[8, 1, 9, 30], [10, 1, 11, 30], [12, 1, 1, 31], [2, 1, 3, 31], [4, 1, 6, 30]]),
     },
 ];
@@ -223,39 +223,47 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
             <div className="-mx-4 flex min-h-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
                     <p className="text-sm" style={{color: "var(--text-secondary)"}}>
-                        Indica el día y el mes en que empieza y termina cada período. El año lo pone cada año escolar.
+                        Un período de evaluación es cada tramo del año en que se califica y se entregan notas (P1, P2...). Aquí
+                        defines cuándo empieza y termina cada uno.
                     </p>
-                    <AccordionPanel step={1} title="Usar un ejemplo" open={section === "presets"}
-                                    summary={chosen ?? "Opcional: arranca con un calendario ya armado"}
+                    <AccordionPanel step={1} title="Elige en cuántas partes se divide el año" open={section === "presets"}
+                                    summary={chosen ?? "Opcional: empieza con las fechas ya calculadas"}
                                     onToggle={() => setSection(section === "presets" ? "periods" : "presets")}>
                         <div className="grid gap-2">
-                            {schoolYear && (
-                                <p className="text-xs" style={{color: "var(--text-secondary)"}}>
-                                    Las fechas se acomodan al año escolar{schoolYear.name ? ` ${schoolYear.name}` : ""}: del {formatDate(schoolYear.start)} al {formatDate(schoolYear.end)}.
-                                </p>
-                            )}
+                            <p className="text-xs" style={{color: "var(--text-secondary)"}}>
+                                {schoolYear
+                                    ? <>Toca una opción y las fechas salen ya calculadas para el año escolar{schoolYear.name ? ` ${schoolYear.name}` : ""}{" "}
+                                        (<strong>{formatDate(schoolYear.start)} – {formatDate(schoolYear.end)}</strong>). En el paso 2 puedes cambiarlas.</>
+                                    : "Toca una opción para empezar con sus fechas. En el paso 2 puedes cambiarlas."}
+                            </p>
                             {PRESETS.map((preset) => (
                                 <button key={preset.label} type="button" onClick={() => choosePreset(preset)}
-                                        className="flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
+                                        className="space-y-2.5 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
                                         style={{borderColor: chosen === preset.label ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
-                                          style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
-                                        <i className="fa fa-wand-magic-sparkles"/>
-                                    </span>
-                                    <span className="min-w-0">
-                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{preset.label}</strong>
-                                        <span className="block text-xs" style={{color: "var(--text-secondary)"}}>{preset.description}</span>
-                                        <span className="block text-xs" style={{color: "var(--text-tertiary)"}}>
-                                            {fitToYear(preset.periods, schoolYear).map((period, index) =>
-                                                `P${index + 1} ${formatDay(period.startDay, period.startMonth)} – ${formatDay(period.endDay, period.endMonth)}`).join(" · ")}
+                                    <span className="flex items-center gap-3">
+                                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-base font-extrabold"
+                                              style={{background: "var(--accent-soft)", color: "var(--accent)"}}>{preset.periods.length}</span>
+                                        <span className="min-w-0">
+                                            <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{preset.label}</strong>
+                                            <span className="block text-xs" style={{color: "var(--text-secondary)"}}>{preset.description}</span>
                                         </span>
+                                    </span>
+                                    <span className="grid gap-1.5 sm:grid-cols-2">
+                                        {fitToYear(preset.periods, schoolYear).map((period, index) => (
+                                            <span key={index} className="flex items-center gap-2 rounded-[10px] px-2 py-1.5 text-xs" style={{background: "var(--surface)"}}>
+                                                <strong style={{color: "var(--accent)"}}>P{index + 1}</strong>
+                                                <span style={{color: "var(--text-secondary)"}}>
+                                                    {formatDay(period.startDay, period.startMonth)} – {formatDay(period.endDay, period.endMonth)}
+                                                </span>
+                                            </span>
+                                        ))}
                                     </span>
                                 </button>
                             ))}
                         </div>
                     </AccordionPanel>
 
-                    <AccordionPanel step={2} title="Ajustar los períodos" open={section === "periods"}
+                    <AccordionPanel step={2} title="Revisa o cambia las fechas" open={section === "periods"}
                                     summary={draft.length ? `${draft.length} ${draft.length === 1 ? "período" : "períodos"} · ${formatDay(draft[0].startDay, draft[0].startMonth)} – ${formatDay(draft[draft.length - 1].endDay, draft[draft.length - 1].endMonth)}` : "Sin períodos todavía"}
                                     onToggle={() => setSection(section === "periods" ? "presets" : "periods")}>
                         <div className="space-y-4">
@@ -318,8 +326,8 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
 
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
                         <i className="fa fa-circle-info me-1"/>
-                        Cada período empieza después de que termina el anterior y todos caben en un año. Al generar los cursos se ubican en el
-                        año escolar; si el primero empieza poco antes que el año, arranca con el año.
+                        Los períodos van uno detrás del otro, sin cruzarse, dentro del año escolar. Se guarda solo el día y el mes,
+                        así que el próximo año escolar usa las mismas fechas sin volver a definirlas.
                     </p>
                 </div>
 
