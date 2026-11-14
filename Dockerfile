@@ -15,8 +15,8 @@ RUN npm run build-prod
 # ---- runtime ----
 FROM nginx:1.27-alpine
 
-# Backend al que nginx redirige /api/ (sin barra final). Sobrescribir en el despliegue.
-ENV API_UPSTREAM=http://spms-api:8031
+# Backend al que nginx redirige /api/ (sin barra final). Por defecto el de dev; sobrescribir en otros entornos.
+ENV API_UPSTREAM=https://aulenyx-backend-5a94yi-dd9879-144-217-90-177.sslip.io
 
 # nginx reemplaza las variables en los .template al arrancar
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
