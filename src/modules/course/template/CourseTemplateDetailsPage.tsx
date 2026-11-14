@@ -111,11 +111,11 @@ export const CourseTemplateDetailsPage = () => {
             const locked = (await service.generateCourses(id))?.lockedPeriods ?? [];
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
             setConfirmGenerate(false);
-            toast.success("Cursos del año al día con las materias, profesores y períodos de evaluación del curso base.");
+            toast.success("Curso al día con las materias, profesores y períodos de evaluación del curso base.");
             if (locked.length) toast.info(`${locked.join(", ")} ya ${locked.length === 1 ? "está cursado y no se cambió" : "están cursados y no se cambiaron"}. Solo se actualizan los períodos nuevos.`,
                 {autoClose: 9000});
         } catch (error) {
-            toast.error(message(error, "No se pudieron generar o actualizar los cursos."));
+            toast.error(message(error, "No se pudo generar o actualizar el curso."));
         } finally {
             setGenerating(false);
         }
@@ -152,7 +152,7 @@ export const CourseTemplateDetailsPage = () => {
             badges={<StatusBadge active={active}/>}
             actions={<OptionsMenu label={`Opciones de ${title}`} items={[
                 {label: "Editar curso base", icon: "fa-pen", visible: canEdit, onSelect: () => setShowEdit(true)},
-                {label: "Generar o actualizar cursos", icon: "fa-layer-group", visible: canGenerate && active, onSelect: () => setConfirmGenerate(true)},
+                {label: "Generar o actualizar curso", icon: "fa-layer-group", visible: canGenerate && active, onSelect: () => setConfirmGenerate(true)},
                 {
                     label: active ? "Marcar como inactivo" : "Marcar como activo", icon: "fa-toggle-on", visible: canChangeStatus,
                     onSelect: () => active ? setConfirmInactivate(true) : toggleStatus(),
@@ -208,7 +208,7 @@ export const CourseTemplateDetailsPage = () => {
             )}
         </LeftModal>
 
-        <CenterModal title="Generar o actualizar cursos" isOpen={confirmGenerate}
+        <CenterModal title="Generar o actualizar curso" isOpen={confirmGenerate}
                      onClose={() => !generating && setConfirmGenerate(false)} className="max-w-md">
             <div className="space-y-4">
                 <p className="text-sm" style={{color: "var(--text-secondary)"}}>
