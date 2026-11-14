@@ -106,12 +106,12 @@ export const ExportExcelButton = ({fetchFile, fileName, label = "Exportar", disa
                         <div className="space-y-2">
                             <div>
                                 <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Desde</span>
-                                <DatePicker compact className="w-full" value={range.from} max={range.to} icon="fa-calendar-day"
+                                <DatePicker value={range.from} max={range.to}
                                             onChange={(from) => setRange((current) => ({...current, from}))}/>
                             </div>
                             <div>
                                 <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Hasta</span>
-                                <DatePicker compact className="w-full" value={range.to} min={range.from} icon="fa-calendar-check"
+                                <DatePicker value={range.to} min={range.from}
                                             onChange={(to) => setRange((current) => ({...current, to}))}/>
                             </div>
                         </div>

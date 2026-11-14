@@ -167,10 +167,9 @@ export const SettingsModal = memo(({isOpen, onClose}: SettingsModalProps) => {
             )}
             {configuration.dataType === "DATE" && (
                 <DatePicker
-                    compact
+                    className="w-[220px] shrink-0"
                     value={configuration.value ?? ""}
                     min={configuration.name === "SCHOOL_YEAR_END_DATE" ? addThreeMonths(schoolYearStart) : nextAvailableSchoolYearStart}
-                    icon={configuration.name === "SCHOOL_YEAR_END_DATE" ? "fa-calendar-check" : "fa-calendar-day"}
                     disabled={settingsLoading || !canConfigure}
                     onChange={(value) => void updateDateSetting(configuration, value)}
                 />

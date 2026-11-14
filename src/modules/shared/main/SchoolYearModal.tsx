@@ -68,14 +68,14 @@ export const SchoolYearModal = memo(({isOpen, onClose}: SchoolYearModalProps) =>
             }}>
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <span className="mb-2 block text-sm font-bold" style={{color: "var(--text-primary)"}}>Fecha de inicio</span>
-                        <div className="flex h-12 items-center gap-3 rounded-[15px] border px-3"
+                        <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Fecha de inicio</span>
+                        <div className="flex h-11 items-center gap-3 rounded-[15px] border px-3"
                              style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
                             <span className="flex h-8 w-8 items-center justify-center rounded-[10px]"
                                   style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
-                                <i className="fa fa-calendar-day"/>
+                                <i className="fa fa-calendar-days"/>
                             </span>
-                            <strong className="text-sm" style={{color: "var(--text-primary)"}}>{formatShortDate(today)}</strong>
+                            <strong className="text-xs font-semibold" style={{color: "var(--text-primary)"}}>{formatShortDate(today)}</strong>
                         </div>
                         <small className="mt-1.5 block px-1 text-xs" style={{color: "var(--text-tertiary)"}}>El período comienza hoy.</small>
                     </div>
@@ -84,7 +84,6 @@ export const SchoolYearModal = memo(({isOpen, onClose}: SchoolYearModalProps) =>
                         value={schoolYearForm.end}
                         min={addThreeMonths(today)}
                         required
-                        icon="fa-calendar-check"
                         helper="Mínimo tres meses después de hoy."
                         onChange={(value) => setSchoolYearForm((currentValue) => ({...currentValue, end: value}))}
                     />

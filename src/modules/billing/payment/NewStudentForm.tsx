@@ -81,7 +81,7 @@ export const NewStudentForm = ({onCreated, onCancel}: Props) => {
                 </label>
                 <div>
                     <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Fecha de nacimiento</span>
-                    <DatePicker compact className="w-full" value={values.birthDate} max={localToday()}
+                    <DatePicker value={values.birthDate} max={localToday()}
                                 onChange={(value) => set("birthDate", value)}/>
                     {field("birthDate")}
                 </div>
