@@ -36,8 +36,12 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
         return this.put<CourseTemplate>(`/${id}/status`);
     }
 
-    generateCourses(id: string | number): Promise<unknown[]> {
-        return this.post<unknown[]>(`/${id}/courses`);
+    /**
+     * Crea los cursos del año que falten y pone al día los que existen: materias, profesores y períodos de evaluación.
+     * `lockedPeriods` son los períodos que no cambiaron por estar ya cursados (con calificaciones o terminados).
+     */
+    generateCourses(id: string | number): Promise<{lockedPeriods?: string[]} | null> {
+        return this.post<{lockedPeriods?: string[]} | null>(`/${id}/courses`);
     }
 
     subjectOptions(id: string | number, term: string = ""): Promise<Subject[]> {
