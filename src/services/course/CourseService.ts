@@ -3,6 +3,7 @@ import {Course, CourseAcademicAssignment, GradeType} from "../../domain/model/co
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TeacherOption} from "./CourseTemplateService.ts";
+import {EvaluationPeriod, EvaluationPeriodRequest} from "../../domain/model/course/EvaluationPeriod.ts";
 
 export type CourseAcademicAssignmentRequest = {
     subjectId: number;
@@ -55,5 +56,31 @@ export class CourseService extends BaseService<Course> {
 
     deleteAcademicAssignment(courseId: string | number, assignmentId: number): Promise<unknown> {
         return this.delete<unknown>(`/${courseId}/academic-assignments/${assignmentId}`);
+    }
+
+    evaluationPeriods(courseId: string | number): Promise<EvaluationPeriod[]> {
+        return this.get<EvaluationPeriod[]>(`/${courseId}/evaluation-periods`);
+    }
+
+    createEvaluationPeriod(courseId: string | number, request: EvaluationPeriodRequest): Promise<EvaluationPeriod> {
+        return this.post<EvaluationPeriod>(`/${courseId}/evaluation-periods`, request);
+    }
+
+    updateEvaluationPeriod(courseId: string | number, periodId: number, request: EvaluationPeriodRequest): Promise<EvaluationPeriod> {
+        return this.put<EvaluationPeriod>(`/${courseId}/evaluation-periods/${periodId}`, request);
+    }
+
+    deleteEvaluationPeriod(courseId: string | number, periodId: number): Promise<void> {
+        return this.delete<void>(`/${courseId}/evaluation-periods/${periodId}`);
+    }
+
+    /** Reparte el año escolar del curso en `count` períodos iguales (el curso no debe tener ninguno). */
+    generateEvaluationPeriods(courseId: string | number, count: number): Promise<EvaluationPeriod[]> {
+        return this.post<EvaluationPeriod[]>(`/${courseId}/evaluation-periods/generate`, {count});
+    }
+
+    /** Copia los períodos a las demás secciones del curso base que no tengan; devuelve esas secciones. */
+    copyEvaluationPeriods(courseId: string | number): Promise<string[]> {
+        return this.post<string[]>(`/${courseId}/evaluation-periods/copy-to-sections`);
     }
 }

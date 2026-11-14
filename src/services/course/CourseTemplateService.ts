@@ -1,5 +1,6 @@
 import {BaseService} from "../BaseService.ts";
 import {CourseTemplate} from "../../domain/model/course/Course.ts";
+import {TemplateCloneTarget, TemplatePeriod} from "../../domain/model/course/EvaluationPeriod.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TemplateSlot} from "../../modules/course/template/schedule.ts";
 
@@ -58,5 +59,30 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
 
     deleteTemplateSubject(templateSubjectId: number): Promise<unknown> {
         return this.delete<unknown>(`/template-subjects/${templateSubjectId}`);
+    }
+
+    /** Períodos de evaluación planificados en el curso base (día y mes). */
+    evaluationPeriods(id: string | number): Promise<TemplatePeriod[]> {
+        return this.get<TemplatePeriod[]>(`/${id}/evaluation-periods`);
+    }
+
+    /** Reemplaza todos los períodos del curso base, en orden. */
+    saveEvaluationPeriods(id: string | number, periods: TemplatePeriod[]): Promise<TemplatePeriod[]> {
+        return this.put<TemplatePeriod[]>(`/${id}/evaluation-periods`, {periods});
+    }
+
+    /** Da los períodos a los cursos del año actual de este curso base que no tengan; devuelve esas secciones. */
+    applyEvaluationPeriods(id: string | number): Promise<string[]> {
+        return this.post<string[]>(`/${id}/evaluation-periods/apply`);
+    }
+
+    /** Los otros cursos base de la organización, a los que se pueden clonar los períodos. */
+    evaluationPeriodCloneTargets(id: string | number): Promise<TemplateCloneTarget[]> {
+        return this.get<TemplateCloneTarget[]>(`/${id}/evaluation-periods/clone-targets`);
+    }
+
+    /** Copia los períodos a esos cursos base (reemplaza los que tenían); devuelve sus nombres. */
+    cloneEvaluationPeriods(id: string | number, templateIds: number[]): Promise<string[]> {
+        return this.post<string[]>(`/${id}/evaluation-periods/clone`, {templateIds});
     }
 }

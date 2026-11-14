@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
 import {Link, useParams} from "react-router-dom";
+import clsx from "clsx";
 import {toast} from "react-toastify";
 
 import {Genders, User, UserStatus, UserStatusLabel} from "../../../domain/model/user/user.ts";
@@ -13,13 +14,26 @@ import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {InfoList} from "../../../components/ui/detail/InfoList.tsx";
 import {Badge, StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
-import {UserChannelsSection} from "./UserChannelsSection.tsx";
+import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
+import {CenterModal} from "../../../components/shared/CenterModal.tsx";
+import {CHANNEL_ICON, useUserChannels} from "./useUserChannels.ts";
 
 const STATUS_ACTIONS: Record<UserStatus, { label: string; icon: string }> = {
-    [UserStatus.ACTIVE]: {label: "Activar", icon: "fa-circle-check"},
-    [UserStatus.INACTIVE]: {label: "Inactivar", icon: "fa-circle-pause"},
+    [UserStatus.ACTIVE]: {label: "Activar usuario", icon: "fa-circle-check"},
+    [UserStatus.INACTIVE]: {label: "Inactivar usuario", icon: "fa-circle-pause"},
     [UserStatus.CANCELLED]: {label: "Cancelar usuario", icon: "fa-ban"},
 };
+
+/** Lo que pasa al inactivar o cancelar, para confirmarlo antes. */
+const STATUS_CONFIRM: Partial<Record<UserStatus, string>> = {
+    [UserStatus.INACTIVE]: "No podrá entrar al panel ni a las aplicaciones hasta que lo actives de nuevo.",
+    [UserStatus.CANCELLED]: "El usuario queda cancelado y pierde el acceso al panel y a las aplicaciones.",
+};
+
+type TabKey = "info";
+const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
+    {key: "info", label: "Datos del usuario", icon: "fa-id-card"},
+];
 
 const userService = UserService.instance;
 const roleService = RoleService.instance;
@@ -39,9 +53,18 @@ export const UserDetailsPage = () => {
     const {id} = useParams<{id: string}>();
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<User | null>(null);
-    const [roleLoading, setRoleLoading] = useState(false);
     const [roleDetails, setRoleDetails] = useState<User["role"] | null>(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [confirmStatus, setConfirmStatus] = useState<UserStatus | null>(null);
+    const apps = useUserChannels(user?.id);
+    const [tab, setTab] = useState<TabKey>(() => {
+        const saved = id ? localStorage.getItem(`user-details-tab-${id}`) : null;
+        return TABS.some((item) => item.key === saved) ? saved as TabKey : "info";
+    });
+
+    useEffect(() => {
+        if (id) localStorage.setItem(`user-details-tab-${id}`, tab);
+    }, [id, tab]);
 
     const name = useMemo(() => {
         if (!user) return "Usuario";
@@ -70,12 +93,10 @@ export const UserDetailsPage = () => {
 
     useEffect(() => {
         if (!user?.role?.id) return;
-        setRoleLoading(true);
         roleService
             .getOne(user.role.id)
             .then((res) => setRoleDetails(res ?? null))
-            .catch(() => setRoleDetails(null))
-            .finally(() => setRoleLoading(false));
+            .catch(() => setRoleDetails(null));
     }, [user?.role?.id]);
 
     const changeStatus = (status: UserStatus) => {
@@ -85,6 +106,7 @@ export const UserDetailsPage = () => {
             .updateStatus(user.id, status)
             .then(() => {
                 toast.success("Estado actualizado.");
+                setConfirmStatus(null);
                 void refresh();
             })
             .catch((error) => toast.error(getApiErrorMessage(error) ?? "No se pudo actualizar el estado."))
@@ -98,7 +120,6 @@ export const UserDetailsPage = () => {
     const canChangeStatus = hasAuthority(AuthorityKey.USER_STATUS_UPDATE);
     const canViewRole = hasAuthority(AuthorityKey.ROLE_DETAILS_VIEW);
     const canEditUser = hasAuthority(AuthorityKey.USER_EDIT);
-    const permissionCount = roleDetails?.countAuthorities ?? user.role?.countAuthorities;
 
     return (
         <div className="space-y-4">
@@ -110,38 +131,68 @@ export const UserDetailsPage = () => {
                 badges={user.status === UserStatus.CANCELLED
                     ? <Badge>{UserStatusLabel.CANCELLED}</Badge>
                     : <StatusBadge active={user.status === UserStatus.ACTIVE}/>}
-                actions={<>
-                    {canChangeStatus && ([UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.CANCELLED] as const)
-                        .filter((status) => status !== user.status)
-                        .map((status) => (
-                            <button key={status} type="button" className="btn btn-sm" disabled={updatingStatus}
-                                    onClick={() => changeStatus(status)}>
-                                <i className={`fa ${STATUS_ACTIONS[status].icon}`}/>{STATUS_ACTIONS[status].label}
-                            </button>
-                        ))}
-                </>}
+                actions={<OptionsMenu label={`Opciones de ${name}`} items={[
+                    ...([UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.CANCELLED] as const).map((status) => ({
+                        ...STATUS_ACTIONS[status],
+                        visible: canChangeStatus && status !== user.status,
+                        onSelect: () => STATUS_CONFIRM[status] ? setConfirmStatus(status) : changeStatus(status),
+                    })),
+                    ...apps.channels.map((channel) => ({
+                        label: channel.granted ? `Quitar acceso a ${channel.name}` : `Habilitar ${channel.name}`,
+                        icon: channel.granted ? "fa-lock" : CHANNEL_ICON[channel.key] ?? "fa-unlock",
+                        visible: canEditUser && (channel.granted || channel.eligible),
+                        onSelect: () => apps.toggle(channel, !channel.granted),
+                    })),
+                ]}/>}
             />
 
-            <DetailSection title="Datos del usuario">
-                <InfoList items={[
-                    {label: "Correo", value: user.email},
-                    {label: "Documento", value: user.document},
-                    {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
-                ]}/>
-            </DetailSection>
+            <nav className="section-tabs w-fit">
+                {TABS.map((item) => (
+                    <button key={item.key} type="button" onClick={() => setTab(item.key)}
+                            className={clsx("section-tab", tab === item.key && "section-tab-active")}>
+                        <i className={`fa ${item.icon}`}/><span>{item.label}</span>
+                    </button>
+                ))}
+            </nav>
 
-            <DetailSection title="Rol"
-                           actions={canViewRole && user.role?.id && <Link to={`/users/roles/${user.role.id}`} className="btn btn-sm">
-                               <i className="fa fa-arrow-up-right-from-square"/>Ver rol
-                           </Link>}>
-                <InfoList items={[
-                    {label: "Rol asignado", value: user.role?.name},
-                    {label: "Permisos", value: roleLoading ? "Cargando..." : permissionCount},
-                    {label: "Descripción", value: roleLoading ? "Cargando..." : roleDetails?.description, full: true},
-                ]}/>
-            </DetailSection>
+            {tab === "info" && (
+                <DetailSection title="Datos del usuario">
+                    <InfoList items={[
+                        {label: "Correo", value: user.email},
+                        {label: "Documento", value: user.document},
+                        {label: "Género", value: user.info?.gender ? Genders[user.info.gender] : undefined},
+                        {
+                            label: "Rol", value: user.role?.name && (canViewRole && user.role.id
+                                ? <Link to={`/users/roles/${user.role.id}`} className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold"
+                                        style={{background: "var(--accent-soft)", color: "var(--accent)"}} title="Ver rol">
+                                    <i className="fa fa-user-shield"/>{user.role.name}<i className="fa fa-arrow-up-right-from-square text-[10px] opacity-70"/>
+                                </Link>
+                                : <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold"
+                                        style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
+                                    <i className="fa fa-user-shield"/>{user.role.name}
+                                </span>),
+                        },
+                        ...(roleDetails?.description ? [{label: "Sobre su rol", value: roleDetails.description, full: true}] : []),
+                    ]}/>
+                </DetailSection>
+            )}
 
-            {canEditUser && user.id && <UserChannelsSection userId={user.id}/>}
+            <CenterModal title={confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""} isOpen={confirmStatus !== null}
+                         onClose={() => !updatingStatus && setConfirmStatus(null)} className="max-w-md">
+                <div className="space-y-5">
+                    <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                        {confirmStatus && STATUS_CONFIRM[confirmStatus]} ¿Seguro que quieres continuar con {name}?
+                    </p>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" className="btn btn-sm" disabled={updatingStatus} onClick={() => setConfirmStatus(null)}>Volver</button>
+                        <button type="button" className="btn btn-sm btn-error" disabled={updatingStatus}
+                                onClick={() => confirmStatus && changeStatus(confirmStatus)}>
+                            <i className={updatingStatus ? "fa fa-spinner fa-spin" : `fa ${confirmStatus ? STATUS_ACTIONS[confirmStatus].icon : ""}`}/>
+                            {confirmStatus ? STATUS_ACTIONS[confirmStatus].label : ""}
+                        </button>
+                    </div>
+                </div>
+            </CenterModal>
         </div>
     );
 };
