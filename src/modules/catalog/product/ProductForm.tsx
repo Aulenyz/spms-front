@@ -249,12 +249,12 @@ export const ProductForm = ({product, onDone, onSaved}: {
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <span className="form-label">Desde</span>
-                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.startDate}
+                            <DatePicker clearable placeholder="Sin fecha" value={values.startDate}
                                         max={values.endDate || undefined} onChange={(value) => set("startDate", value)}/>
                         </div>
                         <div>
                             <span className="form-label">Hasta</span>
-                            <DatePicker compact clearable className="w-full" placeholder="Sin fecha" value={values.endDate}
+                            <DatePicker clearable placeholder="Sin fecha" value={values.endDate}
                                         min={values.startDate || undefined} onChange={(value) => set("endDate", value)}/>
                         </div>
                     </div>

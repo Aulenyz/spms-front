@@ -1,8 +1,9 @@
-import {forwardRef, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import ReactDatePicker from "react-datepicker";
 import {es} from "date-fns/locale";
 import clsx from "clsx";
 import "react-datepicker/dist/react-datepicker.css";
+import {calendarHeader, DateTrigger} from "./CalendarHeader.tsx";
 
 type DateRangePickerProps = {
     label?: string;
@@ -16,28 +17,6 @@ type DateRangePickerProps = {
     /** Se llama cuando se eligieron las dos fechas. */
     onChange: (start: Date, end: Date) => void;
 };
-
-type TriggerProps = {
-    value?: string;
-    onClick?: VoidFunction;
-    disabled?: boolean;
-    placeholder?: string;
-};
-
-const RangeTrigger = forwardRef<HTMLButtonElement, TriggerProps>(({value, onClick, disabled, placeholder}, ref) => (
-    <button ref={ref} type="button" onClick={onClick} disabled={disabled}
-            className="date-picker-trigger group flex h-11 w-full items-center gap-3 rounded-[15px] border px-3 text-left shadow-sm transition-all duration-200">
-        <span className="date-picker-trigger-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]">
-            <i className="fa fa-calendar-days"/>
-        </span>
-        <span className={clsx("min-w-0 flex-1 truncate text-xs font-semibold", !value && "opacity-55")}>
-            {value || placeholder || "Elegir desde y hasta"}
-        </span>
-        <i className="fa fa-chevron-down text-[10px] opacity-40 transition group-hover:opacity-75"/>
-    </button>
-));
-
-RangeTrigger.displayName = "RangeTrigger";
 
 /**
  * Rango de fechas en un solo calendario: el primer clic marca el inicio y el segundo el final.
@@ -75,7 +54,8 @@ export const DateRangePicker = ({label, start, end, min, max, placeholder, class
                 wrapperClassName="!block w-full"
                 calendarClassName="spms-date-calendar"
                 popperClassName="spms-date-popper"
-                customInput={<RangeTrigger disabled={disabled} placeholder={placeholder}/>}
+                renderCustomHeader={calendarHeader({min, max, months: 2})}
+                customInput={<DateTrigger disabled={disabled} placeholder={placeholder ?? "Elegir desde y hasta"}/>}
             />
         </div>
     );

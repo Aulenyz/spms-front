@@ -136,7 +136,6 @@ export const StudentForm = ({
                 <DatePicker
                     label="Fecha de nacimiento*"
                     value={birthDate ?? ""}
-                    icon="fa-calendar-days"
                     required
                     onChange={(value) => setValue("birthDate", value, {shouldDirty: true, shouldValidate: true})}
                 />

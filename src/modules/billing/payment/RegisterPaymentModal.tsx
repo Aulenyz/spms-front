@@ -718,7 +718,7 @@ export const RegisterPaymentModal = ({isOpen, onClose, student: initialStudent, 
                                                             </label>
                                                         ) : null}
                                                         <div><Label>Fecha</Label>
-                                                            <DatePicker compact className="w-full" value={date} max={today()} onChange={setDate}/>
+                                                            <DatePicker value={date} max={today()} onChange={setDate}/>
                                                         </div>
                                                     </div>
                                                     {overpaidByCard && (

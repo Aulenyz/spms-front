@@ -1,8 +1,8 @@
-import {forwardRef} from "react";
 import ReactDatePicker from "react-datepicker";
 import {es} from "date-fns/locale";
 import clsx from "clsx";
 import "react-datepicker/dist/react-datepicker.css";
+import {calendarHeader, DateTrigger} from "./CalendarHeader.tsx";
 
 type DatePickerProps = {
     label?: string;
@@ -13,22 +13,12 @@ type DatePickerProps = {
     placeholder?: string;
     /** Permite dejar la fecha vacía (aparece una ✕ para borrarla). */
     clearable?: boolean;
+    /** Ocupa todo el ancho disponible salvo que aquí se indique otro. */
     className?: string;
     helper?: string;
-    icon?: string;
     required?: boolean;
     disabled?: boolean;
-    compact?: boolean;
     onChange: (value: string) => void;
-};
-
-type TriggerProps = {
-    value?: string;
-    onClick?: VoidFunction;
-    disabled?: boolean;
-    icon: string;
-    compact?: boolean;
-    placeholder?: string;
 };
 
 const parseDate = (value?: string): Date | null => {
@@ -44,31 +34,10 @@ const serializeDate = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-const DateTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
-    ({value, onClick, disabled, icon, compact, placeholder}, ref) => (
-        <button
-            ref={ref}
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className={clsx(
-                "date-picker-trigger group flex w-full items-center gap-3 rounded-[15px] border px-3 text-left shadow-sm transition-all duration-200",
-                compact ? "h-11" : "h-12",
-            )}
-        >
-            <span className="date-picker-trigger-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]">
-                <i className={`fa ${icon}`}/>
-            </span>
-            <span className={clsx("min-w-0 flex-1 text-xs font-semibold", !value && "opacity-55")}>
-                {value || placeholder || "Seleccionar fecha"}
-            </span>
-            <i className="fa fa-chevron-down text-[10px] opacity-40 transition group-hover:opacity-75"/>
-        </button>
-    ),
-);
-
-DateTrigger.displayName = "DateTrigger";
-
+/**
+ * Selector de fecha del sistema. Es uno solo a propósito: mismo botón, mismo calendario y mismas listas
+ * de mes y año en todas las pantallas.
+ */
 export const DatePicker = ({
     label,
     value,
@@ -78,36 +47,39 @@ export const DatePicker = ({
     clearable,
     className,
     helper,
-    icon = "fa-calendar-days",
     required,
     disabled,
-    compact,
     onChange,
-}: DatePickerProps) => (
-    // Compacto mide 220 px salvo que quien lo usa indique otro ancho. Es un div y no un label: un label
-    // reenvía el clic de un día del calendario al botón y lo vuelve a abrir.
-    <div className={clsx("block", compact && !className && "w-[220px] shrink-0", className)}>
-        {label && <span className="mb-2 block text-sm font-bold" style={{color: "var(--text-primary)"}}>{label}</span>}
-        <ReactDatePicker
-            selected={parseDate(value)}
-            minDate={parseDate(min) ?? undefined}
-            maxDate={parseDate(max) ?? undefined}
-            onChange={(date: Date | null) => date ? onChange(serializeDate(date)) : clearable && onChange("")}
-            isClearable={clearable && Boolean(value)}
-            placeholderText={placeholder}
-            locale={es}
-            dateFormat="dd 'de' MMMM 'de' yyyy"
-            calendarStartDay={1}
-            disabled={disabled}
-            required={required}
-            showPopperArrow={false}
-            popperPlacement="bottom-end"
-            popperProps={{strategy: "fixed"}}
-            wrapperClassName={className ? "!block w-full" : undefined}
-            calendarClassName="spms-date-calendar"
-            popperClassName="spms-date-popper"
-            customInput={<DateTrigger icon={icon} compact={compact} disabled={disabled} placeholder={placeholder}/>}
-        />
-        {helper && <small className="mt-1.5 block px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>{helper}</small>}
-    </div>
-);
+}: DatePickerProps) => {
+    const minDate = parseDate(min);
+    const maxDate = parseDate(max);
+
+    return (
+        // Es un div y no un label: un label reenvía el clic de un día del calendario al botón y lo vuelve a abrir.
+        <div className={clsx("block", className)}>
+            {label && <span className="mb-1 block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>{label}</span>}
+            <ReactDatePicker
+                selected={parseDate(value)}
+                minDate={minDate ?? undefined}
+                maxDate={maxDate ?? undefined}
+                onChange={(date: Date | null) => date ? onChange(serializeDate(date)) : clearable && onChange("")}
+                isClearable={clearable && Boolean(value)}
+                placeholderText={placeholder}
+                locale={es}
+                dateFormat="dd 'de' MMMM 'de' yyyy"
+                calendarStartDay={1}
+                disabled={disabled}
+                required={required}
+                showPopperArrow={false}
+                popperPlacement="bottom-end"
+                popperProps={{strategy: "fixed"}}
+                wrapperClassName="!block w-full"
+                calendarClassName="spms-date-calendar"
+                popperClassName="spms-date-popper"
+                renderCustomHeader={calendarHeader({min: minDate, max: maxDate})}
+                customInput={<DateTrigger disabled={disabled} placeholder={placeholder}/>}
+            />
+            {helper && <small className="mt-1.5 block px-1 text-xs leading-5" style={{color: "var(--text-tertiary)"}}>{helper}</small>}
+        </div>
+    );
+};
