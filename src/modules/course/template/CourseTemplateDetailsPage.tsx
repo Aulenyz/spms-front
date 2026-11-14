@@ -277,9 +277,6 @@ const SubjectRow = ({subject, divisions, canEdit, onEdit, onRemove}: {
                                     <i className="fa fa-user"/>
                                 </span>}
                             <div className="min-w-0 text-sm">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
-                                    Sección {division}
-                                </p>
                                 <p className="truncate font-semibold" style={{color: section?.teacher ? "var(--text-primary)" : "var(--danger)"}}>
                                     {section?.teacher
                                         ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${section.teacher.id}`}
