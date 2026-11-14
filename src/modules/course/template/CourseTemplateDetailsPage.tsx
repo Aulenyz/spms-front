@@ -59,6 +59,8 @@ export const CourseTemplateDetailsPage = () => {
     const [subjectToRemove, setSubjectToRemove] = useState<TemplateSubject | null>(null);
     const [removing, setRemoving] = useState(false);
     const [confirmInactivate, setConfirmInactivate] = useState(false);
+    const [confirmGenerate, setConfirmGenerate] = useState(false);
+    const [generating, setGenerating] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
     const [tab, setTab] = useState<TabKey>(() => {
         const saved = id ? localStorage.getItem(`course-template-tab-${id}`) : null;
@@ -104,12 +106,18 @@ export const CourseTemplateDetailsPage = () => {
 
     const generateCourses = async () => {
         if (!id) return;
+        setGenerating(true);
         try {
-            await service.generateCourses(id);
+            const locked = (await service.generateCourses(id))?.lockedPeriods ?? [];
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
-            toast.success("Cursos del período actualizados con las materias y profesores del curso base.");
+            setConfirmGenerate(false);
+            toast.success("Cursos del año al día con las materias, profesores y períodos de evaluación del curso base.");
+            if (locked.length) toast.info(`${locked.join(", ")} ya ${locked.length === 1 ? "está cursado y no se cambió" : "están cursados y no se cambiaron"}. Solo se actualizan los períodos nuevos.`,
+                {autoClose: 9000});
         } catch (error) {
-            toast.error(message(error, "No se pudieron generar los cursos."));
+            toast.error(message(error, "No se pudieron generar o actualizar los cursos."));
+        } finally {
+            setGenerating(false);
         }
     };
 
@@ -144,7 +152,7 @@ export const CourseTemplateDetailsPage = () => {
             badges={<StatusBadge active={active}/>}
             actions={<OptionsMenu label={`Opciones de ${title}`} items={[
                 {label: "Editar curso base", icon: "fa-pen", visible: canEdit, onSelect: () => setShowEdit(true)},
-                {label: "Generar cursos del período", icon: "fa-layer-group", visible: canGenerate && active, onSelect: generateCourses},
+                {label: "Generar o actualizar cursos", icon: "fa-layer-group", visible: canGenerate && active, onSelect: () => setConfirmGenerate(true)},
                 {
                     label: active ? "Marcar como inactivo" : "Marcar como activo", icon: "fa-toggle-on", visible: canChangeStatus,
                     onSelect: () => active ? setConfirmInactivate(true) : toggleStatus(),
@@ -199,6 +207,29 @@ export const CourseTemplateDetailsPage = () => {
                                      }}/>
             )}
         </LeftModal>
+
+        <CenterModal title="Generar o actualizar cursos" isOpen={confirmGenerate}
+                     onClose={() => !generating && setConfirmGenerate(false)} className="max-w-md">
+            <div className="space-y-4">
+                <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                    Se crean las secciones de <strong style={{color: "var(--text-primary)"}}>{title}</strong> que falten en el año
+                    escolar y las que ya existen se ponen al día con este curso base: materias, profesores y períodos de evaluación.
+                </p>
+                <p className="flex gap-2 rounded-xl p-3 text-sm" style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                    <i className="fa fa-lock mt-0.5" style={{color: "var(--text-tertiary)"}}/>
+                    <span>Lo ya cursado no se toca: los períodos con calificaciones o que ya terminaron quedan como están, igual
+                        que las materias con notas. Solo se actualizan los períodos nuevos.</span>
+                </p>
+                <div className="flex justify-end gap-2">
+                    <button type="button" className="btn btn-sm" disabled={generating} onClick={() => setConfirmGenerate(false)}>
+                        Cancelar
+                    </button>
+                    <button type="button" className="btn btn-sm btn-primary" disabled={generating} onClick={() => void generateCourses()}>
+                        <i className={generating ? "fa fa-spinner fa-spin" : "fa fa-layer-group"}/>{generating ? "Actualizando..." : "Generar o actualizar"}
+                    </button>
+                </div>
+            </div>
+        </CenterModal>
 
         <CenterModal title="Inactivar curso base" isOpen={confirmInactivate}
                      onClose={() => !togglingStatus && setConfirmInactivate(false)} className="max-w-md">
@@ -269,30 +300,36 @@ const SubjectRow = ({subject, divisions, canEdit, onEdit, onRemove}: {
                 {divisions.map((division) => {
                     const section = subject.sections.find((item) => item.division === division);
                     return (
-                        <div key={division} className="flex items-start gap-3 rounded-xl p-3" style={{background: "var(--surface-muted)"}}>
-                            {section?.teacher
-                                ? <UserAvatar name={section.teacher.name} image={section.teacher.image}/>
-                                : <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs"
-                                        aria-hidden="true" style={{background: "var(--surface)", color: "var(--text-tertiary)"}}>
-                                    <i className="fa fa-user"/>
-                                </span>}
-                            <div className="min-w-0 text-sm">
-                                <p className="truncate font-semibold" style={{color: section?.teacher ? "var(--text-primary)" : "var(--danger)"}}>
-                                    {section?.teacher
-                                        ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${section.teacher.id}`}
-                                                         className="hover:text-[var(--accent)] hover:underline">{section.teacher.name}</PermittedLink>
-                                        : "Sin profesor"}
-                                </p>
-                                {section?.slots.length
-                                    ? describeSlots(section.slots).map((line) => <p key={line} className="text-xs" style={{color: "var(--text-secondary)"}}>{line}</p>)
-                                    : <p className="text-xs" style={{color: "var(--danger)"}}>Sin horario</p>}
+                        <div key={division} className="rounded-xl p-3" style={{background: "var(--surface-muted)"}}>
+                            <div className="mb-2.5 flex items-center justify-between gap-2">
+                                <span className="rounded-full px-2.5 py-1 text-xs font-bold"
+                                      style={{background: "var(--accent-soft)", color: "var(--accent)"}}>Sección {division}</span>
+                                {canEdit && (
+                                    <button type="button" className="row-action shrink-0" title={`Editar sección ${division}`}
+                                            aria-label={`Editar ${subject.name}, sección ${division}`} onClick={() => onEdit(division)}>
+                                        <i className="fa fa-pen"/>
+                                    </button>
+                                )}
                             </div>
-                            {canEdit && (
-                                <button type="button" className="row-action ms-auto shrink-0" title={`Editar sección ${division}`}
-                                        aria-label={`Editar ${subject.name}, sección ${division}`} onClick={() => onEdit(division)}>
-                                    <i className="fa fa-pen"/>
-                                </button>
-                            )}
+                            <div className="flex items-start gap-3">
+                                {section?.teacher
+                                    ? <UserAvatar name={section.teacher.name} image={section.teacher.image}/>
+                                    : <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs"
+                                            aria-hidden="true" style={{background: "var(--surface)", color: "var(--text-tertiary)"}}>
+                                        <i className="fa fa-user"/>
+                                    </span>}
+                                <div className="min-w-0 text-sm">
+                                    <p className="truncate font-semibold" style={{color: section?.teacher ? "var(--text-primary)" : "var(--danger)"}}>
+                                        {section?.teacher
+                                            ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${section.teacher.id}`}
+                                                             className="hover:text-[var(--accent)] hover:underline">{section.teacher.name}</PermittedLink>
+                                            : "Sin profesor"}
+                                    </p>
+                                    {section?.slots.length
+                                        ? describeSlots(section.slots).map((line) => <p key={line} className="text-xs" style={{color: "var(--text-secondary)"}}>{line}</p>)
+                                        : <p className="text-xs" style={{color: "var(--danger)"}}>Sin horario</p>}
+                                </div>
+                            </div>
                         </div>
                     );
                 })}

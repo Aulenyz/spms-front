@@ -19,25 +19,34 @@ const MONTH_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "se
 /** Días de cada mes; febrero admite el 29 (en años no bisiestos queda en el 28). */
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-/** Calendario escolar agosto–junio repartido en 3 o 4 períodos. */
-const PRESETS: Record<string, TemplatePeriod[]> = {
-    "3 períodos (ago–jun)": [
-        {name: "Período 1", startMonth: 8, startDay: 1, endMonth: 10, endDay: 31},
-        {name: "Período 2", startMonth: 11, startDay: 1, endMonth: 2, endDay: 28},
-        {name: "Período 3", startMonth: 3, startDay: 1, endMonth: 6, endDay: 30},
-    ],
-    "4 períodos (ago–jun)": [
-        {name: "Período 1", startMonth: 8, startDay: 1, endMonth: 10, endDay: 15},
-        {name: "Período 2", startMonth: 10, startDay: 16, endMonth: 12, endDay: 31},
-        {name: "Período 3", startMonth: 1, startDay: 1, endMonth: 4, endDay: 15},
-        {name: "Período 4", startMonth: 4, startDay: 16, endMonth: 6, endDay: 30},
-    ],
-};
+type Preset = { label: string; description: string; periods: TemplatePeriod[] };
 
-const PRESET_DESCRIPTIONS: Record<string, string> = {
-    "3 períodos (ago–jun)": "Año escolar en trimestres.",
-    "4 períodos (ago–jun)": "Año escolar en cuatro cortes de notas.",
-};
+const named = (name: string, ranges: Array<[number, number, number, number]>): TemplatePeriod[] =>
+    ranges.map(([startMonth, startDay, endMonth, endDay], index) => ({name: `${name} ${index + 1}`, startMonth, startDay, endMonth, endDay}));
+
+/** Formas de repartir el año escolar agosto–junio que se usan en colegios de República Dominicana. */
+const PRESETS: Preset[] = [
+    {
+        label: "4 períodos",
+        description: "Cuatro cortes de notas, como el calendario escolar del MINERD.",
+        periods: named("Período", [[8, 1, 10, 31], [11, 1, 1, 31], [2, 1, 3, 31], [4, 1, 6, 30]]),
+    },
+    {
+        label: "3 trimestres",
+        description: "Un boletín por trimestre; común en colegios privados.",
+        periods: named("Trimestre", [[8, 1, 11, 30], [12, 1, 2, 29], [3, 1, 6, 30]]),
+    },
+    {
+        label: "2 semestres",
+        description: "Dos cortes al año, con el cambio en enero.",
+        periods: named("Semestre", [[8, 1, 12, 31], [1, 1, 6, 30]]),
+    },
+    {
+        label: "5 bimestres",
+        description: "Un corte cada dos meses, para seguir de cerca las notas.",
+        periods: named("Bimestre", [[8, 1, 9, 30], [10, 1, 11, 30], [12, 1, 1, 31], [2, 1, 3, 31], [4, 1, 6, 30]]),
+    },
+];
 
 /** Cuánto antes del año escolar puede empezar P1 y aun así arrancar con el año (igual que en la API). */
 const FIRST_PERIOD_TOLERANCE_DAYS = 62;
@@ -85,16 +94,19 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const update = (index: number, change: Partial<TemplatePeriod>) =>
         setDraft((current) => current.map((period, position) => position === index ? {...period, ...change} : period));
 
-    const choosePreset = (label: string, periods: TemplatePeriod[]) => {
-        setDraft(periods.map((period) => ({...period})));
-        setChosen(label);
+    const choosePreset = (preset: Preset) => {
+        setDraft(fitToYear(preset.periods, schoolYear));
+        setChosen(preset.label);
         setSection("periods");
     };
 
     /** Quita un período; los siguientes se renumeran y, si conservan el nombre por defecto, también se renombran. */
     const remove = (index: number) => setDraft((current) => current
         .filter((_, position) => position !== index)
-        .map((period, position) => /^Período \d+$/.test(period.name.trim()) ? {...period, name: `Período ${position + 1}`} : period));
+        .map((period, position) => {
+            const kind = /^(Período|Trimestre|Semestre|Bimestre) \d+$/.exec(period.name.trim())?.[1];
+            return kind ? {...period, name: `${kind} ${position + 1}`} : period;
+        }));
 
     const addPeriod = () => setDraft((current) => {
         const last = current[current.length - 1];
@@ -177,7 +189,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                     </span>
                     <strong className="text-sm" style={{color: "var(--text-primary)"}}>Este curso base aún no tiene períodos</strong>
                     <p className="max-w-md text-sm" style={{color: "var(--text-secondary)"}}>
-                        Defínelos una vez (por ejemplo, P1 de agosto a octubre) y todos los cursos que se generen con este curso base los tendrán.
+                        Defínelos una vez (por ejemplo, P1 de agosto a octubre) y todos los cursos de este curso base los tendrán al generarlos o actualizarlos.
                     </p>
                     {canEdit && (
                         <button type="button" className="btn btn-sm btn-primary" onClick={openEditor}>
@@ -217,18 +229,25 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
                                     summary={chosen ?? "Opcional: arranca con un calendario ya armado"}
                                     onToggle={() => setSection(section === "presets" ? "periods" : "presets")}>
                         <div className="grid gap-2">
-                            {Object.entries(PRESETS).map(([label, periods]) => (
-                                <button key={label} type="button" onClick={() => choosePreset(label, periods)}
+                            {schoolYear && (
+                                <p className="text-xs" style={{color: "var(--text-secondary)"}}>
+                                    Las fechas se acomodan al año escolar{schoolYear.name ? ` ${schoolYear.name}` : ""}: del {formatDate(schoolYear.start)} al {formatDate(schoolYear.end)}.
+                                </p>
+                            )}
+                            {PRESETS.map((preset) => (
+                                <button key={preset.label} type="button" onClick={() => choosePreset(preset)}
                                         className="flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:shadow-sm"
-                                        style={{borderColor: chosen === label ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
+                                        style={{borderColor: chosen === preset.label ? "var(--accent)" : "var(--border-soft)", background: "var(--surface-muted)"}}>
                                     <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
                                           style={{background: "var(--accent-soft)", color: "var(--accent)"}}>
                                         <i className="fa fa-wand-magic-sparkles"/>
                                     </span>
                                     <span className="min-w-0">
-                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{label}</strong>
-                                        <span className="text-xs" style={{color: "var(--text-secondary)"}}>
-                                            {PRESET_DESCRIPTIONS[label]}
+                                        <strong className="block text-sm" style={{color: "var(--text-primary)"}}>{preset.label}</strong>
+                                        <span className="block text-xs" style={{color: "var(--text-secondary)"}}>{preset.description}</span>
+                                        <span className="block text-xs" style={{color: "var(--text-tertiary)"}}>
+                                            {fitToYear(preset.periods, schoolYear).map((period, index) =>
+                                                `P${index + 1} ${formatDay(period.startDay, period.startMonth)} – ${formatDay(period.endDay, period.endMonth)}`).join(" · ")}
                                         </span>
                                     </span>
                                 </button>
@@ -519,6 +538,43 @@ const placeInYear = (periods: TemplatePeriod[], year: SchoolYear) => {
         cursor = addDays(end, 1);
         return {start, end};
     });
+};
+
+const daysBetween = (start: Date, end: Date) => Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+
+/**
+ * Acomoda un ejemplo al año escolar activo para que siempre quepa: del primer al último día del año. Si el año
+ * coincide con el calendario del ejemplo se respetan sus cortes; si no (un año que empezó tarde, por ejemplo),
+ * el año se reparte en las mismas proporciones.
+ */
+const fitToYear = (periods: TemplatePeriod[], year?: SchoolYear): TemplatePeriod[] => {
+    if (!year) return periods.map((period) => ({...period}));
+    const last = periods.length - 1;
+    let placed = placeInYear(periods, year);
+    placed[0] = {...placed[0], start: year.start};
+    placed[last] = {...placed[last], end: year.end};
+    const keepsItsCuts = placed.every((range, index) =>
+        range.end <= year.end && daysBetween(range.start, range.end) >= lengthOf(periods[index]) / 2);
+    if (!keepsItsCuts) {
+        const total = daysBetween(year.start, year.end);
+        const weights = periods.map(lengthOf);
+        const sum = weights.reduce((all, weight) => all + weight, 0);
+        let cursor = year.start;
+        let covered = 0;
+        placed = periods.map((_, index) => {
+            covered += weights[index];
+            const start = cursor;
+            const cut = index === last ? year.end : addDays(year.start, Math.round(total * covered / sum) - 1);
+            const end = cut < start ? start : cut;
+            cursor = addDays(end, 1);
+            return {start, end};
+        });
+    }
+    return periods.map((period, index) => ({
+        name: period.name,
+        startMonth: placed[index].start.getMonth() + 1, startDay: placed[index].start.getDate(),
+        endMonth: placed[index].end.getMonth() + 1, endDay: placed[index].end.getDate(),
+    }));
 };
 
 /** Bloque plegable del editor: solo uno queda abierto, el otro muestra un resumen para volver a él. */
