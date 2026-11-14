@@ -17,6 +17,16 @@ const service = CourseTemplateService.instance;
 type Row = {days: DayOfWeek[]; startsAt: string; endsAt: string};
 type SectionPlan = {teacher: TeacherOption | null; rows: Row[]};
 
+/**
+ * El selector de hora en formato de 12 horas deja "12:00 a. m." al escribir 12:00 tras una hora de la mañana.
+ * Un fin antes del inicio no existe, así que se lee como p. m. cuando eso lo arregla.
+ */
+const endAfterStart = (row: Row): Row => {
+    if (!row.startsAt || !row.endsAt || row.endsAt > row.startsAt || row.endsAt >= "12:00") return row;
+    const [hours, minutes] = row.endsAt.split(":");
+    const afternoon = `${Number(hours) + 12}:${minutes}`;
+    return afternoon > row.startsAt ? {...row, endsAt: afternoon} : row;
+};
 const emptyRow = (): Row => ({days: [], startsAt: "08:00", endsAt: "09:00"});
 
 /** Los días con la misma hora se editan juntos: Lun y Mié de 08:00 a 09:00 es una sola fila. */
@@ -90,11 +100,12 @@ export const TemplateSubjectForm = ({templateId, divisions, initial, initialDivi
             : {...row, days: row.days.includes(day) ? row.days.filter((item) => item !== day) : [...row.days, day]}),
     }));
 
+    const rows = plan.rows.map(endAfterStart);
     const problems = [
         !division && "Elige la sección.",
         !plan.teacher && "Elige el profesor.",
         plan.rows.some((row) => row.days.length === 0) && "Marca al menos un día en cada horario.",
-        plan.rows.some((row) => !row.startsAt || !row.endsAt || row.startsAt >= row.endsAt) && "La hora de inicio debe ser antes de la de fin.",
+        rows.some((row) => !row.startsAt || !row.endsAt || row.startsAt >= row.endsAt) && "La hora de inicio debe ser antes de la de fin.",
     ].filter(Boolean) as string[];
 
     const submit = async (event: FormEvent) => {
@@ -106,7 +117,7 @@ export const TemplateSubjectForm = ({templateId, divisions, initial, initialDivi
             sections: [{
                 division,
                 teacherId: plan.teacher!.id,
-                slots: plan.rows.flatMap((row) => row.days.map((dayOfWeek) => ({dayOfWeek, startsAt: row.startsAt, endsAt: row.endsAt}))),
+                slots: rows.flatMap((row) => row.days.map((dayOfWeek) => ({dayOfWeek, startsAt: row.startsAt, endsAt: row.endsAt}))),
             }],
         };
         setSaving(true);
@@ -194,7 +205,8 @@ export const TemplateSubjectForm = ({templateId, divisions, initial, initialDivi
                                         <span className="text-xs" style={{color: "var(--text-tertiary)"}}>a</span>
                                         <span className="input input-sm min-w-0 flex-1">
                                             <input type="time" aria-label="Hasta" value={row.endsAt} step={300}
-                                                   onChange={(event) => updateRow(index, {endsAt: event.target.value})}/>
+                                                   onChange={(event) => updateRow(index, {endsAt: event.target.value})}
+                                                   onBlur={() => updateRow(index, {endsAt: endAfterStart(row).endsAt})}/>
                                         </span>
                                         <button type="button" className="row-action row-action-danger" title="Quitar horario"
                                                 aria-label="Quitar horario" disabled={plan.rows.length === 1}

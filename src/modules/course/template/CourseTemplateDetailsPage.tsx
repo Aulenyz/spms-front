@@ -15,6 +15,8 @@ import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DetailHeader} from "../../../components/ui/detail/DetailHeader.tsx";
 import {StatusBadge} from "../../../components/ui/detail/StatusBadge.tsx";
 import {OptionsMenu} from "../../../components/ui/OptionsMenu.tsx";
+import {UserAvatar} from "../../../components/ui/UserAvatar.tsx";
+import {PermittedLink} from "../../../components/auth/PermittedLink.tsx";
 import {DetailSection} from "../../../components/ui/detail/DetailSection.tsx";
 import {TemplateEvaluationPeriods} from "./TemplateEvaluationPeriods.tsx";
 import {useAuthContext} from "../../../contexts/AuthContext.tsx";
@@ -268,11 +270,21 @@ const SubjectRow = ({subject, divisions, canEdit, onEdit, onRemove}: {
                     const section = subject.sections.find((item) => item.division === division);
                     return (
                         <div key={division} className="flex items-start gap-3 rounded-xl p-3" style={{background: "var(--surface-muted)"}}>
-                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
-                                  style={{background: "var(--surface)", color: "var(--accent)"}}>{division}</span>
+                            {section?.teacher
+                                ? <UserAvatar name={section.teacher.name} image={section.teacher.image}/>
+                                : <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs"
+                                        aria-hidden="true" style={{background: "var(--surface)", color: "var(--text-tertiary)"}}>
+                                    <i className="fa fa-user"/>
+                                </span>}
                             <div className="min-w-0 text-sm">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{color: "var(--text-tertiary)"}}>
+                                    Sección {division}
+                                </p>
                                 <p className="truncate font-semibold" style={{color: section?.teacher ? "var(--text-primary)" : "var(--danger)"}}>
-                                    {section?.teacher?.name ?? "Sin profesor"}
+                                    {section?.teacher
+                                        ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${section.teacher.id}`}
+                                                         className="hover:text-[var(--accent)] hover:underline">{section.teacher.name}</PermittedLink>
+                                        : "Sin profesor"}
                                 </p>
                                 {section?.slots.length
                                     ? describeSlots(section.slots).map((line) => <p key={line} className="text-xs" style={{color: "var(--text-secondary)"}}>{line}</p>)
