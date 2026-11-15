@@ -18,7 +18,7 @@ export const DetailSection = ({title, description, actions, children, flush, cla
                 <h2 className="detail-section-title">{title}</h2>
                 {description && <p className="detail-section-description">{description}</p>}
             </div>
-            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+            {actions && <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">{actions}</div>}
         </header>
         <div className={flush ? undefined : "p-4 sm:p-5"}>{children}</div>
     </section>
