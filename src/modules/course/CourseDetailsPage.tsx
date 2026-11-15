@@ -161,7 +161,7 @@ export const CourseDetailsPage = () => {
             )}
 
             {tab === "schedule" && (
-                <DetailSection title="Horario" description="Clases de la semana según el curso base de esta sección." flush>
+                <DetailSection title="Horario" description="Clases de la semana de esta sección, tomadas del curso base al generar o actualizar el curso." flush>
                     {assignments.some((assignment) => assignment.slots?.length) ? (
                         <CourseWeekSchedule assignments={assignments}/>
                     ) : (
