@@ -1,11 +1,12 @@
-const PAGE_WIDTH = 842; // A4 apaisado, en puntos
-const PAGE_HEIGHT = 595;
-const MARGIN = 20;
+const PAGE_WIDTH = 792; // hoja carta (8.5 × 11 pulgadas) apaisada, en puntos
+const PAGE_HEIGHT = 612;
+const MARGIN = 0; // la imagen ya trae sus márgenes
 
 const encoder = new TextEncoder();
 
 /**
- * PDF de una sola página A4 apaisada con una imagen JPEG centrada y escalada para que quepa entera.
+ * PDF de una sola página carta apaisada con una imagen JPEG centrada y escalada para que quepa entera (si tiene la
+ * proporción de la hoja, la llena).
  * Se arma a mano (sin librerías): catálogo, página, contenido, imagen y tabla de referencias.
  *
  * @param jpeg bytes de la imagen JPEG

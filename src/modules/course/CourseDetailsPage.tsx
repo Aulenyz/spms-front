@@ -24,6 +24,7 @@ import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
 import {CourseEvaluationPeriods} from "./CourseEvaluationPeriods.tsx";
 import {describeSlots} from "./template/schedule.ts";
+import {ExportMenu} from "../../components/ui/ExportMenu.tsx";
 import {downloadScheduleImage, downloadSchedulePdf, fileNameOf} from "./scheduleExport.ts";
 
 type TabKey = "subjects" | "schedule" | "evaluations" | "students";
@@ -49,7 +50,6 @@ export const CourseDetailsPage = () => {
     const [studentPagination, setStudentPagination] = useState<Pagination>(Pagination.ofSize(10));
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [assignmentToEdit, setAssignmentToEdit] = useState<CourseAcademicAssignment | null>(null);
-    const [exporting, setExporting] = useState<"image" | "pdf" | null>(null);
     const [tab, setTab] = useState<TabKey>(() => {
         const saved = id ? localStorage.getItem(`course-details-tab-${id}`) : null;
         return TABS.some((item) => item.key === saved) ? saved as TabKey : "subjects";
@@ -93,14 +93,11 @@ export const CourseDetailsPage = () => {
             subtitle: [course.type ? GradeTypeLabel[course.type] : null, course.specialization?.name].filter(Boolean).join(" · "),
             assignments,
         };
-        setExporting(kind);
         try {
             await (kind === "pdf" ? downloadSchedulePdf : downloadScheduleImage)(input, `horario-${fileNameOf(title)}`);
         } catch (error) {
             const text = typeof error === "object" && error !== null ? (error as { message?: unknown }).message : undefined;
             toast.error(typeof text === "string" && text.trim() ? text : "No se pudo exportar el horario.");
-        } finally {
-            setExporting(null);
         }
     };
 
@@ -205,16 +202,12 @@ export const CourseDetailsPage = () => {
 
             {tab === "schedule" && (
                 <DetailSection title="Horario" description="Clases de la semana de esta sección, tomadas del curso base al generar o actualizar el curso." flush
-                               actions={hasSchedule && <>
-                                   <button type="button" className="btn btn-sm" disabled={exporting !== null} onClick={() => void exportSchedule("image")}
-                                           title="Descarga el horario como imagen PNG apaisada">
-                                       <i className={exporting === "image" ? "fa fa-spinner fa-spin" : "fa fa-image"}/>Imagen
-                                   </button>
-                                   <button type="button" className="btn btn-sm" disabled={exporting !== null} onClick={() => void exportSchedule("pdf")}
-                                           title="Descarga el horario como PDF apaisado, todo en una hoja">
-                                       <i className={exporting === "pdf" ? "fa fa-spinner fa-spin" : "fa fa-file-pdf"}/>PDF
-                                   </button>
-                               </>}>
+                               actions={hasSchedule && <ExportMenu options={[
+                                   {label: "Imagen (PNG)", icon: "fa-image", description: "Imagen del tamaño de una hoja carta apaisada",
+                                       onSelect: () => exportSchedule("image")},
+                                   {label: "PDF", icon: "fa-file-pdf", description: "Una hoja carta apaisada, todo el horario",
+                                       onSelect: () => exportSchedule("pdf")},
+                               ]}/>}>
                     {hasSchedule ? (
                         <CourseWeekSchedule assignments={assignments}/>
                     ) : (
