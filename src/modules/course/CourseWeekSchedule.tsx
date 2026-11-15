@@ -1,4 +1,6 @@
 import {CourseAcademicAssignment} from "../../domain/model/course/Course.ts";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
+import {PermittedLink} from "../../components/auth/PermittedLink.tsx";
 import {DAYS, DayLabel, hhmm, sortSlots} from "./template/schedule.ts";
 
 /** Semana del curso: una columna por día con sus clases en orden (materia, hora y profesor). */
@@ -25,7 +27,12 @@ export const CourseWeekSchedule = ({assignments}: {assignments: CourseAcademicAs
                                             {hhmm(item.startsAt)}–{hhmm(item.endsAt)}
                                         </p>
                                         <p className="truncate text-sm font-bold" style={{color: "var(--text-primary)"}}>{item.assignment.subject?.name}</p>
-                                        <p className="truncate text-xs" style={{color: "var(--text-secondary)"}}>{item.assignment.teacher?.name ?? "Sin profesor"}</p>
+                                        <p className="truncate text-xs" style={{color: "var(--text-secondary)"}}>
+                                            {item.assignment.teacher
+                                                ? <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${item.assignment.teacher.id}`}
+                                                                 className="hover:text-[var(--accent)] hover:underline">{item.assignment.teacher.name}</PermittedLink>
+                                                : "Sin profesor"}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
