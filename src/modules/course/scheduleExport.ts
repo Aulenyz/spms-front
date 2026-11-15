@@ -1,6 +1,7 @@
 import {CourseAcademicAssignment} from "../../domain/model/course/Course.ts";
 import {imagePdf} from "../../utils/imagePdf.ts";
-import {DAYS, DayLabel, DayOfWeek, hhmm} from "./template/schedule.ts";
+import {buildScheduleGrid, ScheduleBlock} from "./scheduleGrid.ts";
+import {DayLabel} from "./template/schedule.ts";
 
 export type ScheduleExportInput = {
     title: string;
@@ -25,16 +26,7 @@ const MAX_ROW = 190; // con pocas clases las filas no se estiran sin fin
 const MAX_ZOOM = 1.4; // cuánto se agrandan los textos cuando sobra hoja
 const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
-/** Un color por materia, legible también impreso en blanco y negro. */
-const PALETTE = [
-    {fill: "#e0e7ff", edge: "#4f46e5"}, {fill: "#d1fae5", edge: "#059669"}, {fill: "#fef3c7", edge: "#d97706"},
-    {fill: "#fee2e2", edge: "#dc2626"}, {fill: "#cffafe", edge: "#0891b2"}, {fill: "#fae8ff", edge: "#a21caf"},
-    {fill: "#ffedd5", edge: "#ea580c"}, {fill: "#e2e8f0", edge: "#475569"},
-];
-
-type Block = { subject: string; teacher: string; color: typeof PALETTE[number] };
-type Row = { time: string; cells: Map<DayOfWeek, Block[]> };
-type Sized = { lines: Map<Block, string[]>; heights: number[]; unit: number };
+type Sized = { lines: Map<ScheduleBlock, string[]>; heights: number[]; unit: number };
 
 /** Parte el texto en líneas que quepan en el ancho; la última termina en "…" si no alcanza. */
 const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] => {
@@ -80,38 +72,22 @@ const roundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width:
  * si el curso no tiene clases.
  */
 export const drawSchedule = ({title, subtitle, assignments}: ScheduleExportInput): HTMLCanvasElement | null => {
-    const slots = assignments.flatMap((assignment) => (assignment.slots ?? []).map((slot) => ({slot, assignment})));
-    if (slots.length === 0) return null;
+    const grid = buildScheduleGrid(assignments);
+    if (!grid) return null;
 
     const measure = document.createElement("canvas").getContext("2d");
     if (!measure) return null;
 
-    const subjects = [...new Set(assignments.map((assignment) => assignment.subject?.name ?? ""))].sort((a, b) => a.localeCompare(b, "es"));
-    const days = DAYS.filter((day, index) => index < 5 || slots.some(({slot}) => slot.dayOfWeek === day));
+    const {days, rows} = grid;
     const dayWidth = (WIDTH - 2 * MARGIN - TIME_COLUMN) / days.length;
-
-    const grouped = new Map<string, Row>();
-    slots.forEach(({slot, assignment}) => {
-        const time = `${hhmm(slot.startsAt)}–${hhmm(slot.endsAt)}`;
-        const row = grouped.get(time) ?? {time, cells: new Map<DayOfWeek, Block[]>()};
-        grouped.set(time, row);
-        const name = assignment.subject?.name ?? "Materia";
-        const block: Block = {
-            subject: name,
-            teacher: assignment.teacher?.name ?? "Sin profesor",
-            color: PALETTE[Math.max(subjects.indexOf(name), 0) % PALETTE.length],
-        };
-        row.cells.set(slot.dayOfWeek, [...(row.cells.get(slot.dayOfWeek) ?? []), block]);
-    });
-    const rows = [...grouped.values()].sort((a, b) => a.time.localeCompare(b.time));
     const allBlocks = rows.flatMap((row) => [...row.cells.values()].flat());
 
     /** Mide cada casilla con los textos agrandados `unit` veces: sus líneas y la altura natural de cada fila. */
     const size = (unit: number): Sized => {
-        const lines = new Map<Block, string[]>();
+        const lines = new Map<ScheduleBlock, string[]>();
         measure.font = `700 ${17 * unit}px ${FONT}`;
         allBlocks.forEach((block) => lines.set(block, wrap(measure, block.subject, dayWidth - 2 * 10 * unit - 14, 2)));
-        const blockHeight = (block: Block) => 20 * unit + lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
+        const blockHeight = (block: ScheduleBlock) => 20 * unit + lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
         const heights = rows.map((row) => Math.max(MIN_ROW * unit,
             ...[...row.cells.values()].map((blocks) => blocks.reduce((sum, block) => sum + blockHeight(block) + 6, 6))));
         return {lines, heights, unit};
@@ -190,7 +166,7 @@ export const drawSchedule = ({title, subtitle, assignments}: ScheduleExportInput
         days.forEach((day, index) => {
             const blocks = row.cells.get(day) ?? [];
             const x = MARGIN + TIME_COLUMN + dayWidth * index;
-            const natural = (block: Block) => 20 * unit + sized.lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
+            const natural = (block: ScheduleBlock) => 20 * unit + sized.lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
             let blockTop = y + 6;
             blocks.forEach((block) => {
                 const subjectLines = sized.lines.get(block)!;
