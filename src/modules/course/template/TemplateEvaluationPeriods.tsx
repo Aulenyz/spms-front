@@ -11,6 +11,7 @@ import {useCurrentPeriod} from "../../../hooks/queries/useCurrentPeriod.ts";
 import {LoadingContent} from "../../../components/io/output/LoadingContent.tsx";
 import {DateRangePicker} from "../../../components/io/DateRangePicker.tsx";
 import {LeftModal} from "../../../components/shared/LeftModal.tsx";
+import {CenterModal} from "../../../components/shared/CenterModal.tsx";
 
 const service = CourseTemplateService.instance;
 
@@ -84,6 +85,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const yearEnd = parseDate(currentPeriod?.end);
     const schoolYear: SchoolYear | undefined = yearStart && yearEnd ? {name: currentPeriod?.name, start: yearStart, end: yearEnd} : undefined;
     const [cloning, setCloning] = useState(false);
+    const [confirmApply, setConfirmApply] = useState(false);
     const [section, setSection] = useState<"presets" | "periods">("presets");
     const [chosen, setChosen] = useState<string | null>(null);
 
@@ -135,11 +137,13 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
     const apply = async () => {
         setBusy(true);
         try {
-            const sections = await service.applyEvaluationPeriods(templateId);
+            const result = await service.applyEvaluationPeriods(templateId);
+            const locked = Array.isArray(result) ? [] : result?.lockedPeriods ?? [];
             void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
-            toast.success(sections.length
-                ? `Períodos aplicados a ${sections.join(", ")}.`
-                : "Los cursos de este año ya tienen sus períodos.");
+            setConfirmApply(false);
+            toast.success("Los cursos de este año ya tienen estos períodos de evaluación.");
+            if (locked.length) toast.info(`${locked.join(", ")} ya ${locked.length === 1 ? "está cursado y no se cambió" : "están cursados y no se cambiaron"}. Solo se actualizan los períodos nuevos.`,
+                {autoClose: 9000});
         } catch (error) {
             toast.error(message(error, "No se pudieron aplicar los períodos."));
         } finally {
@@ -158,17 +162,17 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
         {saved.length > 0 && (
             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setCloning(true)}
                     title="Copia estos períodos a otros cursos base">
-                <i className="fa fa-clone"/>Clonar a otros cursos base
+                <i className="fa fa-clone"/>Clonar
             </button>
         )}
         {saved.length > 0 && (
-            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void apply()}
-                    title="Da estos períodos a los cursos del año actual que todavía no tienen">
-                <i className="fa fa-share-from-square"/>Aplicar a los cursos del año
+            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirmApply(true)}
+                    title="Lleva estos períodos a los cursos de este año escolar">
+                <i className="fa fa-share-from-square"/>Aplicar cambios
             </button>
         )}
         <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={openEditor}>
-            <i className={saved.length ? "fa fa-pen" : "fa fa-plus"}/>{saved.length ? "Editar períodos" : "Definir períodos"}
+            <i className={saved.length ? "fa fa-pen" : "fa fa-plus"}/>{saved.length ? "Editar" : "Definir"}
         </button>
     </>;
 
@@ -341,6 +345,27 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
             </div>
         </LeftModal>
 
+        <CenterModal title="Aplicar cambios" isOpen={canEdit && confirmApply}
+                     onClose={() => !busy && setConfirmApply(false)} className="max-w-md">
+            <div className="space-y-4">
+                <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                    Los cursos de este año escolar que salieron de este curso base quedan con los mismos períodos de evaluación
+                    que ves aquí: se crean los que falten, se actualizan los nombres y las fechas, y se quitan los que ya no están.
+                </p>
+                <p className="flex gap-2 rounded-xl p-3 text-sm" style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                    <i className="fa fa-lock mt-0.5" style={{color: "var(--text-tertiary)"}}/>
+                    <span>Lo ya cursado no se toca: los períodos con calificaciones o que ya terminaron quedan como están.
+                        En los demás se pierden los ajustes de fechas hechos a mano dentro de un curso.</span>
+                </p>
+                <div className="flex justify-end gap-2">
+                    <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirmApply(false)}>Cancelar</button>
+                    <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void apply()}>
+                        <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-share-from-square"}/>{busy ? "Aplicando..." : "Sí, aplicar"}
+                    </button>
+                </div>
+            </div>
+        </CenterModal>
+
         <LeftModal title="Clonar períodos" isOpen={canEdit && cloning} onClose={() => setCloning(false)} className="h-full w-[min(480px,100vw)]">
             {cloning && <ClonePeriods templateId={templateId} periods={saved} onDone={() => setCloning(false)}/>}
         </LeftModal>
@@ -365,6 +390,7 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
     const targets = targetsQuery.data ?? [];
     const [selected, setSelected] = useState<number[]>([]);
     const [busy, setBusy] = useState(false);
+    const [confirming, setConfirming] = useState(false);
     const replacing = targets.filter((target) => selected.includes(target.id) && target.periods > 0).length;
 
     const [term, setTerm] = useState("");
@@ -389,6 +415,7 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
         } catch (error) {
             toast.error(message(error, "No se pudieron clonar los períodos."));
         } finally {
+            setConfirming(false);
             setBusy(false);
         }
     };
@@ -480,11 +507,31 @@ const ClonePeriods = ({templateId, periods, onDone}: { templateId: string; perio
             </div>
             <footer className="flex justify-end gap-2 border-t px-4 pt-4" style={{borderColor: "var(--border-soft)"}}>
                 <button type="button" className="btn btn-sm" disabled={busy} onClick={onDone}>Cancelar</button>
-                <button type="button" className="btn btn-sm btn-primary" disabled={busy || selected.length === 0} onClick={() => void clone()}>
-                    <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-clone"}/>
-                    {busy ? "Clonando..." : selected.length ? `Clonar a ${selected.length}` : "Clonar"}
+                <button type="button" className="btn btn-sm btn-primary" disabled={busy || selected.length === 0} onClick={() => setConfirming(true)}>
+                    <i className="fa fa-clone"/>
+                    {selected.length ? `Clonar a ${selected.length}` : "Clonar"}
                 </button>
             </footer>
+
+            <CenterModal title="Clonar períodos" isOpen={confirming} onClose={() => !busy && setConfirming(false)} className="max-w-md">
+                <div className="space-y-4">
+                    <p className="text-sm" style={{color: "var(--text-secondary)"}}>
+                        {periods.length === 1 ? "Este período se copia" : `Estos ${periods.length} períodos se copian`} a{" "}
+                        <strong style={{color: "var(--text-primary)"}}>{chosen.map((target) => target.name).join(", ")}</strong>.
+                        {replacing > 0 && ` ${replacing === 1 ? "El que ya tenía períodos los pierde y queda" : `Los ${replacing} que ya tenían períodos los pierden y quedan`} con estos.`}
+                    </p>
+                    <p className="flex gap-2 rounded-xl p-3 text-sm" style={{background: "var(--surface-muted)", color: "var(--text-secondary)"}}>
+                        <i className="fa fa-circle-info mt-0.5" style={{color: "var(--text-tertiary)"}}/>
+                        <span>Solo cambian los cursos base. Sus cursos de este año siguen igual hasta que uses "Aplicar cambios" en cada uno.</span>
+                    </p>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirming(false)}>Cancelar</button>
+                        <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void clone()}>
+                            <i className={busy ? "fa fa-spinner fa-spin" : "fa fa-clone"}/>{busy ? "Clonando..." : "Sí, clonar"}
+                        </button>
+                    </div>
+                </div>
+            </CenterModal>
         </div>
     );
 };
