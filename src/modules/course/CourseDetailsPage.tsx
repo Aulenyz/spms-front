@@ -18,6 +18,8 @@ import {DetailHeader} from "../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {Badge, StatusBadge} from "../../components/ui/detail/StatusBadge.tsx";
 import {CourseAssignmentModal} from "./CourseAssignmentModal.tsx";
+import {PermittedLink} from "../../components/auth/PermittedLink.tsx";
+import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
 import {CourseEvaluationPeriods} from "./CourseEvaluationPeriods.tsx";
 import {describeSlots} from "./template/schedule.ts";
@@ -141,7 +143,11 @@ export const CourseDetailsPage = () => {
                                     </td>
                                     <td>
                                         {assignment.teacher
-                                            ? <>{assignment.teacher.name}<span className="block text-xs text-[var(--text-tertiary)]">{assignment.teacher.email}</span></>
+                                            ? <>
+                                                <PermittedLink authority={AuthorityKey.USER_DETAILS_VIEW} to={`/users/${assignment.teacher.id}`}
+                                                               className="hover:text-[var(--accent)] hover:underline">{assignment.teacher.name}</PermittedLink>
+                                                <span className="block text-xs text-[var(--text-tertiary)]">{assignment.teacher.email}</span>
+                                            </>
                                             : <span className="text-[var(--warning)]">Sin profesor</span>}
                                     </td>
                                     <td className="text-sm">
