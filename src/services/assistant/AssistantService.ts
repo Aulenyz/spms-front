@@ -53,7 +53,7 @@ export class AssistantService extends BaseService<ChatReply> {
         return this.post<{note: string}>("/payment-note", request);
     }
 
-    describe(kind: "specialization" | "subject", name: string, detail?: string): Promise<{description: string; code?: string | null}> {
+    describe(kind: "specialization" | "subject" | "role", name: string, detail?: string): Promise<{description: string; code?: string | null}> {
         return this.post<{description: string; code?: string | null}>("/describe", {kind, name, detail});
     }
 
