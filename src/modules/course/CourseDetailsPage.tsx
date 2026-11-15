@@ -173,7 +173,7 @@ export const CourseDetailsPage = () => {
                 </DetailSection>
             )}
 
-            {tab === "evaluations" && id && <CourseEvaluationPeriods courseId={id} hasSections={Boolean(course.templateId)}/>}
+            {tab === "evaluations" && id && <CourseEvaluationPeriods courseId={id} templateId={course.templateId}/>}
 
             {tab === "students" && (
                 <DetailSection title="Estudiantes inscritos" flush

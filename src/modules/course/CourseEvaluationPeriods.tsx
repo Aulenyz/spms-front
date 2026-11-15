@@ -1,30 +1,23 @@
 import {useEffect, useState} from "react";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "react-toastify";
-import clsx from "clsx";
+import {Link} from "react-router-dom";
 
 import {queryKeys} from "../../app/query/queryKeys.ts";
 import {
     EvaluationPeriod,
     EvaluationPeriodRequest,
-    EvaluationPeriodState,
-    EvaluationPeriodStateLabel,
 } from "../../domain/model/course/EvaluationPeriod.ts";
 import {CourseService} from "../../services/course/CourseService.ts";
 import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {LoadingContent} from "../../components/io/output/LoadingContent.tsx";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
 import {DatePicker} from "../../components/io/DatePicker.tsx";
+import {PeriodList} from "../../components/ui/detail/PeriodList.tsx";
 
 const courseService = CourseService.instance;
 
 const GENERATE_OPTIONS = [2, 3, 4, 6];
-
-const STATE_STYLE: Record<EvaluationPeriodState, { color: string; background: string }> = {
-    UPCOMING: {color: "var(--text-tertiary)", background: "var(--surface-soft)"},
-    OPEN: {color: "var(--accent)", background: "var(--accent-soft)"},
-    ENDED: {color: "var(--success)", background: "var(--success-soft)"},
-};
 
 const message = (error: unknown, fallback: string): string => {
     const text = typeof error === "object" && error !== null ? (error as { message?: unknown }).message : undefined;
@@ -36,6 +29,11 @@ const formatDate = (value: string): string => {
     return new Date(year, month - 1, day).toLocaleDateString("es", {day: "numeric", month: "short", year: "numeric"});
 };
 
+const toDate = (value: string): Date => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
 const daysBetween = (from: string, to: string): number =>
     Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1);
 
@@ -43,7 +41,9 @@ const daysBetween = (from: string, to: string): number =>
  * Períodos de evaluación del curso (P1, P2...): los profesores califican cada materia por período y publican
  * desde la app. Son sucesivos y van dentro del año escolar.
  */
-export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: string; hasSections: boolean }) => {
+export const CourseEvaluationPeriods = ({courseId, templateId}: { courseId: string; templateId?: number | null }) => {
+    /** Un curso generado desde un curso base no define sus períodos: vienen de allá. */
+    const managed = Boolean(templateId);
     const queryClient = useQueryClient();
     const queryKey = [...queryKeys.courses.all, "evaluation-periods", courseId];
     const periodsQuery = useQuery({
@@ -75,20 +75,6 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
     const generate = (count: number) => run(() => courseService.generateEvaluationPeriods(courseId, count),
         `Se crearon ${count} períodos de evaluación.`, "No se pudieron generar los períodos.");
 
-    const copyToSections = async () => {
-        setBusy(true);
-        try {
-            const sections = await courseService.copyEvaluationPeriods(courseId);
-            toast.success(sections.length
-                ? `Períodos copiados a ${sections.join(", ")}.`
-                : "Las demás secciones ya tienen sus períodos.");
-        } catch (error) {
-            toast.error(message(error, "No se pudieron copiar los períodos."));
-        } finally {
-            setBusy(false);
-        }
-    };
-
     const remove = (period: EvaluationPeriod) => run(() => courseService.deleteEvaluationPeriod(courseId, period.id),
         `${period.code} eliminado.`, "No se pudo eliminar el período.").then(() => setConfirmDelete(null));
 
@@ -97,17 +83,18 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
     return (
         <DetailSection
             title="Períodos de evaluación"
-            description="Vienen del curso base al generar el curso; aquí puedes ajustarlos. Los profesores califican y publican desde la app."
-            actions={periods.length > 0 && <>
-                {hasSections && (
-                    <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void copyToSections()}>
-                        <i className="fa fa-clone"/>Copiar a otras secciones
-                    </button>
-                )}
+            description={managed
+                ? "Vienen del curso base cada vez que se genera o actualiza el curso. Los que ya pasaron no se pueden cambiar."
+                : "Defínelos aquí, o genera un curso base para que sus cursos nazcan con ellos. Los profesores califican y publican desde la app."}
+            actions={managed && templateId ? (
+                <Link to={`/courses/templates/${templateId}`} className="btn btn-sm">
+                    <i className="fa fa-layer-group"/>Ver curso base
+                </Link>
+            ) : periods.length > 0 && (
                 <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => setCreating(true)}>
                     <i className="fa fa-plus"/>Agregar período
                 </button>
-            </>}
+            )}
         >
             {periodsQuery.isLoading ? <LoadingContent loading className="py-12"/> : periods.length === 0 ? (
                 <div className="flex flex-col items-center gap-4 rounded-[18px] border border-dashed px-6 py-10 text-center"
@@ -119,105 +106,92 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                     <div>
                         <strong className="block text-base" style={{color: "var(--text-primary)"}}>Este curso aún no tiene períodos</strong>
                         <p className="mt-1 max-w-md text-sm" style={{color: "var(--text-secondary)"}}>
-                            Lo ideal es definirlos en el curso base para que todos sus cursos nazcan con ellos. También puedes
-                            repartir el año aquí con un clic o crearlos uno por uno.
+                            {managed
+                                ? "Defínelos en el curso base y usa \"Generar o actualizar curso\": llegan a todas sus secciones."
+                                : "Reparte el año con un clic o créalos uno por uno."}
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        {GENERATE_OPTIONS.map((count) => (
-                            <button key={count} type="button" className="btn btn-sm" disabled={busy} onClick={() => void generate(count)}>
-                                <i className="fa fa-wand-magic-sparkles"/>{count} períodos
+                    {!managed && (
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            {GENERATE_OPTIONS.map((count) => (
+                                <button key={count} type="button" className="btn btn-sm" disabled={busy} onClick={() => void generate(count)}>
+                                    <i className="fa fa-wand-magic-sparkles"/>{count} períodos
+                                </button>
+                            ))}
+                            <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => setCreating(true)}>
+                                <i className="fa fa-plus"/>Crear manualmente
                             </button>
-                        ))}
-                        <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => setCreating(true)}>
-                            <i className="fa fa-plus"/>Crear manualmente
-                        </button>
-                    </div>
+                        </div>
+                    )}
                 </div>
             ) : (
-                <div className="space-y-5">
-                    <Timeline periods={periods}/>
-                    <ol className="space-y-3">
-                        {periods.map((period, index) => {
-                            const style = STATE_STYLE[period.state];
-                            const ended = period.state === "ENDED";
-                            const extendable = ended && period.extendable === true;
-                            const deletable = period.id === last?.id && !period.used && !ended;
-                            const next = periods[index + 1];
-                            const crosses = next !== undefined && period.endsAt >= next.startsAt;
-                            return (
-                                <li key={period.id} className="flex flex-wrap items-center gap-4 rounded-[16px] border p-4"
-                                    style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                                    <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-sm font-extrabold"
-                                          style={{background: style.background, color: style.color}}>
-                                        {period.code}
+                <div className="space-y-3">
+                    <PeriodList rows={periods.map((period, index) => {
+                        const ended = period.state === "ENDED";
+                        const extendable = ended && period.extendable === true;
+                        const deletable = !managed && period.id === last?.id && !period.used && !ended;
+                        const next = periods[index + 1];
+                        return {
+                            key: period.id,
+                            code: period.code,
+                            name: period.name,
+                            start: toDate(period.startsAt),
+                            end: toDate(period.endsAt),
+                            days: daysBetween(period.startsAt, period.endsAt),
+                            badges: <>
+                                {period.used && (
+                                    <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                                          style={{background: "var(--surface)", color: "var(--text-secondary)"}}>
+                                        <i className="fa fa-pen-to-square me-1"/>Con calificaciones
                                     </span>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <strong className="text-sm" style={{color: "var(--text-primary)"}}>{period.name}</strong>
-                                            <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                                                  style={{background: style.background, color: style.color}}>
-                                                {EvaluationPeriodStateLabel[period.state]}
-                                            </span>
-                                            {period.used && (
-                                                <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                                                      style={{background: "var(--surface-soft)", color: "var(--text-secondary)"}}>
-                                                    <i className="fa fa-pen-to-square me-1"/>Con calificaciones
-                                                </span>
-                                            )}
-                                            {crosses && (
-                                                <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                                                      style={{background: "var(--warning-soft)", color: "var(--warning)"}}>
-                                                    <i className="fa fa-arrows-left-right me-1"/>Se cruza con {next.code}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>
-                                            <i className="fa fa-calendar me-1.5 opacity-60"/>
-                                            {formatDate(period.startsAt)} – {formatDate(period.endsAt)}
-                                            <span className="ms-2 text-xs" style={{color: "var(--text-tertiary)"}}>
-                                                · {daysBetween(period.startsAt, period.endsAt)} días
-                                            </span>
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        {ended && !extendable ? (
-                                            <span className="row-action cursor-not-allowed opacity-50" role="img"
-                                                  title="Ya pasó: no se puede editar" aria-label={`${period.code} ya pasó: no se puede editar`}>
-                                                <i className="fa fa-lock"/>
-                                            </span>
-                                        ) : (
-                                            <button type="button" className="row-action" disabled={busy} onClick={() => setEditing(period)}
-                                                    title={extendable ? "Extender el fin" : "Editar"}
-                                                    aria-label={`${extendable ? "Extender el fin de" : "Editar"} ${period.code}`}>
-                                                <i className={extendable ? "fa fa-calendar-plus" : "fa fa-pen"}/>
-                                            </button>
-                                        )}
-                                        {deletable && (confirmDelete === period.id ? (
-                                            <>
-                                                <button type="button" className="btn btn-xs" disabled={busy} onClick={() => setConfirmDelete(null)}>
-                                                    Cancelar
-                                                </button>
-                                                <button type="button" className="btn btn-xs btn-danger" disabled={busy} onClick={() => void remove(period)}>
-                                                    <i className="fa fa-trash"/>Eliminar {period.code}
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <button type="button" className="row-action" title="Eliminar" aria-label={`Eliminar ${period.code}`}
-                                                    disabled={busy} onClick={() => setConfirmDelete(period.id)}>
-                                                <i className="fa fa-trash"/>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ol>
+                                )}
+                                {next !== undefined && period.endsAt >= next.startsAt && (
+                                    <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                                          style={{background: "var(--warning-soft)", color: "var(--warning)"}}>
+                                        <i className="fa fa-arrows-left-right me-1"/>Se cruza con {next.code}
+                                    </span>
+                                )}
+                            </>,
+                            actions: <>
+                                {ended && !extendable ? (
+                                    <span className="row-action cursor-not-allowed opacity-50" role="img"
+                                          title="Ya pasó: no se puede editar" aria-label={`${period.code} ya pasó: no se puede editar`}>
+                                        <i className="fa fa-lock"/>
+                                    </span>
+                                ) : extendable ? (
+                                    <button type="button" className="btn btn-xs" disabled={busy} onClick={() => setEditing(period)}
+                                            title="Extender el fin, por si se alargan los días" aria-label={`Extender el fin de ${period.code}`}>
+                                        <i className="fa fa-calendar-plus"/>Extender
+                                    </button>
+                                ) : !managed && (
+                                    <button type="button" className="row-action" title="Editar" aria-label={`Editar ${period.code}`}
+                                            disabled={busy} onClick={() => setEditing(period)}>
+                                        <i className="fa fa-pen"/>
+                                    </button>
+                                )}
+                                {deletable && (confirmDelete === period.id ? (
+                                    <>
+                                        <button type="button" className="btn btn-xs" disabled={busy} onClick={() => setConfirmDelete(null)}>
+                                            Cancelar
+                                        </button>
+                                        <button type="button" className="btn btn-xs btn-danger" disabled={busy} onClick={() => void remove(period)}>
+                                            <i className="fa fa-trash"/>Eliminar {period.code}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button type="button" className="row-action" title="Eliminar" aria-label={`Eliminar ${period.code}`}
+                                            disabled={busy} onClick={() => setConfirmDelete(period.id)}>
+                                        <i className="fa fa-trash"/>
+                                    </button>
+                                ))}
+                            </>,
+                        };
+                    })}/>
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
                         <i className="fa fa-circle-info me-1"/>
-                        Los períodos van uno detrás de otro. Los que ya pasaron no se pueden editar; solo el último con calificaciones
-                        puede extender su fin, aunque se cruce con el siguiente. Solo se puede eliminar el último, y solo si aún no
-                        terminó ni tiene calificaciones.
+                        {managed
+                            ? "Los períodos se cambian en el curso base. Los que ya pasaron no se pueden editar; solo el último con calificaciones puede extender su fin, aunque se cruce con el siguiente."
+                            : "Los períodos van uno detrás de otro. Los que ya pasaron no se pueden editar; solo el último con calificaciones puede extender su fin. Solo se puede eliminar el último, y solo si aún no terminó ni tiene calificaciones."}
                     </p>
                 </div>
             )}
@@ -245,53 +219,6 @@ const nextDay = (value: string): string => {
     const [year, month, day] = value.split("-").map(Number);
     const date = new Date(year, month - 1, day + 1);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
-
-/**
- * Barra del año escolar con cada período a escala y el día de hoy marcado. El ancho sale de los días de cada
- * período, así que uno extendido que se cruza con el siguiente no desborda la barra.
- */
-const Timeline = ({periods}: { periods: EvaluationPeriod[] }) => {
-    const days = periods.map((period) => daysBetween(period.startsAt, period.endsAt));
-    const total = days.reduce((sum, value) => sum + value, 0);
-    const today = new Date().toISOString().slice(0, 10);
-    // Hoy cae en el último período que ya empezó (si no ha terminado)
-    const current = periods.reduce((found, period, index) => period.startsAt <= today ? index : found, -1);
-    const inside = current >= 0 && today <= periods[current].endsAt;
-    const todayOffset = inside
-        ? ((days.slice(0, current).reduce((sum, value) => sum + value, 0) + daysBetween(periods[current].startsAt, today)) / total) * 100
-        : null;
-    return (
-        <div className="relative pt-6">
-            {todayOffset !== null && (
-                <span className="absolute top-0 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider"
-                      style={{left: `${todayOffset}%`, color: "var(--accent)"}}>Hoy</span>
-            )}
-            <div className="flex h-3 overflow-hidden rounded-full" style={{background: "var(--surface-soft)"}}>
-                {periods.map((period, index) => (
-                    <div key={period.id} title={`${period.code} · ${period.name}`}
-                         className={clsx(index > 0 && "border-l-2")}
-                         style={{
-                             width: `${(days[index] / total) * 100}%`,
-                             background: STATE_STYLE[period.state].color,
-                             opacity: period.state === "UPCOMING" ? 0.35 : 0.85,
-                             borderColor: "var(--surface)",
-                         }}/>
-                ))}
-            </div>
-            {todayOffset !== null && (
-                <span className="absolute top-[18px] h-5 w-0.5 -translate-x-1/2 rounded-full"
-                      style={{left: `${todayOffset}%`, background: "var(--accent)"}}/>
-            )}
-            <div className="mt-2 flex text-[11px] font-semibold" style={{color: "var(--text-tertiary)"}}>
-                {periods.map((period, index) => (
-                    <span key={period.id} className="truncate text-center" style={{width: `${(days[index] / total) * 100}%`}}>
-                        {period.code}
-                    </span>
-                ))}
-            </div>
-        </div>
-    );
 };
 
 const PeriodFormModal = ({open, period, nextSequence, suggestedStart, onClose, onSave}: {
