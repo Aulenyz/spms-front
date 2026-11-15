@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
-import {useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import clsx from "clsx";
 
 import {queryKeys} from "../../app/query/queryKeys.ts";
@@ -17,7 +17,7 @@ import {LoadingContent} from "../../components/io/output/LoadingContent.tsx";
 import {DetailHeader} from "../../components/ui/detail/DetailHeader.tsx";
 import {DetailSection} from "../../components/ui/detail/DetailSection.tsx";
 import {Badge, StatusBadge} from "../../components/ui/detail/StatusBadge.tsx";
-import {CourseAssignmentModal} from "./CourseQuickForms.tsx";
+import {CourseAssignmentModal} from "./CourseAssignmentModal.tsx";
 import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
 import {CourseEvaluationPeriods} from "./CourseEvaluationPeriods.tsx";
 import {describeSlots} from "./template/schedule.ts";
@@ -72,6 +72,8 @@ export const CourseDetailsPage = () => {
     });
     const enrollments: Page<Enrollment> = enrollmentsQuery.data ?? EMPTY_ENROLLMENTS;
     const assignments = course?.academicAssignments ?? [];
+    /** Un curso generado desde un curso base no cambia sus materias ni profesores: vienen de allá. */
+    const managed = Boolean(course?.templateId);
     const withoutTeacher = assignments.filter((assignment) => !assignment.teacher).length;
 
     const reloadCourse = () => void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
@@ -111,9 +113,15 @@ export const CourseDetailsPage = () => {
 
             {tab === "subjects" && (
                 <DetailSection title="Materias y profesores" flush
-                               actions={<button type="button" className="btn btn-sm btn-primary" onClick={() => openAssignmentModal()}>
-                                   <i className="fa fa-plus"/>Agregar materia
-                               </button>}>
+                               actions={managed && course?.templateId ? (
+                                   <Link to={`/courses/templates/${course.templateId}`} className="btn btn-sm">
+                                       <i className="fa fa-layer-group"/>Ver curso base
+                                   </Link>
+                               ) : (
+                                   <button type="button" className="btn btn-sm btn-primary" onClick={() => openAssignmentModal()}>
+                                       <i className="fa fa-plus"/>Agregar materia
+                                   </button>
+                               )}>
                     {assignments.length ? (
                         <table className="table-shell">
                             <thead>
@@ -121,7 +129,7 @@ export const CourseDetailsPage = () => {
                                 <th>Materia</th>
                                 <th>Profesor</th>
                                 <th>Horario</th>
-                                <th className="w-12"/>
+                                {!managed && <th className="w-12"/>}
                             </tr>
                             </thead>
                             <tbody>
@@ -141,12 +149,14 @@ export const CourseDetailsPage = () => {
                                             ? describeSlots(assignment.slots).map((line) => <span key={line} className="block whitespace-nowrap">{line}</span>)
                                             : <span className="text-[var(--text-tertiary)]">Sin horario</span>}
                                     </td>
-                                    <td className="text-right">
-                                        <button type="button" className="row-action" title="Cambiar profesor"
-                                                aria-label="Cambiar profesor" onClick={() => openAssignmentModal(assignment)}>
-                                            <i className="fa fa-pen"/>
-                                        </button>
-                                    </td>
+                                    {!managed && (
+                                        <td className="text-right">
+                                            <button type="button" className="row-action" title="Cambiar profesor"
+                                                    aria-label="Cambiar profesor" onClick={() => openAssignmentModal(assignment)}>
+                                                <i className="fa fa-pen"/>
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                             </tbody>
@@ -154,7 +164,9 @@ export const CourseDetailsPage = () => {
                     ) : (
                         <div className="p-5">
                             <EmptyState title="Sin materias" icon="fa-book"
-                                        description="Agrega materias y su profesor a este curso."/>
+                                        description={managed
+                                            ? "Las materias y profesores se definen en el curso base y llegan con \"Generar o actualizar curso\"."
+                                            : "Agrega materias y su profesor a este curso."}/>
                         </div>
                     )}
                 </DetailSection>

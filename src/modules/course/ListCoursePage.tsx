@@ -1,5 +1,5 @@
 import {useCallback, useMemo, useState} from "react";
-import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
+import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {Link} from "react-router-dom";
 
 import {KeyValueOf, State} from "../../domain/types/steoreotype.ts";
@@ -14,18 +14,15 @@ import {DataTableCard} from "../../components/ui/data/DataTableCard.tsx";
 import {EmptyState} from "../../components/ui/feedback/EmptyState.tsx";
 import {CourseFilter} from "../../domain/filters/course/CourseFilter.tsx";
 import {GradeTypePill} from "../../components/io/output/pill/GradeTypePill.tsx";
-import {QuickCourseModal} from "./CourseQuickForms.tsx";
 
 const courseService = CourseService.instance;
 const EMPTY_PAGE: Page<Course> = Pagination.empty<Course>();
 
 export const ListCoursePage = () => {
-    const queryClient = useQueryClient();
     const [pagination, setPagination]: State<Pagination> = useState(Pagination.ofSize(10));
     const [filters, setFilters] = useState<KeyValueOf<string>>({active: "true"});
     // undefined: usar el periodo actual; null: sin periodo; número: periodo elegido en el filtro.
     const [chosenPeriodId, setChosenPeriodId] = useState<number | null | undefined>(undefined);
-    const [showQuickCourse, setShowQuickCourse] = useState(false);
     const currentPeriod = useCurrentPeriod({silent: true});
 
     const selectedPeriodId: number | null = chosenPeriodId !== undefined ? chosenPeriodId : (currentPeriod.data?.id ?? null);
@@ -71,9 +68,6 @@ export const ListCoursePage = () => {
             <PageHeader
                 title="Cursos"
                 description="Consulta cursos creados por periodo, estado y área especializada desde una sola vista."
-                actions={<button type="button" className="btn btn-sm btn-primary" onClick={() => setShowQuickCourse(true)}>
-                    <i className="fa fa-bolt me-1"/>Curso rápido
-                </button>}
             />
 
             <DataTableCard
@@ -133,8 +127,6 @@ export const ListCoursePage = () => {
                     </div>
                 )}
             </DataTableCard>
-            <QuickCourseModal open={showQuickCourse} onClose={() => setShowQuickCourse(false)}
-                              onSaved={() => void queryClient.invalidateQueries({queryKey: queryKeys.courses.all})}/>
         </div>
     );
 };
