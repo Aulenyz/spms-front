@@ -1,12 +1,11 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {LeftModal} from "../../components/shared/LeftModal.tsx";
 import {SearchSelect} from "../../components/io/input/SearchSelect.tsx";
-import {Course, CourseAcademicAssignment, GradeType, GradeTypeLabel, Specialization} from "../../domain/model/course/Course.ts";
+import {CourseAcademicAssignment} from "../../domain/model/course/Course.ts";
 import {CourseAcademicAssignmentRequest, CourseService} from "../../services/course/CourseService.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TeacherOption} from "../../services/course/CourseTemplateService.ts";
-import {SpecializationSelect} from "./template/SpecializationSelect.tsx";
 
 const service = CourseService.instance;
 const message = (error: unknown, fallback: string) =>
@@ -14,96 +13,7 @@ const message = (error: unknown, fallback: string) =>
         ? (error as {message: string}).message : fallback;
 
 type AssignmentForm = {uid?: string; subjectId: string; teacherId: string; subject?: Subject; teacher?: TeacherOption};
-// `uid` solo vive en el cliente: clave estable de React para filas que se agregan/quitan.
-let assignmentSequence = 0;
-const emptyAssignment = (): AssignmentForm => ({uid: `assignment-${++assignmentSequence}`, subjectId: "", teacherId: ""});
 const validAssignment = (assignment: AssignmentForm) => Boolean(assignment.subjectId && assignment.teacherId);
-
-export const QuickCourseModal = ({open, onClose, onSaved}: {open: boolean; onClose: () => void; onSaved: (course: Course) => void}) => {
-    const [name, setName] = useState("");
-    const [division, setDivision] = useState("A");
-    const [type, setType] = useState<GradeType>(GradeType.PRIMARY);
-    const [specialization, setSpecialization] = useState<Specialization | null>(null);
-    const [assignments, setAssignments] = useState<AssignmentForm[]>([emptyAssignment()]);
-    const [saving, setSaving] = useState(false);
-    const canSave = useMemo(() => Boolean(name.trim() && division.trim() && type)
-        && assignments.every(validAssignment), [assignments, division, name, type]);
-
-    const save = async () => {
-        if (!canSave) {
-            toast.error("Completa el curso, la materia y el profesor antes de guardar.");
-            return;
-        }
-        setSaving(true);
-        try {
-            const course = await service.createQuick({
-                name: name.trim(),
-                division: division.trim().toUpperCase(),
-                type,
-                specializationId: specialization?.id ?? null,
-                assignments: assignments.map(toRequest),
-            });
-            toast.success("Curso creado correctamente.");
-            onSaved(course);
-            onClose();
-            setName("");
-            setDivision("A");
-            setType(GradeType.PRIMARY);
-            setSpecialization(null);
-            setAssignments([emptyAssignment()]);
-        } catch (error) {
-            toast.error(message(error, "No se pudo crear el curso rápido."));
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return <LeftModal title="Curso rápido" isOpen={open} onClose={onClose} className="h-full w-[min(720px,100vw)]">
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-        }}>
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-1">
-                <div className="rounded-2xl border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
-                    <strong className="text-sm">Datos del curso</strong>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <label><span className="mb-2 block text-sm font-bold">Nombre *</span>
-                            <input className="input w-full" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ej. 4to Primaria"/>
-                        </label>
-                        <label><span className="mb-2 block text-sm font-bold">Sección *</span>
-                            <input className="input w-full uppercase" value={division} onChange={(event) => setDivision(event.target.value)} placeholder="A"/>
-                        </label>
-                        <label><span className="mb-2 block text-sm font-bold">Tipo *</span>
-                            <select className="input select w-full" value={type} onChange={(event) => setType(event.target.value as GradeType)}>
-                                {Object.values(GradeType).map((value) => <option key={value} value={value}>{GradeTypeLabel[value]}</option>)}
-                            </select>
-                        </label>
-                        <SpecializationSelect value={specialization} onChange={setSpecialization}/>
-                    </div>
-                </div>
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <strong className="text-sm">Materias y profesores</strong>
-                        <button type="button" className="btn btn-sm" onClick={() => setAssignments((current) => [...current, emptyAssignment()])}>
-                            <i className="fa fa-plus me-1"/>Agregar materia
-                        </button>
-                    </div>
-                    {assignments.map((assignment, index) => <AssignmentEditor key={assignment.uid ?? index}
-                                                                              value={assignment}
-                                                                              index={index}
-                                                                              canRemove={assignments.length > 1}
-                                                                              onChange={(next) => setAssignments((current) => current.map((item, position) => position === index ? next : item))}
-                                                                              onRemove={() => setAssignments((current) => current.filter((_, position) => position !== index))}/>)}
-                </div>
-            </div>
-            <div className="flex justify-end border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
-                <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !canSave}>
-                    <i className={saving ? "fa fa-spinner fa-spin me-1" : "fa fa-check me-1"}/>{saving ? "Guardando..." : "Guardar curso"}
-                </button>
-            </div>
-        </form>
-    </LeftModal>;
-};
 
 export const CourseAssignmentModal = ({courseId, assignment, open, onClose, onSaved}: {
     courseId?: string | number;

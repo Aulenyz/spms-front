@@ -1,5 +1,5 @@
 import {BaseService} from "../BaseService.ts";
-import {Course, CourseAcademicAssignment, GradeType} from "../../domain/model/course/Course.ts";
+import {Course, CourseAcademicAssignment} from "../../domain/model/course/Course.ts";
 import {Page, Pagination} from "../../domain/filters/Page.ts";
 import {Subject} from "../../domain/model/course/Subject.ts";
 import {TeacherOption} from "./CourseTemplateService.ts";
@@ -8,14 +8,6 @@ import {EvaluationPeriod, EvaluationPeriodRequest} from "../../domain/model/cour
 export type CourseAcademicAssignmentRequest = {
     subjectId: number;
     teacherId: number;
-};
-
-export type QuickCourseRequest = {
-    name: string;
-    division: string;
-    type: GradeType;
-    specializationId?: number | null;
-    assignments: CourseAcademicAssignmentRequest[];
 };
 
 export class CourseService extends BaseService<Course> {
@@ -32,10 +24,6 @@ export class CourseService extends BaseService<Course> {
     search(term: string, pagination: Pagination = Pagination.first): Promise<Page<Course>> {
         // Backend expects `term` always present (even when empty).
         return this.get<Page<Course>>("/search", {...pagination, term: term ?? ""});
-    }
-
-    createQuick(request: QuickCourseRequest): Promise<Course> {
-        return this.post<Course>("/quick", request);
     }
 
     subjectOptions(term: string = ""): Promise<Subject[]> {

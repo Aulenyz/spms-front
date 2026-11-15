@@ -8,7 +8,7 @@ export interface Course extends BaseModel {
     type: GradeType;
     division: string;
     specialization: Specialization | null;
-    /** Curso base del que se generó; vacío en los cursos rápidos. */
+    /** Curso base del que se generó; vacío solo en cursos antiguos creados sin curso base. */
     templateId?: number | null;
     academicAssignments?: CourseAcademicAssignment[];
 }
