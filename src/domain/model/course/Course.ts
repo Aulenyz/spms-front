@@ -16,7 +16,7 @@ export interface Course extends BaseModel {
 export interface CourseAcademicAssignment extends BaseModel {
     subject: Subject;
     teacher?: CourseTeacher | null;
-    /** Clases de la semana según el curso base (sección del curso). */
+    /** Clases de la semana que el curso tiene para la materia (copia del curso base al generarlo o actualizarlo). */
     slots?: TemplateSlot[];
 }
 
