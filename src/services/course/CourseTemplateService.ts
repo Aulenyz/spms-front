@@ -75,9 +75,12 @@ export class CourseTemplateService extends BaseService<CourseTemplate> {
         return this.put<TemplatePeriod[]>(`/${id}/evaluation-periods`, {periods});
     }
 
-    /** Da los períodos a los cursos del año actual de este curso base que no tengan; devuelve esas secciones. */
-    applyEvaluationPeriods(id: string | number): Promise<string[]> {
-        return this.post<string[]>(`/${id}/evaluation-periods/apply`);
+    /**
+     * Pone los períodos de los cursos del año actual de este curso base igual que los de aquí. `lockedPeriods` son
+     * los que no cambiaron por estar ya cursados. (La API anterior devolvía la lista de secciones que los recibieron.)
+     */
+    applyEvaluationPeriods(id: string | number): Promise<{lockedPeriods?: string[]} | string[] | null> {
+        return this.post<{lockedPeriods?: string[]} | string[] | null>(`/${id}/evaluation-periods/apply`);
     }
 
     /** Los otros cursos base de la organización, a los que se pueden clonar los períodos. */
