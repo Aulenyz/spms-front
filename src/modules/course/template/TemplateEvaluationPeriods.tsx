@@ -183,7 +183,7 @@ export const TemplateEvaluationPeriods = ({templateId, canEdit}: { templateId: s
 
     return <>
         <DetailSection title="Períodos de evaluación"
-                       description="Cada curso de este curso base sigue estos períodos. Las fechas se ubican solas en cada año escolar y los cursos que se generan automáticamente se mantienen al día; los períodos ya cursados no cambian."
+                       description="Los cursos de este curso base usan estos períodos. Las fechas se ajustan solas a cada año escolar y lo ya cursado no cambia."
                        actions={actions}>
             {periodsQuery.isLoading ? <LoadingContent loading className="py-10"/> : saved.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-[18px] border border-dashed px-6 py-8 text-center"
