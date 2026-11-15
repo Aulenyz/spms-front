@@ -1,7 +1,9 @@
 import {useMemo, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {toast} from "react-toastify";
 
 import {RoleFormValues} from "../../../../domain/model/user/user.ts";
+import {AssistantService} from "../../../../services/assistant/AssistantService.ts";
 import {RoleService} from "../../../../services/user/RoleService.ts";
 
 const roleService = RoleService.instance;
@@ -13,6 +15,34 @@ export const RoleForm = ({onSubmit}: { onSubmit?: () => void }) => {
         name: "",
         description: "",
     });
+
+    // La IA escribe la descripción a partir del nombre solo cuando se pulsa el botón.
+    const {data: assistant} = useQuery({
+        queryKey: ["assistant", "status"],
+        queryFn: ({signal}) => AssistantService.instance.withSignal(signal).status(),
+        staleTime: Infinity,
+        meta: {silent: true},
+    });
+    const trimmedName = values.name.trim();
+    const [suggesting, setSuggesting] = useState(false);
+    const [suggested, setSuggested] = useState(false);
+    const [manual, setManual] = useState(false);
+    const canSuggest = Boolean(assistant?.enabled) && trimmedName.length >= 3;
+
+    const suggest = async () => {
+        if (!canSuggest) return;
+        setSuggesting(true);
+        try {
+            const {description} = await AssistantService.instance.describe("role", trimmedName);
+            setField("description", description);
+            setManual(false);
+            setSuggested(true);
+        } catch {
+            // Si la IA no responde, la descripción se escribe a mano.
+        } finally {
+            setSuggesting(false);
+        }
+    };
 
     const canSubmit = useMemo(() => {
         return Boolean(values.name.trim()) && Boolean(values.description.trim());
@@ -93,12 +123,24 @@ export const RoleForm = ({onSubmit}: { onSubmit?: () => void }) => {
                 <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>
                     Descripcion*
                 </label>
-                <textarea
-                    className="input min-h-[120px] w-full resize-none py-3"
-                    placeholder="Describe el objetivo de este rol"
-                    value={values.description}
-                    onChange={(event) => setField("description", event.target.value)}
-                />
+                <div className="flex items-start gap-2">
+                    <textarea
+                        className="input min-h-[120px] w-full min-w-0 flex-1 resize-none py-3"
+                        placeholder={assistant?.enabled ? "Escríbela o pulsa el botón para que la IA la sugiera" : "Describe el objetivo de este rol"}
+                        value={values.description}
+                        onChange={(event) => { setField("description", event.target.value); setManual(true); }}
+                    />
+                    {assistant?.enabled && (
+                    <button type="button" className="btn btn-sm btn-square mt-1 shrink-0" disabled={!canSuggest || suggesting}
+                            title={suggested ? "Otra sugerencia con IA" : "Sugerir con IA"} aria-label="Sugerir descripción con IA"
+                            onClick={() => void suggest()}>
+                        <i className={`fa ${suggesting ? "fa-spinner fa-spin" : "fa-wand-magic-sparkles"}`} style={{color: "var(--accent)"}}/>
+                    </button>
+                )}
+                </div>
+                <p className="min-h-[1.25rem] text-xs" style={{color: "var(--text-tertiary)"}}>
+                    {suggesting ? "La IA está escribiendo la descripción…" : suggested && !manual ? "Sugerida por IA; puedes editarla." : ""}
+                </p>
                 {errors.description && <p className="mt-1 text-xs font-semibold text-red-500">{errors.description}</p>}
             </div>
 
