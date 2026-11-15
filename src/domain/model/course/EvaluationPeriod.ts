@@ -15,6 +15,8 @@ export type EvaluationPeriod = {
     state: EvaluationPeriodState;
     /** Ya tiene calificaciones o una publicación: no se puede eliminar. */
     used: boolean;
+    /** Ya terminó y es el último con calificaciones: es el único terminado al que se le puede extender el fin. */
+    extendable?: boolean;
 };
 
 export type EvaluationPeriodRequest = {

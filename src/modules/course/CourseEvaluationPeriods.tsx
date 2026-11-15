@@ -138,9 +138,13 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                 <div className="space-y-5">
                     <Timeline periods={periods}/>
                     <ol className="space-y-3">
-                        {periods.map((period) => {
+                        {periods.map((period, index) => {
                             const style = STATE_STYLE[period.state];
-                            const deletable = period.id === last?.id && !period.used;
+                            const ended = period.state === "ENDED";
+                            const extendable = ended && period.extendable === true;
+                            const deletable = period.id === last?.id && !period.used && !ended;
+                            const next = periods[index + 1];
+                            const crosses = next !== undefined && period.endsAt >= next.startsAt;
                             return (
                                 <li key={period.id} className="flex flex-wrap items-center gap-4 rounded-[16px] border p-4"
                                     style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
@@ -161,6 +165,12 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                                                     <i className="fa fa-pen-to-square me-1"/>Con calificaciones
                                                 </span>
                                             )}
+                                            {crosses && (
+                                                <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                                                      style={{background: "var(--warning-soft)", color: "var(--warning)"}}>
+                                                    <i className="fa fa-arrows-left-right me-1"/>Se cruza con {next.code}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>
                                             <i className="fa fa-calendar me-1.5 opacity-60"/>
@@ -171,10 +181,18 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <button type="button" className="row-action" title="Editar" aria-label={`Editar ${period.code}`}
-                                                disabled={busy} onClick={() => setEditing(period)}>
-                                            <i className="fa fa-pen"/>
-                                        </button>
+                                        {ended && !extendable ? (
+                                            <span className="row-action cursor-not-allowed opacity-50" role="img"
+                                                  title="Ya pasó: no se puede editar" aria-label={`${period.code} ya pasó: no se puede editar`}>
+                                                <i className="fa fa-lock"/>
+                                            </span>
+                                        ) : (
+                                            <button type="button" className="row-action" disabled={busy} onClick={() => setEditing(period)}
+                                                    title={extendable ? "Extender el fin" : "Editar"}
+                                                    aria-label={`${extendable ? "Extender el fin de" : "Editar"} ${period.code}`}>
+                                                <i className={extendable ? "fa fa-calendar-plus" : "fa fa-pen"}/>
+                                            </button>
+                                        )}
                                         {deletable && (confirmDelete === period.id ? (
                                             <>
                                                 <button type="button" className="btn btn-xs" disabled={busy} onClick={() => setConfirmDelete(null)}>
@@ -197,7 +215,9 @@ export const CourseEvaluationPeriods = ({courseId, hasSections}: { courseId: str
                     </ol>
                     <p className="text-xs" style={{color: "var(--text-tertiary)"}}>
                         <i className="fa fa-circle-info me-1"/>
-                        Los períodos van uno detrás de otro. Solo se puede eliminar el último, y solo si aún no tiene calificaciones.
+                        Los períodos van uno detrás de otro. Los que ya pasaron no se pueden editar; solo el último con calificaciones
+                        puede extender su fin, aunque se cruce con el siguiente. Solo se puede eliminar el último, y solo si aún no
+                        terminó ni tiene calificaciones.
                     </p>
                 </div>
             )}
@@ -227,13 +247,20 @@ const nextDay = (value: string): string => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-/** Barra del año escolar con cada período a escala y el día de hoy marcado. */
+/**
+ * Barra del año escolar con cada período a escala y el día de hoy marcado. El ancho sale de los días de cada
+ * período, así que uno extendido que se cruza con el siguiente no desborda la barra.
+ */
 const Timeline = ({periods}: { periods: EvaluationPeriod[] }) => {
-    const start = periods[0].startsAt;
-    const end = periods[periods.length - 1].endsAt;
-    const total = daysBetween(start, end);
+    const days = periods.map((period) => daysBetween(period.startsAt, period.endsAt));
+    const total = days.reduce((sum, value) => sum + value, 0);
     const today = new Date().toISOString().slice(0, 10);
-    const todayOffset = today >= start && today <= end ? (daysBetween(start, today) / total) * 100 : null;
+    // Hoy cae en el último período que ya empezó (si no ha terminado)
+    const current = periods.reduce((found, period, index) => period.startsAt <= today ? index : found, -1);
+    const inside = current >= 0 && today <= periods[current].endsAt;
+    const todayOffset = inside
+        ? ((days.slice(0, current).reduce((sum, value) => sum + value, 0) + daysBetween(periods[current].startsAt, today)) / total) * 100
+        : null;
     return (
         <div className="relative pt-6">
             {todayOffset !== null && (
@@ -245,7 +272,7 @@ const Timeline = ({periods}: { periods: EvaluationPeriod[] }) => {
                     <div key={period.id} title={`${period.code} · ${period.name}`}
                          className={clsx(index > 0 && "border-l-2")}
                          style={{
-                             width: `${(daysBetween(period.startsAt, period.endsAt) / total) * 100}%`,
+                             width: `${(days[index] / total) * 100}%`,
                              background: STATE_STYLE[period.state].color,
                              opacity: period.state === "UPCOMING" ? 0.35 : 0.85,
                              borderColor: "var(--surface)",
@@ -257,9 +284,8 @@ const Timeline = ({periods}: { periods: EvaluationPeriod[] }) => {
                       style={{left: `${todayOffset}%`, background: "var(--accent)"}}/>
             )}
             <div className="mt-2 flex text-[11px] font-semibold" style={{color: "var(--text-tertiary)"}}>
-                {periods.map((period) => (
-                    <span key={period.id} className="truncate text-center"
-                          style={{width: `${(daysBetween(period.startsAt, period.endsAt) / total) * 100}%`}}>
+                {periods.map((period, index) => (
+                    <span key={period.id} className="truncate text-center" style={{width: `${(days[index] / total) * 100}%`}}>
                         {period.code}
                     </span>
                 ))}
@@ -288,14 +314,16 @@ const PeriodFormModal = ({open, period, nextSequence, suggestedStart, onClose, o
     }, [period, suggestedStart, open]);
 
     const code = period?.code ?? `P${nextSequence}`;
-    const valid = Boolean(startsAt && endsAt && endsAt >= startsAt);
+    /** Un período que ya terminó solo puede extender su fin (la API lo exige). */
+    const extending = period?.state === "ENDED";
+    const valid = Boolean(startsAt && endsAt && endsAt >= startsAt && (!extending || endsAt > period.endsAt));
 
     const submit = async () => {
         if (!valid) return;
         setSaving(true);
         try {
             await onSave({name: name.trim() || undefined, startsAt, endsAt});
-            toast.success(period ? `${code} actualizado.` : `${code} creado.`);
+            toast.success(extending ? `${code} extendido hasta el ${formatDate(endsAt)}.` : period ? `${code} actualizado.` : `${code} creado.`);
             onClose();
         } catch (error) {
             toast.error(message(error, "No se pudo guardar el período."));
@@ -305,7 +333,7 @@ const PeriodFormModal = ({open, period, nextSequence, suggestedStart, onClose, o
     };
 
     return (
-        <LeftModal title={period ? `Editar ${code}` : `Nuevo período ${code}`} isOpen={open} onClose={onClose}
+        <LeftModal title={extending ? `Extender ${code}` : period ? `Editar ${code}` : `Nuevo período ${code}`} isOpen={open} onClose={onClose}
                    className="h-full w-[min(520px,100vw)]">
             <form className="flex min-h-0 flex-1 flex-col gap-4" onSubmit={(event) => {
                 event.preventDefault();
@@ -314,25 +342,28 @@ const PeriodFormModal = ({open, period, nextSequence, suggestedStart, onClose, o
                 <div className="rounded-[18px] border p-4" style={{borderColor: "var(--border-soft)", background: "var(--surface-muted)"}}>
                     <div className="text-xs font-semibold uppercase tracking-[0.18em]" style={{color: "var(--text-tertiary)"}}>{code}</div>
                     <p className="mt-1 text-sm" style={{color: "var(--text-secondary)"}}>
-                        Debe empezar después de que termine el período anterior y quedar dentro del año escolar.
+                        {extending
+                            ? "Este período ya terminó, así que solo puedes extender su fecha de fin, por si se alargan los días. Puede cruzarse con el período siguiente."
+                            : "Debe empezar después de que termine el período anterior y quedar dentro del año escolar."}
                     </p>
                 </div>
                 <div className="space-y-1">
                     <label className="block text-xs font-semibold" style={{color: "var(--text-secondary)"}}>Nombre</label>
                     <label className="input input-sm w-full">
                         <i className="fa fa-tag me-1"/>
-                        <input maxLength={64} placeholder={`Período ${period?.sequence ?? nextSequence}`} value={name}
+                        <input maxLength={64} placeholder={`Período ${period?.sequence ?? nextSequence}`} value={name} disabled={extending}
                                onChange={(event) => setName(event.target.value)}/>
                     </label>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <DatePicker label="Inicio*" value={startsAt} onChange={setStartsAt} required/>
-                    <DatePicker label="Fin*" value={endsAt} min={startsAt || undefined} onChange={setEndsAt} required/>
+                    <DatePicker label="Inicio*" value={startsAt} onChange={setStartsAt} required disabled={extending}/>
+                    <DatePicker label="Fin*" value={endsAt} min={(extending ? nextDay(period.endsAt) : startsAt) || undefined}
+                                onChange={setEndsAt} required/>
                 </div>
                 <div className="mt-auto flex justify-end gap-2 border-t pt-4" style={{borderColor: "var(--border-soft)"}}>
                     <button type="button" className="btn btn-sm" onClick={onClose} disabled={saving}>Cancelar</button>
                     <button type="submit" className="btn btn-sm btn-primary" disabled={saving || !valid}>
-                        <i className={saving ? "fa fa-spinner fa-spin" : "fa fa-check"}/>{saving ? "Guardando..." : "Guardar"}
+                        <i className={saving ? "fa fa-spinner fa-spin" : "fa fa-check"}/>{saving ? "Guardando..." : extending ? "Extender" : "Guardar"}
                     </button>
                 </div>
             </form>
