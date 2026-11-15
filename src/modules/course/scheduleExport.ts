@@ -17,7 +17,7 @@ const SCALE = 2; // nitidez: el archivo sale a 300 puntos por pulgada
 const WIDTH = 1650;
 const PAGE_HEIGHT = 1275;
 const MARGIN = 54; // ~0.36": dentro de lo que imprime cualquier impresora
-const TIME_COLUMN = 150;
+const TIME_COLUMN = 176;
 const HEADER = 138;
 const DAY_ROW = 50;
 const FOOTER = 52;
@@ -26,11 +26,27 @@ const MAX_ROW = 190; // con pocas clases las filas no se estiran sin fin
 const MAX_ZOOM = 1.4; // cuánto se agrandan los textos cuando sobra hoja
 const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
-type Sized = { lines: Map<ScheduleBlock, string[]>; heights: number[]; unit: number };
+type BlockText = { subject: string[]; teacher: string[] };
+type Sized = { lines: Map<ScheduleBlock, BlockText>; heights: number[]; unit: number };
 
-/** Parte el texto en líneas que quepan en el ancho; la última termina en "…" si no alcanza. */
+/** Parte una palabra más ancha que la casilla en pedazos que sí quepan, para que nunca se corte. */
+const breakWord = (ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] => {
+    const pieces: string[] = [];
+    let current = "";
+    for (const character of word) {
+        if (current && ctx.measureText(current + character).width > maxWidth) {
+            pieces.push(current);
+            current = character;
+        } else current += character;
+    }
+    if (current) pieces.push(current);
+    return pieces;
+};
+
+/** Parte el texto en líneas que quepan en el ancho; si sobran líneas, la última termina en "…". */
 const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] => {
-    const words = text.split(/\s+/).filter(Boolean);
+    const words = text.split(/\s+/).filter(Boolean)
+        .flatMap((word) => ctx.measureText(word).width > maxWidth ? breakWord(ctx, word, maxWidth) : [word]);
     const lines: string[] = [];
     let current = "";
     for (const word of words) {
@@ -42,7 +58,7 @@ const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
         }
     }
     if (current) lines.push(current);
-    if (lines.length <= maxLines) return lines.map((line) => fit(ctx, line, maxWidth));
+    if (lines.length <= maxLines) return lines;
     const kept = lines.slice(0, maxLines);
     kept[maxLines - 1] = fit(ctx, `${kept[maxLines - 1]} ${lines.slice(maxLines).join(" ")}`, maxWidth);
     return kept;
@@ -66,6 +82,9 @@ const roundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width:
     ctx.closePath();
 };
 
+/** Alto del texto de una casilla: sus líneas de materia y de profesor. */
+const textHeight = (text: BlockText, unit: number) => text.subject.length * 21 * unit + 4 + text.teacher.length * 18 * unit;
+
 /**
  * Dibuja el horario semanal del curso en una hoja carta apaisada: una fila por franja horaria y una columna por día,
  * con la materia y el profesor de cada clase. Los textos y las filas se agrandan para llenar la hoja. Devuelve null
@@ -84,10 +103,15 @@ export const drawSchedule = ({title, subtitle, assignments}: ScheduleExportInput
 
     /** Mide cada casilla con los textos agrandados `unit` veces: sus líneas y la altura natural de cada fila. */
     const size = (unit: number): Sized => {
-        const lines = new Map<ScheduleBlock, string[]>();
-        measure.font = `700 ${17 * unit}px ${FONT}`;
-        allBlocks.forEach((block) => lines.set(block, wrap(measure, block.subject, dayWidth - 2 * 10 * unit - 14, 2)));
-        const blockHeight = (block: ScheduleBlock) => 20 * unit + lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
+        const lines = new Map<ScheduleBlock, BlockText>();
+        const textWidth = dayWidth - 2 * 10 * unit - 20;
+        allBlocks.forEach((block) => {
+            measure.font = `700 ${17 * unit}px ${FONT}`;
+            const subject = wrap(measure, block.subject, textWidth, 3);
+            measure.font = `500 ${14 * unit}px ${FONT}`;
+            lines.set(block, {subject, teacher: wrap(measure, block.teacher, textWidth, 2)});
+        });
+        const blockHeight = (block: ScheduleBlock) => textHeight(lines.get(block)!, unit) + 20 * unit;
         const heights = rows.map((row) => Math.max(MIN_ROW * unit,
             ...[...row.cells.values()].map((blocks) => blocks.reduce((sum, block) => sum + blockHeight(block) + 6, 6))));
         return {lines, heights, unit};
@@ -158,18 +182,25 @@ export const drawSchedule = ({title, subtitle, assignments}: ScheduleExportInput
         ctx.lineTo(WIDTH - MARGIN, y + rowHeight);
         ctx.stroke();
 
+        // La hora va en una sola línea: si no cabe en su columna, la letra se achica
         ctx.textAlign = "center";
         ctx.fillStyle = "#111827";
-        ctx.font = `700 ${16 * unit}px ${FONT}`;
-        ctx.fillText(row.time, MARGIN + TIME_COLUMN / 2, y + rowHeight / 2 + 6 * unit);
+        let timeSize = 16 * unit;
+        ctx.font = `700 ${timeSize}px ${FONT}`;
+        const timeWidth = ctx.measureText(row.time).width;
+        if (timeWidth > TIME_COLUMN - 28) {
+            timeSize *= (TIME_COLUMN - 28) / timeWidth;
+            ctx.font = `700 ${timeSize}px ${FONT}`;
+        }
+        ctx.fillText(row.time, MARGIN + TIME_COLUMN / 2, y + rowHeight / 2 + timeSize * 0.36);
 
         days.forEach((day, index) => {
             const blocks = row.cells.get(day) ?? [];
             const x = MARGIN + TIME_COLUMN + dayWidth * index;
-            const natural = (block: ScheduleBlock) => 20 * unit + sized.lines.get(block)!.length * 21 * unit + 4 + 18 * unit;
+            const natural = (block: ScheduleBlock) => textHeight(sized.lines.get(block)!, unit) + 20 * unit;
             let blockTop = y + 6;
             blocks.forEach((block) => {
-                const subjectLines = sized.lines.get(block)!;
+                const text = sized.lines.get(block)!;
                 const blockHeight = blocks.length === 1 ? rowHeight - 12 : natural(block);
                 ctx.fillStyle = block.color.fill;
                 roundedRect(ctx, x + 6, blockTop, dayWidth - 12, blockHeight, 10);
@@ -180,17 +211,16 @@ export const drawSchedule = ({title, subtitle, assignments}: ScheduleExportInput
 
                 ctx.textAlign = "left";
                 const left = x + 6 + 10 * unit + 6;
-                const textHeight = subjectLines.length * 21 * unit + 4 + 18 * unit;
-                let baseline = blockTop + (blockHeight - textHeight) / 2 + 16 * unit;
+                let baseline = blockTop + (blockHeight - textHeight(text, unit)) / 2 + 16 * unit;
                 ctx.fillStyle = "#111827";
                 ctx.font = `700 ${17 * unit}px ${FONT}`;
-                subjectLines.forEach((line) => {
+                text.subject.forEach((line) => {
                     ctx.fillText(line, left, baseline);
                     baseline += 21 * unit;
                 });
                 ctx.fillStyle = "#374151";
                 ctx.font = `500 ${14 * unit}px ${FONT}`;
-                ctx.fillText(fit(ctx, block.teacher, dayWidth - 2 * 10 * unit - 14), left, baseline + 2);
+                text.teacher.forEach((line, lineIndex) => ctx.fillText(line, left, baseline + 2 + lineIndex * 18 * unit));
                 blockTop += natural(block) + 6;
             });
         });
