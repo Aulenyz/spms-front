@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import {Link, useParams} from "react-router-dom";
 import clsx from "clsx";
+import {toast} from "react-toastify";
 
 import {queryKeys} from "../../app/query/queryKeys.ts";
 import {useDebouncedValue} from "../../hooks/useDebouncedValue.ts";
@@ -23,6 +24,7 @@ import {AuthorityKey} from "../../domain/model/user/authorities.ts";
 import {CourseWeekSchedule} from "./CourseWeekSchedule.tsx";
 import {CourseEvaluationPeriods} from "./CourseEvaluationPeriods.tsx";
 import {describeSlots} from "./template/schedule.ts";
+import {downloadScheduleImage, downloadSchedulePdf, fileNameOf} from "./scheduleExport.ts";
 
 type TabKey = "subjects" | "schedule" | "evaluations" | "students";
 
@@ -47,6 +49,7 @@ export const CourseDetailsPage = () => {
     const [studentPagination, setStudentPagination] = useState<Pagination>(Pagination.ofSize(10));
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [assignmentToEdit, setAssignmentToEdit] = useState<CourseAcademicAssignment | null>(null);
+    const [exporting, setExporting] = useState<"image" | "pdf" | null>(null);
     const [tab, setTab] = useState<TabKey>(() => {
         const saved = id ? localStorage.getItem(`course-details-tab-${id}`) : null;
         return TABS.some((item) => item.key === saved) ? saved as TabKey : "subjects";
@@ -79,6 +82,28 @@ export const CourseDetailsPage = () => {
     const withoutTeacher = assignments.filter((assignment) => !assignment.teacher).length;
 
     const reloadCourse = () => void queryClient.invalidateQueries({queryKey: queryKeys.courses.all});
+    const hasSchedule = assignments.some((assignment) => assignment.slots?.length);
+
+    /** Descarga el horario del curso como imagen o PDF apaisado, con todas las clases en una sola hoja. */
+    const exportSchedule = async (kind: "image" | "pdf") => {
+        if (!course) return;
+        const title = `${course.name} ${course.division ?? ""}`.trim();
+        const input = {
+            title,
+            subtitle: [course.type ? GradeTypeLabel[course.type] : null, course.specialization?.name].filter(Boolean).join(" · "),
+            assignments,
+        };
+        setExporting(kind);
+        try {
+            await (kind === "pdf" ? downloadSchedulePdf : downloadScheduleImage)(input, `horario-${fileNameOf(title)}`);
+        } catch (error) {
+            const text = typeof error === "object" && error !== null ? (error as { message?: unknown }).message : undefined;
+            toast.error(typeof text === "string" && text.trim() ? text : "No se pudo exportar el horario.");
+        } finally {
+            setExporting(null);
+        }
+    };
+
     const openAssignmentModal = (assignment?: CourseAcademicAssignment | null) => {
         setAssignmentToEdit(assignment ?? null);
         setShowAssignmentModal(true);
@@ -179,8 +204,18 @@ export const CourseDetailsPage = () => {
             )}
 
             {tab === "schedule" && (
-                <DetailSection title="Horario" description="Clases de la semana de esta sección, tomadas del curso base al generar o actualizar el curso." flush>
-                    {assignments.some((assignment) => assignment.slots?.length) ? (
+                <DetailSection title="Horario" description="Clases de la semana de esta sección, tomadas del curso base al generar o actualizar el curso." flush
+                               actions={hasSchedule && <>
+                                   <button type="button" className="btn btn-sm" disabled={exporting !== null} onClick={() => void exportSchedule("image")}
+                                           title="Descarga el horario como imagen PNG apaisada">
+                                       <i className={exporting === "image" ? "fa fa-spinner fa-spin" : "fa fa-image"}/>Imagen
+                                   </button>
+                                   <button type="button" className="btn btn-sm" disabled={exporting !== null} onClick={() => void exportSchedule("pdf")}
+                                           title="Descarga el horario como PDF apaisado, todo en una hoja">
+                                       <i className={exporting === "pdf" ? "fa fa-spinner fa-spin" : "fa fa-file-pdf"}/>PDF
+                                   </button>
+                               </>}>
+                    {hasSchedule ? (
                         <CourseWeekSchedule assignments={assignments}/>
                     ) : (
                         <div className="p-5">
